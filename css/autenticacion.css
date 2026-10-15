@@ -1,0 +1,7 @@
+/* Estilos propios de las pantallas de login y registro. Lo general está en base.css (Rol 4). */
+
+/* Los formularios no ocupan todo el ancho del contenedor: se leen mejor angostos. */
+.formulario-angosto { max-width: 32rem; }
+
+/* El botón "Mostrar" de la contraseña queda chico, debajo del campo. */
+.mostrar-password { justify-self: start; padding: .3rem .9rem; font-size: .9rem; }
