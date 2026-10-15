@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>HuellaVet — Veterinaria</title>
+  <meta name="description" content="Veterinaria con tienda de productos para retirar en el local. Reservá tu turno por WhatsApp.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Nunito+Sans:wght@400;600;700&display=swap">
+  <link rel="stylesheet" href="/css/base.css">
+</head>
+<body>
+  <a class="saltar" href="#contenido">Saltar al contenido</a>
+
+  <header class="encabezado">
+    <div class="contenedor encabezado-fila">
+      <a class="marca-logo" href="/index.html" aria-label="HuellaVet, ir al inicio">
+        <svg viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+          <g fill="#1d4b43">
+            <ellipse cx="14" cy="27" rx="7" ry="9"/>
+            <ellipse cx="29" cy="15" rx="7" ry="10"/>
+            <ellipse cx="45" cy="15" rx="7" ry="10"/>
+            <ellipse cx="57" cy="29" rx="6" ry="9"/>
+            <path d="M32 31c-9 0-18 9-18 17 0 6 5 9 11 8 3-.6 5-1.5 7-1.5s4 .9 7 1.5c6 1 11-2 11-8 0-8-9-17-18-17z"/>
+          </g>
+        </svg>
+      </a>
+      <a class="marca-nombre" href="/index.html">HuellaVet</a>
+
+      <!-- Solo se ve en celular (ver base.css). js/menu.js lo abre y cierra. -->
+      <button type="button" class="menu-boton" id="menu-boton" aria-expanded="false" aria-controls="navegacion" aria-label="Abrir menú">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></svg>
+      </button>
+
+      <nav id="navegacion" aria-label="Principal">
+        <button type="button" class="menu-cerrar" id="menu-cerrar">&lsaquo; Volver</button>
+        <!-- Entrega 3: solo Productos. Adopción, Reseñas, Contacto y carrito llegan en la Entrega 5.
+             js/auth.js agrega "Panel" cuando el rol es veterinario. -->
+        <ul class="menu" id="menu">
+          <li><a href="/catalogo.html">Productos</a></li>
+        </ul>
+        <!-- js/auth.js reemplaza estos botones según la sesión (con sesión: nombre y "Salir") -->
+        <div class="sesion" id="sesion">
+          <a class="boton boton-borde" href="/login.html">Inicia sesión</a>
+          <a class="boton" href="/registro.html">Registro</a>
+        </div>
+      </nav>
+    </div>
+  </header>
+
+  <main id="contenido">
+    <h1 class="solo-lectores">HuellaVet, veterinaria y tienda de productos</h1>
+
+    <section class="hero seccion" aria-label="Turnos y ubicación">
+      <div class="contenedor">
+        <div class="hero-intro">
+          <p>Nosotros somos HuellaVet.</p>
+          <address>Calle Falsa 123</address>
+        </div>
+        <div class="hero-turno">
+          <!-- Reemplazar 549XXXXXXXXXX por el número de WhatsApp de la veterinaria (código de país, sin + ni espacios) -->
+          <a class="boton boton-acento boton-grande" href="https://wa.me/549XXXXXXXXXX?text=Hola%2C%20quiero%20reservar%20un%20turno" target="_blank" rel="noopener noreferrer">Reservar turno</a>
+        </div>
+        <div class="hero-ubicacion">
+          <div>
+            <h2>¿Dónde nos encontramos?</h2>
+            <p>Calle Falsa 123. Atendemos con turno previo, que se coordina por WhatsApp.</p>
+          </div>
+          <div class="imagen-provisoria fachada" role="img" aria-label="Foto de la fachada de la veterinaria">Fachada de la veterinaria</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="seccion" aria-labelledby="titulo-servicios">
+      <div class="contenedor">
+        <h2 id="titulo-servicios" class="titulo-seccion">Nuestros servicios</h2>
+        <div class="grilla">
+          <article class="tarjeta servicio">
+            <h3>Consulta clínica</h3>
+            <p>Atención y diagnóstico de tu mascota.</p>
+          </article>
+          <article class="tarjeta servicio">
+            <h3>Vacunación</h3>
+            <p>Plan de vacunas y recordatorios.</p>
+          </article>
+          <article class="tarjeta servicio">
+            <h3>Tienda para retirar</h3>
+            <p>Alimento, accesorios y medicamentos.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="opiniones seccion" aria-labelledby="titulo-opiniones">
+      <div class="contenedor">
+        <h2 id="titulo-opiniones" class="titulo-seccion">¿Qué opinan nuestros clientes?</h2>
+        <div class="burbujas">
+          <blockquote class="burbuja">
+            <p>Opinión de ejemplo 1.</p>
+            <footer>Cliente</footer>
+          </blockquote>
+          <blockquote class="burbuja">
+            <p>Opinión de ejemplo 2.</p>
+            <footer>Cliente</footer>
+          </blockquote>
+          <blockquote class="burbuja">
+            <p>Opinión de ejemplo 3.</p>
+            <footer>Cliente</footer>
+          </blockquote>
+        </div>
+        <p class="aviso-ejemplo">Textos de ejemplo. Las reseñas reales llegan en la Entrega 5.</p>
+      </div>
+    </section>
+
+    <section class="seccion" aria-labelledby="titulo-destacados">
+      <div class="contenedor">
+        <h2 id="titulo-destacados" class="titulo-seccion">¡No te lo pierdas!</h2>
+        <!-- Provisorio: datos de ejemplo. El sábado 17 se completa con GET /api/tienda/productos -->
+        <div class="grilla" id="destacados">
+          <article class="tarjeta producto-destacado">
+            <div class="imagen-provisoria" role="img" aria-label="Imagen del producto">Imagen</div>
+            <p class="etiqueta">Producto más vendido</p>
+            <h3>Nombre del producto</h3>
+            <p class="precio">$0</p>
+          </article>
+          <article class="tarjeta producto-destacado">
+            <div class="imagen-provisoria" role="img" aria-label="Imagen del producto">Imagen</div>
+            <p class="etiqueta">Producto con descuento</p>
+            <h3>Nombre del producto</h3>
+            <p class="precio">$0</p>
+          </article>
+          <article class="tarjeta producto-destacado">
+            <div class="imagen-provisoria" role="img" aria-label="Imagen del producto">Imagen</div>
+            <p class="etiqueta">Producto que se está por agotar</p>
+            <h3>Nombre del producto</h3>
+            <p class="precio">$0</p>
+          </article>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="pie">
+    <div class="contenedor">
+      <div>
+        <h2>Seguinos</h2>
+        <ul class="redes">
+          <!-- Reemplazar los # por los perfiles reales -->
+          <li><a href="#" aria-label="X (Twitter)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.2 2H21l-6.5 7.4L22 22h-6l-4.7-6.2L5.8 22H3l7-8L2 2h6.1l4.2 5.6L18.2 2zm-1 18h1.6L7.1 3.9H5.4L17.2 20z"/></svg></a></li>
+          <li><a href="#" aria-label="Instagram"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2h10a5 5 0 0 1 5 5v10a5 5 0 0 1-5 5H7a5 5 0 0 1-5-5V7a5 5 0 0 1 5-5zm0 2a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V7a3 3 0 0 0-3-3H7zm5 3.5A4.5 4.5 0 1 1 7.5 12 4.5 4.5 0 0 1 12 7.5zm0 2A2.5 2.5 0 1 0 14.5 12 2.5 2.5 0 0 0 12 9.5zM17.3 6a1.2 1.2 0 1 1-1.2 1.2A1.2 1.2 0 0 1 17.3 6z"/></svg></a></li>
+          <li><a href="#" aria-label="YouTube"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21.6 7.2a2.5 2.5 0 0 0-1.8-1.8C18.2 5 12 5 12 5s-6.2 0-7.8.4A2.5 2.5 0 0 0 2.4 7.2 26 26 0 0 0 2 12a26 26 0 0 0 .4 4.8 2.5 2.5 0 0 0 1.8 1.8C5.8 19 12 19 12 19s6.2 0 7.8-.4a2.5 2.5 0 0 0 1.8-1.8A26 26 0 0 0 22 12a26 26 0 0 0-.4-4.8zM10 15V9l5 3-5 3z"/></svg></a></li>
+        </ul>
+      </div>
+      <div>
+        <h2>Contacto</h2>
+        <address>
+          <p>+54 9 11 5555-5555</p>
+          <p>contacto@huellavet.example</p>
+          <p>Calle Falsa 123</p>
+        </address>
+      </div>
+      <div>
+        <h2>HuellaVet</h2>
+        <p>Programación en Ambiente Web · TP Integrador 2026 · Grupo La 25</p>
+      </div>
+    </div>
+  </footer>
+
+  <script type="module" src="/js/menu.js"></script>
+  <!-- Activar cuando exista js/auth.js -->
+  <!-- <script type="module" src="/js/auth.js"></script> -->
+</body>
+</html>
