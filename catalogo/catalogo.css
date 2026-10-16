@@ -1,0 +1,221 @@
+
+/* HuellaVet — catálogo de productos
+   Los colores, tipografías y estilos generales vienen de base.css. */
+
+/* Encabezado del catálogo */
+.catalogo-header {
+  background: var(--blanco);
+  border-bottom: 1px solid var(--borde);
+  padding-block: 1rem;
+}
+
+.catalogo-header .contenedor {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.marca {
+  color: var(--pino-oscuro);
+  font-family: var(--fuente-titulo);
+  font-size: 1.8rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.catalogo-header p {
+  margin: 0;
+  color: var(--tinta-suave);
+  text-align: right;
+  font-size: 0.95rem;
+}
+
+/* Contenido principal */
+.catalogo-contenedor {
+  width: min(1120px, 100% - 2rem);
+  margin-inline: auto;
+  padding-block: clamp(2.5rem, 6vw, 4.5rem);
+}
+
+.catalogo-intro {
+  margin-bottom: 2rem;
+}
+
+.catalogo-intro .etiqueta {
+  margin-bottom: 0.5rem;
+}
+
+.catalogo-intro h1 {
+  margin-bottom: 0.6rem;
+}
+
+.catalogo-intro > p:last-child {
+  color: var(--tinta-suave);
+  margin-bottom: 0;
+}
+
+/* Búsqueda y filtros */
+.catalogo-filtros {
+  display: grid;
+  grid-template-columns: minmax(240px, 2fr) repeat(2, minmax(160px, 1fr));
+  gap: 1rem;
+  padding: 1.5rem;
+  background: var(--blanco);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+}
+
+.campo-filtro {
+  display: grid;
+  align-content: start;
+  gap: 0.35rem;
+}
+
+.campo-filtro label {
+  color: var(--tinta);
+  font-weight: 700;
+}
+
+.campo-filtro input,
+.campo-filtro select {
+  width: 100%;
+  min-height: 48px;
+  padding: 0.7rem 0.8rem;
+  border: 2px solid var(--borde);
+  border-radius: 10px;
+  background: var(--blanco);
+  color: var(--tinta);
+  font: inherit;
+}
+
+.campo-filtro input::placeholder {
+  color: var(--tinta-suave);
+  opacity: 0.8;
+}
+
+.campo-filtro input:focus,
+.campo-filtro select:focus {
+  border-color: var(--pino);
+}
+
+/* Resultados */
+.catalogo-resultados {
+  min-height: 180px;
+  margin-top: 2rem;
+}
+
+#estado {
+  min-height: 1.5em;
+  margin-bottom: 1rem;
+  color: var(--tinta-suave);
+}
+
+.lista-productos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr));
+  gap: 1.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lista-productos li {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 1rem;
+  min-width: 0;
+  padding: 1.25rem;
+  background: var(--blanco);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  box-shadow: 0 3px 12px rgb(18 48 43 / 5%);
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.lista-productos li:hover {
+  border-color: var(--pino);
+  box-shadow: 0 6px 18px rgb(18 48 43 / 10%);
+}
+
+.lista-productos a {
+  color: var(--pino);
+  font-weight: 700;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.lista-productos a:hover {
+  color: var(--pino-oscuro);
+  text-decoration: underline;
+}
+
+.lista-productos span {
+  color: var(--pino-oscuro);
+  font-size: 1.15rem;
+  font-weight: 800;
+}
+
+/* Pie */
+.catalogo-footer {
+  margin-top: 2rem;
+  padding: 1.5rem 1rem;
+  background: var(--pino-oscuro);
+  color: var(--menta);
+  text-align: center;
+}
+
+.catalogo-footer p {
+  max-width: none;
+  margin: 0;
+}
+
+/* Adaptación a pantallas medianas */
+@media (max-width: 800px) {
+  .catalogo-filtros {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .campo-filtro:first-child {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Adaptación a celulares */
+@media (max-width: 520px) {
+  .catalogo-header .contenedor {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .catalogo-header p {
+    text-align: left;
+  }
+
+  .catalogo-contenedor {
+    width: min(100% - 1.25rem, 1120px);
+    padding-block: 2rem;
+  }
+
+  .catalogo-filtros {
+    grid-template-columns: 1fr;
+    padding: 1rem;
+  }
+
+  .campo-filtro:first-child {
+    grid-column: auto;
+  }
+
+  .lista-productos {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Respeta la preferencia de movimiento reducido del usuario */
+@media (prefers-reduced-motion: reduce) {
+  .lista-productos li {
+    transition: none;
+  }
+}

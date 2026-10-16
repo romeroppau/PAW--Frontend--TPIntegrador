@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Catálogo de productos para el cuidado de tus animales en HuellaVet.">
+    <title>Catálogo de productos | HuellaVet</title>
+
+    <link rel="stylesheet" href="/css/base.css">
+    <link rel="stylesheet" href="/catalogo/catalogo.css">
+
+    <script type="module" src="/js/catalogo.js"></script>
+</head>
+
+<body>
+    <header class="catalogo-header">
+        <div class="contenedor">
+            <a class="marca" href="/index.html">HuellaVet</a>
+            <p>Todo para el cuidado de tus animales</p>
+        </div>
+    </header>
+
+    <main class="catalogo-contenedor">
+        <section class="catalogo-intro">
+            <p class="etiqueta">HUELLAVET</p>
+            <h1>Catálogo de productos</h1>
+            <p>Encontrá productos para acompañar el bienestar de tus animales.</p>
+        </section>
+
+        <section class="catalogo-filtros" aria-label="Buscar y filtrar productos">
+            <div class="campo-filtro">
+                <label for="buscar">Buscar producto</label>
+                <input type="search" id="buscar" placeholder="Ej.: alimento, juguete..." autocomplete="off">
+            </div>
+
+            <div class="campo-filtro">
+                <label for="categoria">Categoría</label>
+                <select id="categoria">
+                    <option value="">Todas las categorías</option>
+                </select>
+            </div>
+
+            <div class="campo-filtro">
+                <label for="especie">Especie</label>
+                <select id="especie">
+                    <option value="">Todas las especies</option>
+                </select>
+            </div>
+        </section>
+
+        <section class="catalogo-resultados" aria-label="Productos disponibles">
+            <p id="estado" role="status" aria-live="polite">
+                Cargando productos...
+            </p>
+
+            <ul id="lista" class="lista-productos"></ul>
+        </section>
+    </main>
+
+    <footer class="catalogo-footer">
+        <p>HuellaVet · Cuidado y bienestar animal</p>
+    </footer>
+</body>
+
+</html>
