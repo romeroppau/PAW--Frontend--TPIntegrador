@@ -8,9 +8,9 @@ import { api } from '/js/api.js';
 
 // A dónde ir después de registrarse (el registro deja la sesión iniciada). Igual que en login.js.
 const HOME_POR_ROL = {
-  CLIENTE: '/catalogo/catalogo.html',
-  RESCATISTA: '/catalogo/catalogo.html',
-  VETERINARIO: '/panel.html'
+  CLIENTE: '/paneles/panel-cliente.html',
+  RESCATISTA: '/paneles/panel-rescatista.html',
+  VETERINARIO: '/paneles/panel-administrador.html'
 };
 
 const formulario = document.getElementById('form-registro');

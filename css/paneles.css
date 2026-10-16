@@ -1,0 +1,180 @@
+/* Paneles HuellaVet: estilos específicos. Reutiliza las variables de css/base.css. */
+
+.panel-cabecera {
+  background: var(--blanco);
+  border-bottom: 1px solid var(--borde);
+}
+
+.panel-cabecera .contenedor {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-block: 1rem;
+}
+
+.panel-marca {
+  color: var(--pino-oscuro);
+  font-family: var(--fuente-titulo);
+  font-size: 1.65rem;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.panel-usuario {
+  margin: 0;
+  color: var(--tinta-suave);
+  text-align: right;
+  font-size: .95rem;
+}
+
+.panel-nav {
+  background: var(--blanco);
+  border-bottom: 1px solid var(--borde);
+}
+
+.panel-nav .contenedor {
+  display: flex;
+  align-items: center;
+  gap: .25rem;
+  overflow-x: auto;
+  padding-block: .35rem;
+  scrollbar-width: thin;
+}
+
+.panel-nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 42px;
+  padding: .55rem .8rem;
+  border-radius: 9px;
+  color: var(--tinta);
+  font-size: .94rem;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.panel-nav a:hover,
+.panel-nav a:focus-visible {
+  background: var(--menta);
+  color: var(--pino-oscuro);
+}
+
+.panel-principal {
+  width: min(1120px, 100% - 2rem);
+  margin-inline: auto;
+  padding-block: clamp(2rem, 5vw, 4rem);
+}
+
+.panel-intro {
+  margin-bottom: 2rem;
+  padding: clamp(1.4rem, 4vw, 2.5rem);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  background: var(--menta);
+}
+
+.panel-intro .etiqueta {
+  margin-bottom: .45rem;
+  color: var(--pino);
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  font-size: .8rem;
+}
+
+.panel-intro h1 {
+  margin-bottom: .65rem;
+}
+
+.panel-intro p:last-child {
+  margin-bottom: 0;
+  color: var(--tinta-suave);
+}
+
+.panel-seccion-titulo {
+  margin: 0 0 1rem;
+}
+
+.panel-grilla {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 245px), 1fr));
+  gap: 1rem;
+}
+
+.panel-tarjeta {
+  scroll-margin-top: 1rem;
+  padding: 1.25rem;
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  background: var(--blanco);
+  box-shadow: 0 3px 12px rgb(18 48 43 / 5%);
+}
+
+.panel-tarjeta h2 {
+  margin: 0 0 .8rem;
+  font-size: 1.45rem;
+}
+
+.panel-tarjeta p {
+  color: var(--tinta-suave);
+}
+
+.panel-opciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .55rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.panel-opciones li {
+  padding: .35rem .65rem;
+  border: 1px solid var(--borde);
+  border-radius: 999px;
+  background: var(--fondo);
+  color: var(--tinta);
+  font-size: .9rem;
+}
+
+.panel-aviso {
+  margin-top: 1.5rem;
+  padding: .85rem 1rem;
+  border-left: 4px solid var(--naranja);
+  border-radius: 8px;
+  background: var(--blanco);
+  color: var(--tinta-suave);
+}
+
+.panel-pie {
+  padding: 1.5rem 1rem;
+  background: var(--pino-oscuro);
+  color: var(--menta);
+  text-align: center;
+}
+
+.panel-pie p {
+  max-width: none;
+  margin: 0;
+}
+
+@media (max-width: 600px) {
+  .panel-cabecera .contenedor {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: .25rem;
+  }
+  .panel-usuario {
+    text-align: left;
+  }
+  .panel-nav .contenedor {
+    width: 100%;
+    padding-inline: .5rem;
+  }
+  .panel-principal {
+    width: min(100% - 1.25rem, 1120px);
+  }
+}

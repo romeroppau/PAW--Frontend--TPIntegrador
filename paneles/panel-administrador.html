@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Panel de administración de HuellaVet.">
+  <title>Panel de administrador | HuellaVet</title>
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/paneles.css">
+</head>
+
+<body>
+  <header class="panel-cabecera">
+    <div class="contenedor"><a class="panel-marca" href="/index.html">HuellaVet</a>
+      <p class="panel-usuario">Panel de administrador</p>
+    </div>
+  </header>
+  <nav class="panel-nav" aria-label="Navegación del administrador">
+    <div class="contenedor">
+      <a href="#agenda">Agenda</a><a href="#pacientes">Mis pacientes</a><a href="#productos">Shop / Productos</a><a
+        href="#insumos">Insumos</a><a href="#reportes">Reportes</a><a href="#rescatistas">Rescatistas</a><a
+        href="#adopcion">Adopción</a><a href="#resenas">Reseñas</a><a href="#notificaciones">Notificaciones</a><a
+        href="#contacto">Contacto</a>
+    </div>
+  </nav>
+  <main class="panel-principal">
+    <section class="panel-intro">
+      <p class="etiqueta">Gestión del sistema</p>
+      <h1>Panel de administrador</h1>
+      <p>Accesos generales para administrar turnos, pacientes, productos, inventario y adopciones.</p>
+    </section>
+    <h2 class="panel-seccion-titulo">Secciones de administración</h2>
+    <div class="panel-grilla">
+      <section class="panel-tarjeta" id="agenda">
+        <h2>Agenda</h2>
+        <ul class="panel-opciones">
+          <li>Registrar turno</li>
+          <li>Turnos del día</li>
+          <li>Atender consulta</li>
+        </ul>
+      </section>
+      <section class="panel-tarjeta" id="pacientes">
+        <h2>Mis pacientes</h2>
+        <ul class="panel-opciones">
+          <li>Clientes</li>
+          <li>Ficha de mascotas</li>
+          <li>Historial clínico</li>
+          <li>Calendario sanitario</li>
+        </ul>
+      </section>
+      <section class="panel-tarjeta" id="productos">
+        <h2>Shop / Productos</h2>
+        <ul class="panel-opciones">
+          <li>ABM de productos</li>
+          <li>Cargar stock</li>
+          <li>Pedidos para retirar</li>
+        </ul>
+      </section>
+      <section class="panel-tarjeta" id="insumos">
+        <h2>Insumos</h2>
+        <ul class="panel-opciones">
+          <li>ABM de insumos</li>
+          <li>Cargar stock</li>
+        </ul>
+      </section>
+      <section class="panel-tarjeta" id="reportes">
+        <h2>Reportes</h2>
+        <ul class="panel-opciones">
+          <li>Ventas</li>
+          <li>Turnos atendidos</li>
+          <li>Stock / movimientos de inventario</li>
+        </ul>
+      </section>
+      <section class="panel-tarjeta" id="rescatistas">
+        <h2>Rescatistas</h2>
+        <ul class="panel-opciones">
+          <li>Solicitudes pendientes</li>
+          <li>Rescatistas aprobados</li>
+        </ul>
+      </section>
+      <section class="panel-tarjeta" id="adopcion">
+        <h2>Adopción</h2>
+        <ul class="panel-opciones">
+          <li>Moderar publicaciones</li>
+          <li>Adopciones en curso</li>
+          <li>Completar adopción</li>
+        </ul>
+      </section>
+      <section class="panel-tarjeta" id="resenas">
+        <h2>Reseñas</h2>
+        <ul class="panel-opciones">
+          <li>Moderar / eliminar</li>
+        </ul>
+      </section>
+      <section class="panel-tarjeta" id="notificaciones">
+        <h2>Notificaciones</h2>
+        <p>Alertas y novedades administrativas.</p>
+      </section>
+      <section class="panel-tarjeta" id="contacto">
+        <h2>Contacto</h2>
+        <p>Información de contacto y canales de comunicación.</p>
+      </section>
+    </div>
+    <p class="panel-aviso">Estas secciones representan la navegación prevista en el sitemap. Las acciones
+      administrativas reales deben conectarse a sus endpoints y permisos.</p>
+  </main>
+  <footer class="panel-pie">
+    <p>HuellaVet · Administración</p>
+  </footer>
+</body>
+
+</html>
