@@ -1,6 +1,6 @@
 {
   "rewrites": [
-    { "source": "/api/:path*", "destination": "https://paw-apigateway-tpintegrador.onrender.com" }
+    { "source": "/api/:path*", "destination": "https://paw-apigateway-tpintegrador.onrender.com/api/:path*" }
   ],
   "headers": [
     {
