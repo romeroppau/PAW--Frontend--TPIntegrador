@@ -5,47 +5,99 @@ const $categoria = document.getElementById('categoria');
 const $especie = document.getElementById('especie');
 const $lista = document.getElementById('lista');
 const $estado = document.getElementById('estado');
+const $cargarMas = document.getElementById('cargar-mas');
 
 let pedidoActual = 0;
+let paginaActual = 1;
 
-// Carga el catálogo de productos según los filtros y la página. Se llama al cargar la página y cada vez que cambian los filtros o se hace scroll hasta el final.
-async function cargar(pagina = 1) {
+function parametros(pagina) {
+  const q = new URLSearchParams();
+  const buscar = $buscar.value.trim();
+  if (buscar) q.set('buscar', buscar);
+  if ($categoria.value) q.set('categoria', $categoria.value);
+  if ($especie.value) q.set('especie', $especie.value);
+  q.set('pagina', String(pagina));
+  return q;
+}
+
+function extraerProductos(respuesta) {
+  if (Array.isArray(respuesta)) return respuesta;
+  if (Array.isArray(respuesta.datos)) return respuesta.datos;
+  if (Array.isArray(respuesta.productos)) return respuesta.productos;
+  return [];
+}
+
+async function cargar(pagina = 1, agregar = false) {
   const id = ++pedidoActual;
-  const q = new URLSearchParams({
-    buscar: $buscar.value.trim(),
-    categoria: $categoria.value,
-    especie: $especie.value,
-    pagina
-  });
-  $estado.textContent = 'Cargando…';
-  try { // Se hace la solicitud a la API para obtener los productos según los filtros y la página
-    const r = await api('/api/tienda/productos?' + q);
-    if (id !== pedidoActual) return; // descarta respuestas viejas
-    render(r);
-  } catch (e) { // Si hay un error, se muestra un mensaje de error
-    $estado.textContent = 'No se pudo cargar el catálogo. Intente nuevamente.';
+  paginaActual = pagina;
+  $estado.textContent = 'Cargando productos…';
+  $cargarMas.hidden = true;
+  if (!agregar) $lista.replaceChildren();
+
+  try {
+    const respuesta = await api('/api/tienda/productos?' + parametros(pagina).toString());
+    if (id !== pedidoActual) return;
+
+    const productos = extraerProductos(respuesta);
+    if (!agregar) $lista.replaceChildren();
+
+    for (const producto of productos) {
+      $lista.append(crearTarjeta(producto));
+    }
+
+    if ($lista.children.length === 0) {
+      $estado.textContent = 'No se encontraron productos. Probá cambiar la búsqueda o los filtros.';
+    } else {
+      $estado.textContent = '';
+    }
+
+    // El contrato incluye paginado. Si una página trae productos, se permite pedir la siguiente.
+    // Al llegar a una página vacía, se oculta el botón y no se pierden los resultados ya mostrados.
+    $cargarMas.hidden = productos.length === 0;
+  } catch (error) {
+    if (id !== pedidoActual) return;
+    $estado.textContent = 'No se pudo cargar el catálogo. Probá nuevamente más tarde.';
+    $cargarMas.hidden = true;
   }
 }
 
-// Renderiza la lista de productos en el HTML. Se llama desde cargar() cuando se recibe la respuesta de la API.
-function render(r) {
-  const productos = r.datos ?? r.productos ?? [];
-  $lista.replaceChildren();
-  $estado.textContent = productos.length ? '' : 'No se encontraron productos.';
-  for (const p of productos) { // Se crea un elemento <li> con un enlace al producto y su precio, y se agrega a la lista
-    const li = document.createElement('li');
-    const a = document.createElement('a');
-    a.href = 'producto.html?id=' + encodeURIComponent(p.id);
-    a.textContent = p.nombre; // textContent: evita XSS
-    const precio = document.createElement('span');
-    precio.textContent = ' $' + p.precio;
-    li.append(a, precio);
-    $lista.append(li);
-  }
+function crearTarjeta(producto) {
+  const li = document.createElement('li');
+  li.className = 'tarjeta-producto';
+
+  const categoria = document.createElement('p');
+  categoria.className = 'etiqueta';
+  categoria.textContent = producto.categoria ?? 'Producto';
+
+  const nombre = document.createElement('h2');
+  nombre.className = 'nombre-producto';
+  nombre.textContent = producto.nombre ?? 'Producto sin nombre';
+
+  const precio = document.createElement('p');
+  precio.className = 'precio';
+  precio.textContent = producto.precio == null ? 'Precio a consultar' : formatearPrecio(producto.precio);
+
+  const enlace = document.createElement('a');
+  enlace.className = 'boton boton-borde enlace-detalle';
+  enlace.href = '/catalogo/producto.html?id=' + encodeURIComponent(producto.id);
+  enlace.textContent = 'Ver detalle';
+  enlace.setAttribute('aria-label', `Ver detalle de ${producto.nombre ?? 'producto'}`);
+
+  li.append(categoria, nombre, precio, enlace);
+  return li;
 }
 
-// Se agregan los event listeners a los filtros y al input de búsqueda, con debounce para evitar hacer demasiadas solicitudes al servidor mientras el usuario escribe.
+function formatearPrecio(valor) {
+  const numero = Number(valor);
+  if (!Number.isFinite(numero)) return `$${valor}`;
+  return new Intl.NumberFormat('es-AR', {
+    style: 'currency', currency: 'ARS', maximumFractionDigits: 2
+  }).format(numero);
+}
+
 $buscar.addEventListener('input', debounce(() => cargar(1), 300));
 $categoria.addEventListener('change', () => cargar(1));
 $especie.addEventListener('change', () => cargar(1));
-cargar(1); // Se carga la primera página del catálogo al cargar la página
+$cargarMas.addEventListener('click', () => cargar(paginaActual + 1, true));
+
+cargar(1);

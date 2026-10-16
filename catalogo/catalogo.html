@@ -1,66 +1,74 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Catálogo de productos para el cuidado de tus animales en HuellaVet.">
-    <title>Catálogo de productos | HuellaVet</title>
-
-    <link rel="stylesheet" href="/css/base.css">
-    <link rel="stylesheet" href="/catalogo/catalogo.css">
-
-    <script type="module" src="/js/catalogo.js"></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Explorá el catálogo de productos de HuellaVet.">
+  <title>Catálogo | HuellaVet</title>
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/catalogo/catalogo.css">
+  <script type="module" src="/js/catalogo.js"></script>
 </head>
 
 <body>
-    <header class="catalogo-header">
-        <div class="contenedor">
-            <a class="marca" href="/index.html">HuellaVet</a>
-            <p>Todo para el cuidado de tus animales</p>
-        </div>
-    </header>
+  <header class="catalogo-header">
+    <div class="contenedor encabezado-catalogo">
+      <a class="marca-catalogo" href="/index.html">HuellaVet</a>
+      <nav aria-label="Navegación principal">
+        <a href="/index.html">Inicio</a>
+        <a href="/catalogo/catalogo.html" aria-current="page">Tienda</a>
+        <a href="/login/login.html">Ingresar</a>
+      </nav>
+    </div>
+  </header>
 
-    <main class="catalogo-contenedor">
-        <section class="catalogo-intro">
-            <p class="etiqueta">HUELLAVET</p>
-            <h1>Catálogo de productos</h1>
-            <p>Encontrá productos para acompañar el bienestar de tus animales.</p>
-        </section>
+  <main class="contenedor catalogo-principal">
+    <section class="catalogo-intro" aria-labelledby="titulo-catalogo">
+      <p class="etiqueta">TIENDA HUELLAVET</p>
+      <h1 id="titulo-catalogo">Productos para su bienestar</h1>
+      <p>Buscá productos por nombre y filtrá por categoría o especie.</p>
+    </section>
 
-        <section class="catalogo-filtros" aria-label="Buscar y filtrar productos">
-            <div class="campo-filtro">
-                <label for="buscar">Buscar producto</label>
-                <input type="search" id="buscar" placeholder="Ej.: alimento, juguete..." autocomplete="off">
-            </div>
+    <section class="filtros-catalogo" aria-label="Buscar y filtrar productos">
+      <div class="campo">
+        <label for="buscar">Buscar por nombre</label>
+        <input id="buscar" type="search" placeholder="Ej.: alimento balanceado" autocomplete="off">
+      </div>
+      <div class="campo">
+        <label for="categoria">Categoría</label>
+        <select id="categoria">
+          <option value="">Todas las categorías</option>
+          <option value="Medicamentos">Medicamentos</option>
+          <option value="Alimento balanceado">Alimento balanceado</option>
+          <option value="Accesorios">Accesorios</option>
+        </select>
+      </div>
+      <div class="campo">
+        <label for="especie">Especie</label>
+        <select id="especie">
+          <option value="">Todas las especies</option>
+          <option value="Perro">Perro</option>
+          <option value="Gato">Gato</option>
+        </select>
+      </div>
+    </section>
 
-            <div class="campo-filtro">
-                <label for="categoria">Categoría</label>
-                <select id="categoria">
-                    <option value="">Todas las categorías</option>
-                </select>
-            </div>
+    <section class="resultados-catalogo" aria-label="Resultados del catálogo">
+      <p id="estado" class="estado" role="status" aria-live="polite">Cargando productos…</p>
+      <ul id="lista" class="lista-productos"></ul>
+      <button id="cargar-mas" class="boton boton-borde boton-cargar" type="button" hidden>Cargar más productos</button>
+    </section>
+  </main>
 
-            <div class="campo-filtro">
-                <label for="especie">Especie</label>
-                <select id="especie">
-                    <option value="">Todas las especies</option>
-                </select>
-            </div>
-        </section>
-
-        <section class="catalogo-resultados" aria-label="Productos disponibles">
-            <p id="estado" role="status" aria-live="polite">
-                Cargando productos...
-            </p>
-
-            <ul id="lista" class="lista-productos"></ul>
-        </section>
-    </main>
-
-    <footer class="catalogo-footer">
-        <p>HuellaVet · Cuidado y bienestar animal</p>
-    </footer>
+  <footer class="pie pie-catalogo">
+    <div class="contenedor">
+      <section>
+        <h2>HuellaVet</h2>
+        <p>Productos para acompañar el cuidado y bienestar animal.</p>
+      </section>
+    </div>
+  </footer>
 </body>
 
 </html>
