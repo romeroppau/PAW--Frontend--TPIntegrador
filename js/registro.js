@@ -8,8 +8,8 @@ import { api } from '/js/api.js';
 
 // A dónde ir después de registrarse (el registro deja la sesión iniciada). Igual que en login.js.
 const HOME_POR_ROL = {
-  CLIENTE: '/catalogo.html',
-  RESCATISTA: '/catalogo.html',
+  CLIENTE: '/catalogo/catalogo.html',
+  RESCATISTA: '/catalogo/catalogo.html',
   VETERINARIO: '/panel.html'
 };
 
