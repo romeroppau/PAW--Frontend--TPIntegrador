@@ -10,10 +10,13 @@
   <link rel="stylesheet" href="/css/paneles.css">
 </head>
 
-<body>
+<!-- data-rol: rol que puede ver esta página (lo lee js/guardia-panel.js) -->
+<body data-rol="RESCATISTA">
   <header class="panel-cabecera">
     <div class="contenedor"><a class="panel-marca" href="/index.html">HuellaVet</a>
       <p class="panel-usuario">Panel de rescatista</p>
+      <!-- js/auth.js lo rellena con el nombre del usuario y el botón "Salir" -->
+      <div class="sesion" id="sesion"></div>
     </div>
   </header>
   <nav class="panel-nav" aria-label="Navegación del rescatista">
@@ -23,7 +26,8 @@
         href="#notificaciones">Notificaciones</a><a href="#contacto">Contactanos</a>
     </div>
   </nav>
-  <main class="panel-principal">
+  <!-- hidden: se muestra recién cuando guardia-panel.js confirma el rol -->
+  <main class="panel-principal" hidden>
     <section class="panel-intro">
       <p class="etiqueta">Adopciones responsables</p>
       <h1>Panel de rescatista</h1>
@@ -77,6 +81,9 @@
   <footer class="panel-pie">
     <p>HuellaVet · Cuidado y bienestar animal</p>
   </footer>
+
+  <script type="module" src="/js/guardia-panel.js"></script>
+  <script type="module" src="/js/auth.js"></script>
 </body>
 
 </html>

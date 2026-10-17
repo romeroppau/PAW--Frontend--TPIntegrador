@@ -178,3 +178,9 @@
     width: min(100% - 1.25rem, 1120px);
   }
 }
+
+/* Sesión en los paneles (auth.js rellena #sesion con el nombre y "Salir") */
+.panel-cabecera .panel-usuario { margin-left: auto; }
+.panel-opciones a { display: block; margin: -.35rem -.65rem; padding: .35rem .65rem; border-radius: 999px; color: var(--pino); font-weight: 700; text-decoration: none; }
+.panel-opciones a:hover { text-decoration: underline; }
+@media (max-width: 600px) { .panel-cabecera .panel-usuario { margin-left: 0; } }
