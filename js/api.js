@@ -30,8 +30,7 @@ export async function api(ruta, { metodo = 'GET', cuerpo = null, reintentar = tr
     return datos;
   } catch (e) {
     // Render dormido: un reintento ante timeout o error de red
-    if (reintentar && (e.name === 'AbortError' || e instanceof TypeError)) {
-      return api(ruta, { metodo, cuerpo, reintentar: false });
+if (reintentar && metodo === 'GET' && (e.name === 'AbortError' || e instanceof TypeError)) {      return api(ruta, { metodo, cuerpo, reintentar: false });
     }
     throw e;
   } finally {
