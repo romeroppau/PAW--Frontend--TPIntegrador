@@ -16,22 +16,17 @@
 // layout.js ya se cargó como script clásico en el HTML (crea el encabezado que usan menu.js y auth.js).
 import './menu.js';
 import { api } from './api.js';                                  // fetch común (cookie, CSRF, timeout, reintento)
-import { sesion } from './auth.js';                              // promesa con el usuario actual o null
+import { exigirRol } from './auth.js';                          // guardia de acceso compartida (ver auth.js)
 import { el, limpiarErrores, mostrarErrores } from './ui.js';    // utilidades de interfaz
 
 /* ------------------------------------------------------------------ */
 /* Guardia de acceso                                                   */
 /* ------------------------------------------------------------------ */
 
-// "await" a nivel de módulo: el resto del archivo no se ejecuta hasta saber quién es el usuario.
-const usuario = await sesion;
-
-// Sin sesión o con otro rol: se redirige y se corta la ejecución del módulo.
-// location.replace evita que la página protegida quede en el historial del navegador.
-if (!usuario || usuario.rol !== 'VETERINARIO') {   // los roles llegan en mayúsculas (contrato de auth)
-  location.replace('/login/login.html');
-  throw new Error('Acceso denegado');
-}
+// Guardia compartida (definida en auth.js, la misma que usa el panel del administrador):
+// espera a saber quién es el usuario y, si no es VETERINARIO, redirige a login y corta la ejecución del módulo.
+// El resto del archivo no corre para otros roles.
+await exigirRol('VETERINARIO');
 
 /* ------------------------------------------------------------------ */
 /* Constantes y utilidades compartidas                                 */

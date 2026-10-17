@@ -42,6 +42,27 @@ export async function cargarUsuario() {
   return usuario;
 }
 
+/**
+ * Guardia de acceso para páginas que solo debe ver un rol.
+ * Espera a conocer la sesión; si no hay usuario o su rol no coincide, redirige a login y corta
+ * la ejecución del módulo que la llamó (lanza un error, así el resto del archivo no corre).
+ * location.replace evita que la página protegida quede en el historial del navegador.
+ *
+ * Es solo comodidad de interfaz: la autorización real la hace el backend (responde 403).
+ *
+ * Uso:  await exigirRol('VETERINARIO');
+ * @param {string} rol  Rol exigido, en mayúsculas ('CLIENTE', 'VETERINARIO' o 'RESCATISTA').
+ * @returns {Promise<object>} El usuario, si el rol coincide.
+ */
+export async function exigirRol(rol) {
+  const u = await sesion;
+  if (!u || u.rol !== rol) {
+    location.replace('/login/login.html');
+    throw new Error('Acceso denegado');
+  }
+  return u;
+}
+
 /** Ajusta el encabezado según el usuario: nombre, botón "Salir" y enlace "Panel". */
 function pintar() {
   const zona = document.getElementById('sesion'); // contenedor de los botones de sesión
@@ -57,10 +78,10 @@ function pintar() {
   });
   zona.replaceChildren(el('span', usuario.nombre ?? 'Mi cuenta', { class: 'sesion-nombre' }), salir);
 
-  // Enlace al panel de administración, solo para el veterinario.
+  // Enlace al panel de administración (portada con todas las secciones), solo para el veterinario.
   if (usuario.rol === 'VETERINARIO' && menu) {
     const li = el('li');
-    li.append(el('a', 'Panel', { href: '/panel/productos.html' }));
+    li.append(el('a', 'Panel', { href: '/paneles/panel-administrador.html' }));
     menu.append(li);
   }
 }

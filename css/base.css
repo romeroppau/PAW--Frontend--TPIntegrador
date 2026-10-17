@@ -213,3 +213,15 @@ th { background: var(--menta); color: var(--pino-oscuro); }
   .redes { justify-content: center; }
   .pie .contenedor { text-align: center; }
 }
+
+/* Formularios y panel */
+[hidden] { display: none !important; }
+.contenedor-form { max-width: 560px; }
+.barra-titulo { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem; }
+.barra-titulo h1 { font-size: clamp(1.6rem, 3vw, 2.2rem); margin: 0; }
+.acciones { display: flex; gap: .5rem 1rem; align-items: center; flex-wrap: wrap; }
+.form-stock { display: flex; gap: .35rem; }
+.form-stock input { width: 5rem; font: inherit; padding: .35rem .5rem; border: 2px solid var(--borde); border-radius: 8px; }
+.boton-chico { padding: .35rem .8rem; font-size: .9rem; }
+.sesion-nombre { font-weight: 700; color: var(--pino-oscuro); }
+form .boton + .boton { margin-left: .5rem; }
