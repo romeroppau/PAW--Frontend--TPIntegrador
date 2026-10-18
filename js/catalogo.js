@@ -1,4 +1,5 @@
 import { api, debounce } from './api.js';
+import { textoCategoria } from './etiquetas.js';
 
 const $buscar = document.getElementById('buscar');
 const $categoria = document.getElementById('categoria');
@@ -67,7 +68,7 @@ function crearTarjeta(producto) {
 
   const categoria = document.createElement('p');
   categoria.className = 'etiqueta';
-  categoria.textContent = producto.categoria ?? 'Producto';
+  categoria.textContent = producto.categoria ? textoCategoria(producto.categoria) : 'Producto';
 
   const nombre = document.createElement('h2');
   nombre.className = 'nombre-producto';

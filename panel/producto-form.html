@@ -30,12 +30,22 @@
       </div>
       <div class="campo">
         <label for="categoria">Categoría</label>
-        <input id="categoria" name="categoria" type="text" aria-describedby="error-categoria" required>
+        <select id="categoria" name="categoria" aria-describedby="error-categoria" required>
+          <option value="">Elegí una categoría</option>
+          <option value="MEDICAMENTO">Medicamentos</option>
+          <option value="ALIMENTO">Alimento balanceado</option>
+          <option value="ACCESORIO">Accesorios</option>
+        </select>
         <span class="campo-error" id="error-categoria"></span>
       </div>
       <div class="campo">
         <label for="especie">Especie</label>
-        <input id="especie" name="especie" type="text" aria-describedby="error-especie" required>
+        <select id="especie" name="especie" aria-describedby="error-especie" required>
+          <option value="">Elegí una especie</option>
+          <option value="PERRO">Perro</option>
+          <option value="GATO">Gato</option>
+          <option value="TODAS">Todas las especies</option>
+        </select>
         <span class="campo-error" id="error-especie"></span>
       </div>
       <div class="campo">

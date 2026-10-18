@@ -1,4 +1,5 @@
 import { api } from './api.js';
+import { textoCategoria, textoEspecie } from './etiquetas.js';
 
 const $estado = document.getElementById('estado-detalle');
 const $error = document.getElementById('error-detalle');
@@ -44,9 +45,9 @@ async function cargarDetalle() {
       return;
     }
 
-    $categoria.textContent = producto.categoria ?? 'Producto';
+    $categoria.textContent = producto.categoria ? textoCategoria(producto.categoria) : 'Producto';
     $nombre.textContent = producto.nombre ?? 'Producto';
-    $especie.textContent = producto.especie ? `Especie: ${producto.especie}` : '';
+    $especie.textContent = producto.especie ? `Especie: ${textoEspecie(producto.especie)}` : '';
     $precio.textContent = formatearPrecio(producto.precio);
     $descripcion.textContent = producto.descripcion ?? 'No hay una descripción disponible para este producto.';
 

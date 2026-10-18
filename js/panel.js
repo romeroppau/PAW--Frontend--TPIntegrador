@@ -18,6 +18,7 @@ import './menu.js';
 import { api } from './api.js';                                  // fetch común (cookie, CSRF, timeout, reintento)
 import { exigirRol } from './auth.js';                          // guardia de acceso compartida (ver auth.js)
 import { el, limpiarErrores, mostrarErrores } from './ui.js';    // utilidades de interfaz
+import { textoCategoria } from './etiquetas.js';                // texto de cada código de categoría
 
 /* ------------------------------------------------------------------ */
 /* Guardia de acceso                                                   */
@@ -85,7 +86,7 @@ function fila(p) {
   const tr = el('tr');
   tr.append(
     el('td', p.nombre),
-    el('td', p.categoria ?? ''),
+    el('td', p.categoria ? textoCategoria(p.categoria) : ''),
     el('td', '$' + p.precio),
     el('td', p.stock),
     el('td', p.vencimiento || '—'),               // sin vencimiento se muestra un guion
@@ -164,16 +165,15 @@ async function formulario() {
     form.elements.stock.disabled = true;
 
     try {
-      // El plan no define un GET individual para el veterinario, así que se
-      // pide el listado completo y se busca el producto por id.
-      const p = lista(await api(base)).find((x) => String(x.id) === id);
-      if (!p) { location.replace('/panel/productos.html'); return; }   // id inexistente: vuelve al listado
+      // GET .../{id}: trae un solo producto con todos sus datos (el listado no incluye descripción ni imagen).
+      const p = await api(`${base}/${encodeURIComponent(id)}`);
 
       // Precarga los campos con los valores actuales. "?? ''" evita escribir "null" en un input.
       for (const c of ['nombre', 'descripcion', 'categoria', 'especie', 'precio', 'stock', 'vencimiento']) {
         form.elements[c].value = p[c] ?? '';
       }
-    } catch {
+    } catch (e) {
+      if (e.estado === 404) { location.replace('/panel/productos.html'); return; }   // id inexistente: vuelve al listado
       estado.textContent = 'No se pudo cargar el producto.';
       return;
     }
