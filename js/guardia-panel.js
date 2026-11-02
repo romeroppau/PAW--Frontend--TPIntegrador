@@ -1,7 +1,9 @@
 /**
  * guardia-panel.js — Protege los paneles de Ana (paneles/*.html) y muestra "Salir".
  *
- * Cada panel indica qué rol puede verlo con data-rol en el <body>:
+ * Cada página indica qué rol puede verla con data-rol en el <body>. Si la ven varios roles,
+ * se separan con coma: data-rol="CLIENTE,VETERINARIO" (páginas compartidas de cliente/).
+ *   Ejemplos:
  *   paneles/panel-administrador.html  ->  <body data-rol="VETERINARIO">
  *   paneles/panel-cliente.html        ->  <body data-rol="CLIENTE">
  *   paneles/panel-rescatista.html     ->  <body data-rol="RESCATISTA">
@@ -20,6 +22,6 @@
 import { exigirRol } from './auth.js';
 
 // Si no hay sesión o el rol no coincide, redirige a login y el módulo se corta acá.
-await exigirRol(document.body.dataset.rol);
+await exigirRol(document.body.dataset.rol.split(',').map((rol) => rol.trim()));
 
 document.querySelector('main').hidden = false;
