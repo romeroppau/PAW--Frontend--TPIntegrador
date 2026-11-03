@@ -43,27 +43,47 @@ export async function cargarUsuario() {
 }
 
 /**
- * Guardia de acceso para páginas que solo debe ver un rol.
- * Espera a conocer la sesión; si no hay usuario o su rol no coincide, redirige a login y corta
+ * Guardia de acceso para páginas que solo deben ver ciertos roles.
+ * Espera a conocer la sesión; si no hay usuario o su rol no está permitido, redirige a login y corta
  * la ejecución del módulo que la llamó (lanza un error, así el resto del archivo no corre).
  * location.replace evita que la página protegida quede en el historial del navegador.
  *
  * Es solo comodidad de interfaz: la autorización real la hace el backend (responde 403).
  *
  * Uso:  await exigirRol('VETERINARIO');
- * @param {string} rol  Rol exigido, en mayúsculas ('CLIENTE', 'VETERINARIO' o 'RESCATISTA').
- * @returns {Promise<object>} El usuario, si el rol coincide.
+ *       await exigirRol(['CLIENTE', 'VETERINARIO']);   // páginas compartidas (cliente/*.html)
+ * @param {string|string[]} roles  Rol o roles permitidos, en mayúsculas ('CLIENTE', 'VETERINARIO' o 'RESCATISTA').
+ * @returns {Promise<object>} El usuario, si su rol está permitido.
  */
-export async function exigirRol(rol) {
+export async function exigirRol(roles) {
+  const permitidos = Array.isArray(roles) ? roles : [roles];
   const u = await sesion;
-  if (!u || u.rol !== rol) {
+  if (!u || !permitidos.includes(u.rol)) {
     location.replace('/login/login.html');
     throw new Error('Acceso denegado');
   }
   return u;
 }
 
-/** Ajusta el encabezado según el usuario: nombre, botón "Salir" y enlace "Panel". */
+/**
+ * Enlaces que cada rol ve en el menú del encabezado, además de los comunes.
+ * Para sumar una pantalla al menú de un rol, se agrega una fila acá.
+ */
+const ENLACES_POR_ROL = {
+  VETERINARIO: [
+    ['Panel', '/paneles/panel-administrador.html'],
+    ['Agenda', '/panel/agenda.html'],
+  ],
+  CLIENTE: [
+    ['Mi panel', '/paneles/panel-cliente.html'],
+    ['Mis mascotas', '/cliente/mascotas.html'],
+  ],
+  RESCATISTA: [
+    ['Mi panel', '/paneles/panel-rescatista.html'],
+  ],
+};
+
+/** Ajusta el encabezado según el usuario: nombre, botón "Salir" y los enlaces de su rol en el menú. */
 function pintar() {
   const zona = document.getElementById('sesion'); // contenedor de los botones de sesión
   const menu = document.getElementById('menu');   // lista de enlaces del menú
@@ -78,11 +98,13 @@ function pintar() {
   });
   zona.replaceChildren(el('span', usuario.nombre ?? 'Mi cuenta', { class: 'sesion-nombre' }), salir);
 
-  // Enlace al panel de administración (portada con todas las secciones), solo para el veterinario.
-  if (usuario.rol === 'VETERINARIO' && menu) {
-    const li = el('li');
-    li.append(el('a', 'Panel', { href: '/paneles/panel-administrador.html' }));
-    menu.append(li);
+  // Enlaces del menú según el rol (el veterinario entra por la portada del panel de administración).
+  if (menu) {
+    for (const [texto, destino] of ENLACES_POR_ROL[usuario.rol] ?? []) {
+      const li = el('li');
+      li.append(el('a', texto, { href: destino }));
+      menu.append(li);
+    }
   }
 }
 

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Insumos | HuellaVet</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Nunito+Sans:wght@400;600;700&display=swap">
+  <link rel="stylesheet" href="/css/base.css">
+</head>
+<!-- PANTALLA VACÍA (Entrega 4). La completa el rol 2 (Trinidad).
+     Para completarla: reemplazar el contenido de <main> y agregar el script propio (js/insumos.js).
+     Mantener estas dos cosas:
+       - data-rol del <body>: roles que pueden ver la página (separados por coma si son varios).
+       - los scripts menu.js, guardia-panel.js y auth.js: el <main> queda oculto (hidden) hasta que
+         guardia-panel.js confirma el rol, y el menú y el botón "Salir" los arma auth.js. -->
+<body data-rol="VETERINARIO">
+  <a class="saltar" href="#contenido">Saltar al contenido</a>
+  <div id="encabezado-sitio"></div>
+  <script src="/js/layout.js"></script>
+  <main id="contenido" class="seccion" hidden>
+    <div class="contenedor">
+      <p><a href="/paneles/panel-administrador.html">&larr; Volver al panel de administrador</a></p>
+      <h1>Insumos</h1>
+      <p class="mensaje">Pantalla en construcción: la completa el rol 2 (Trinidad) en la Entrega 4.</p>
+    </div>
+  </main>
+  <div id="pie-sitio"></div>
+
+  <script type="module" src="/js/menu.js"></script>
+  <script type="module" src="/js/guardia-panel.js"></script>
+  <script type="module" src="/js/auth.js"></script>
+</body>
+</html>
