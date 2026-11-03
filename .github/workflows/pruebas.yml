@@ -1,0 +1,73 @@
+# Pruebas automáticas del Frontend: sintaxis de los JavaScript, configuración de Vercel
+# y validador del W3C sobre todas las páginas.
+#
+# Corre en cada push a cualquier rama, en cada pull request hacia dev o main y, por lo tanto,
+# también después de cada merge (que es un push a dev o a main).
+# Las reglas del repo exigen que el chequeo "pruebas" pase para poder mergear a dev y a main.
+
+name: Pruebas
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+    branches: [dev, main]
+
+jobs:
+  pruebas:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      # A main solo se llega desde dev: un pull request de otra rama hacia main falla acá.
+      - name: A main solo se mergea desde dev
+        if: github.event_name == 'pull_request' && github.base_ref == 'main' && github.head_ref != 'dev'
+        env:
+          RAMA_ORIGEN: ${{ github.head_ref }}
+        run: |
+          echo "::error::A main solo se mergea desde dev. Este pull request viene de '$RAMA_ORIGEN': cambiá la base a dev."
+          exit 1
+
+      - name: Bajar el código
+        uses: actions/checkout@v4
+
+      - name: Instalar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Sintaxis de los JavaScript
+        run: |
+          find . -name '*.js' -not -path '*/node_modules/*' -print0 | xargs -0 -r -n1 node --check
+
+      - name: vercel.json es un JSON válido
+        run: node -e "JSON.parse(require('fs').readFileSync('vercel.json', 'utf8'))"
+
+      # Validador oficial del W3C (Nu Html Checker) sobre todos los .html.
+      # Por ahora solo avisa: queda un error conocido (el <img> sin src de catalogo/producto.html).
+      # Cuando las páginas pasen el validador, borrar "continue-on-error" para que también bloquee.
+      - name: Validador del W3C
+        continue-on-error: true
+        run: |
+          docker run --rm -v "$PWD:/src:ro" ghcr.io/validator/validator:latest \
+            vnu --errors-only --skip-non-html /src
+
+      # Pruebas de punta a punta: Playwright abre las páginas en un navegador real (computadora y
+      # celular), escribe, elige filtros y comprueba lo que se ve. La API se simula en cada prueba.
+      # Va después del W3C para que el validador no revise lo que instala npm.
+      - name: Pruebas de punta a punta (Playwright)
+        working-directory: pruebas-e2e
+        run: |
+          npm ci --no-audit --no-fund
+          npx playwright install --with-deps chromium
+          npx playwright test
+
+      # Si fallan, el informe (con capturas de lo que veía el navegador) queda para descargar
+      # en la pestaña Actions de GitHub, en "Artifacts".
+      - name: Guardar el informe de Playwright
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: informe-playwright
+          path: pruebas-e2e/playwright-report
+          retention-days: 7

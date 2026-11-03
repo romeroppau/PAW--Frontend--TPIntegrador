@@ -1,0 +1,4 @@
+# Lo instala npm y lo genera Playwright: no se sube.
+node_modules/
+test-results/
+playwright-report/

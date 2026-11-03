@@ -1,0 +1,3 @@
+# Archivos que Vercel no publica en el sitio.
+pruebas-e2e/
+.github/
