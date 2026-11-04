@@ -225,3 +225,15 @@ th { background: var(--menta); color: var(--pino-oscuro); }
 .boton-chico { padding: .35rem .8rem; font-size: .9rem; }
 .sesion-nombre { font-weight: 700; color: var(--pino-oscuro); }
 form .boton + .boton { margin-left: .5rem; }
+
+
+/* Consulta e historial clínico */
+.bloque { margin-top: 1.5rem; }
+.campo-chico { max-width: 14rem; }
+.form-item { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 0 .75rem; margin-top: 1rem; }
+.form-item .campo { flex: 1 1 14rem; margin-bottom: 1rem; }
+.form-item .campo-chico { flex: 0 0 8rem; }
+.form-item .boton { margin-bottom: 1rem; }
+.resumen .total th, .resumen .total td { font-weight: 700; }
+.historial-lista { display: grid; gap: 1rem; }
+.historial-factura { font-weight: 700; }
