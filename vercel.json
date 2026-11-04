@@ -1,6 +1,15 @@
 {
+  "ignoreCommand": "[ \"$VERCEL_GIT_COMMIT_REF\" != \"main\" ] && [ \"$VERCEL_GIT_COMMIT_REF\" != \"dev\" ]",
   "rewrites": [
-    { "source": "/api/:path*", "destination": "https://paw-apigateway-tpintegrador.onrender.com/api/:path*" }
+    {
+      "source": "/api/:path*",
+      "has": [{ "type": "host", "value": "huellavet-la25-dev.vercel.app" }],
+      "destination": "https://paw-apigateway-tpintegrador-dev.onrender.com/api/:path*"
+    },
+    {
+      "source": "/api/:path*",
+      "destination": "https://paw-apigateway-tpintegrador.onrender.com/api/:path*"
+    }
   ],
   "headers": [
     {
