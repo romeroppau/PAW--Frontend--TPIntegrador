@@ -249,3 +249,14 @@ form .boton + .boton { margin-left: .5rem; }
 .campo-selector { max-width: 24rem; }
 .form-stock { flex-wrap: wrap; }
 .form-stock .campo-error { flex-basis: 100%; }
+
+
+/* Agenda del veterinario (rol 3): selector de día y color de cada estado del turno.
+   Colores con contraste suficiente sobre su fondo (accesibilidad). */
+.form-dia { display: flex; flex-wrap: wrap; align-items: flex-end; gap: .5rem .75rem; margin-bottom: 1rem; }
+.form-dia .campo { margin-bottom: 0; }
+.titulo-dia { font-size: 1.25rem; margin-top: .5rem; }
+.titulo-dia::first-letter { text-transform: uppercase; }
+.resumen-agenda { color: var(--tinta-suave); font-weight: 600; }
+.insignia-atendido { background: #d7f0df; color: var(--ok); }
+.insignia-anulado { background: #e9eceb; color: var(--tinta-suave); }
