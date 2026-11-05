@@ -237,3 +237,15 @@ form .boton + .boton { margin-left: .5rem; }
 .resumen .total th, .resumen .total td { font-weight: 700; }
 .historial-lista { display: grid; gap: 1rem; }
 .historial-factura { font-weight: 700; }
+
+
+/* Insumos (rol 2): estado con color en el listado, filas dadas de baja y ayudas del formulario.
+   Colores con contraste suficiente sobre su fondo (accesibilidad). */
+.insignia { display: inline-block; padding: .15rem .6rem; border-radius: 999px; font-size: .9rem; font-weight: 700; background: #e3efe9; color: var(--pino); }
+.insignia-falta { background: #fbe4e2; color: var(--error); }
+.insignia-bajo { background: #fff1c7; color: #7a5300; }
+.fila-baja td { color: var(--tinta-suave); }
+.ayuda { display: block; font-size: .9rem; color: var(--tinta-suave); }
+.campo-selector { max-width: 24rem; }
+.form-stock { flex-wrap: wrap; }
+.form-stock .campo-error { flex-basis: 100%; }
