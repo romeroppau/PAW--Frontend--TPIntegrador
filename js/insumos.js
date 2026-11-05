@@ -216,18 +216,18 @@ async function movimientos() {
   const selector = document.getElementById('insumo');
   const filas = document.getElementById('filas');
 
-  // Carga los movimientos del insumo elegido. Sin insumo, la tabla queda vacía.
+  // Carga los movimientos. Sin insumo elegido trae los de todos; con uno, el selector funciona
+  // como filtro (GET .../movimientos?insumo=ID).
   async function mostrar(insumoId) {
-    filas.replaceChildren();
-    if (!insumoId) { estado.textContent = 'Elegí un insumo para ver sus movimientos.'; return; }
-
     estado.textContent = 'Cargando…';
     try {
-      const { datos } = await api(`${base}/${encodeURIComponent(insumoId)}/movimientos`);
+      const filtro = insumoId ? '?insumo=' + encodeURIComponent(insumoId) : '';
+      const { datos } = await api(`${base}/movimientos${filtro}`);
       filas.replaceChildren(...datos.map((m) => {
         const tr = el('tr');
         tr.append(
           el('td', fecha(m.fecha)),
+          el('td', m.insumo),
           el('td', TIPOS[m.tipo] ?? m.tipo),
           el('td', MOTIVOS[m.motivo] ?? m.motivo),
           el('td', m.cantidad),
@@ -235,8 +235,13 @@ async function movimientos() {
         );
         return tr;
       }));
-      estado.textContent = datos.length ? '' : 'Este insumo todavía no tiene movimientos.';
+      if (datos.length) {
+        estado.textContent = '';
+      } else {
+        estado.textContent = insumoId ? 'Este insumo todavía no tiene movimientos.' : 'Todavía no hay movimientos de insumos.';
+      }
     } catch {
+      filas.replaceChildren();
       estado.textContent = 'No se pudo cargar el historial.';
     }
   }

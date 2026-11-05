@@ -11,7 +11,8 @@
 </head>
 <!-- Historial de movimientos de un insumo (rol 2): cargas, retiros manuales y usos en consultas.
      Se elige el insumo con el selector; con ?id= en la URL llega ya elegido (desde el listado).
-     Lo maneja js/insumos.js con GET /api/inventario/insumos/{id}/movimientos. -->
+     Al entrar muestra los de todos los insumos; el selector filtra por uno (?id= en la URL lo deja elegido).
+     Lo maneja js/insumos.js con GET /api/inventario/insumos/movimientos?insumo=. -->
 <body data-rol="VETERINARIO" data-pagina="movimientos">
   <a class="saltar" href="#contenido">Saltar al contenido</a>
   <div id="encabezado-sitio"></div>
@@ -21,16 +22,16 @@
       <p><a href="/panel/insumos.html">&larr; Volver al listado de insumos</a></p>
       <h1>Movimientos de insumos</h1>
       <div class="campo campo-selector">
-        <label for="insumo">Insumo</label>
+        <label for="insumo">Filtrar por insumo</label>
         <select id="insumo" name="insumo">
-          <option value="">Elegí un insumo</option>
+          <option value="">Todos los insumos</option>
         </select>
       </div>
       <p class="estado" id="estado" role="status"></p>
       <div class="tabla-scroll">
         <table>
-          <caption class="solo-lectores">Historial de movimientos del insumo elegido</caption>
-          <thead><tr><th scope="col">Fecha</th><th scope="col">Tipo</th><th scope="col">Motivo</th><th scope="col">Cantidad</th><th scope="col">Registró</th></tr></thead>
+          <caption class="solo-lectores">Historial de movimientos de insumos</caption>
+          <thead><tr><th scope="col">Fecha</th><th scope="col">Insumo</th><th scope="col">Tipo</th><th scope="col">Motivo</th><th scope="col">Cantidad</th><th scope="col">Registró</th></tr></thead>
           <tbody id="filas"></tbody>
         </table>
       </div>
