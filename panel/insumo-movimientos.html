@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Panel · Movimientos de insumos — HuellaVet</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Nunito+Sans:wght@400;600;700&display=swap">
+  <link rel="stylesheet" href="/css/base.css">
+</head>
+<!-- Historial de movimientos de un insumo (rol 2): cargas, retiros manuales y usos en consultas.
+     Se elige el insumo con el selector; con ?id= en la URL llega ya elegido (desde el listado).
+     Lo maneja js/insumos.js con GET /api/inventario/insumos/{id}/movimientos. -->
+<body data-rol="VETERINARIO" data-pagina="movimientos">
+  <a class="saltar" href="#contenido">Saltar al contenido</a>
+  <div id="encabezado-sitio"></div>
+  <script src="/js/layout.js"></script>
+  <main id="contenido" class="seccion" hidden>
+    <div class="contenedor">
+      <p><a href="/panel/insumos.html">&larr; Volver al listado de insumos</a></p>
+      <h1>Movimientos de insumos</h1>
+      <div class="campo campo-selector">
+        <label for="insumo">Insumo</label>
+        <select id="insumo" name="insumo">
+          <option value="">Elegí un insumo</option>
+        </select>
+      </div>
+      <p class="estado" id="estado" role="status"></p>
+      <div class="tabla-scroll">
+        <table>
+          <caption class="solo-lectores">Historial de movimientos del insumo elegido</caption>
+          <thead><tr><th scope="col">Fecha</th><th scope="col">Tipo</th><th scope="col">Motivo</th><th scope="col">Cantidad</th><th scope="col">Registró</th></tr></thead>
+          <tbody id="filas"></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+  <div id="pie-sitio"></div>
+
+  <script type="module" src="/js/menu.js"></script>
+  <script type="module" src="/js/guardia-panel.js"></script>
+  <script type="module" src="/js/auth.js"></script>
+  <script type="module" src="/js/insumos.js"></script>
+</body>
+</html>

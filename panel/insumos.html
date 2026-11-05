@@ -3,27 +3,38 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Insumos | HuellaVet</title>
+  <title>Panel · Insumos — HuellaVet</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Nunito+Sans:wght@400;600;700&display=swap">
   <link rel="stylesheet" href="/css/base.css">
 </head>
-<!-- PANTALLA VACÍA (Entrega 4). La completa el rol 2 (Trinidad).
-     Para completarla: reemplazar el contenido de <main> y agregar el script propio (js/insumos.js).
-     Mantener estas dos cosas:
-       - data-rol del <body>: roles que pueden ver la página (separados por coma si son varios).
-       - los scripts menu.js, guardia-panel.js y auth.js: el <main> queda oculto (hidden) hasta que
-         guardia-panel.js confirma el rol, y el menú y el botón "Salir" los arma auth.js. -->
-<body data-rol="VETERINARIO">
+<!-- Listado de insumos del veterinario (rol 2). Las filas las arma js/insumos.js con
+     GET /api/inventario/insumos (contrato: docs/api/contrato-insumos.md del repo Inventario).
+     data-rol: solo el veterinario. data-pagina: le dice a insumos.js qué pantalla es. -->
+<body data-rol="VETERINARIO" data-pagina="listado">
   <a class="saltar" href="#contenido">Saltar al contenido</a>
   <div id="encabezado-sitio"></div>
   <script src="/js/layout.js"></script>
   <main id="contenido" class="seccion" hidden>
     <div class="contenedor">
       <p><a href="/paneles/panel-administrador.html">&larr; Volver al panel de administrador</a></p>
-      <h1>Insumos</h1>
-      <p class="mensaje">Pantalla en construcción: la completa el rol 2 (Trinidad) en la Entrega 4.</p>
+      <div class="barra-titulo">
+        <h1>Insumos</h1>
+        <div class="acciones">
+          <a class="boton boton-borde" href="/panel/insumo-movimientos.html">Movimientos</a>
+          <a class="boton" href="/panel/insumo-form.html">Nuevo insumo</a>
+        </div>
+      </div>
+      <p>Los insumos con 10 unidades o menos se marcan con stock bajo. El estado se actualiza solo según el stock.</p>
+      <p class="estado" id="estado" role="status"></p>
+      <div class="tabla-scroll">
+        <table>
+          <caption class="solo-lectores">Listado de insumos</caption>
+          <thead><tr><th scope="col">Nombre</th><th scope="col">Stock</th><th scope="col">Costo</th><th scope="col">Estado</th><th scope="col">Acciones</th></tr></thead>
+          <tbody id="filas"></tbody>
+        </table>
+      </div>
     </div>
   </main>
   <div id="pie-sitio"></div>
@@ -31,5 +42,6 @@
   <script type="module" src="/js/menu.js"></script>
   <script type="module" src="/js/guardia-panel.js"></script>
   <script type="module" src="/js/auth.js"></script>
+  <script type="module" src="/js/insumos.js"></script>
 </body>
 </html>

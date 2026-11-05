@@ -3,27 +3,45 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Insumo | HuellaVet</title>
+  <title>Panel · Insumo — HuellaVet</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Nunito+Sans:wght@400;600;700&display=swap">
   <link rel="stylesheet" href="/css/base.css">
 </head>
-<!-- PANTALLA VACÍA (Entrega 4). La completa el rol 2 (Trinidad).
-     Para completarla: reemplazar el contenido de <main> y agregar el script propio (js/insumos.js).
-     Mantener estas dos cosas:
-       - data-rol del <body>: roles que pueden ver la página (separados por coma si son varios).
-       - los scripts menu.js, guardia-panel.js y auth.js: el <main> queda oculto (hidden) hasta que
-         guardia-panel.js confirma el rol, y el menú y el botón "Salir" los arma auth.js. -->
-<body data-rol="VETERINARIO">
+<!-- Alta y edición de un insumo (rol 2). Sin ?id= en la URL es un alta (POST); con ?id= es una
+     edición (PUT) y el stock no se puede cambiar: el stock solo cambia con "Cargar" o "Retirar",
+     para que quede en los movimientos. Lo maneja js/insumos.js. -->
+<body data-rol="VETERINARIO" data-pagina="formulario">
   <a class="saltar" href="#contenido">Saltar al contenido</a>
   <div id="encabezado-sitio"></div>
   <script src="/js/layout.js"></script>
   <main id="contenido" class="seccion" hidden>
-    <div class="contenedor">
+    <div class="contenedor contenedor-form">
       <p><a href="/panel/insumos.html">&larr; Volver al listado de insumos</a></p>
-      <h1>Insumo</h1>
-      <p class="mensaje">Pantalla en construcción: la completa el rol 2 (Trinidad) en la Entrega 4.</p>
+      <h1 id="titulo">Nuevo insumo</h1>
+      <p class="estado" id="estado" role="status"></p>
+      <form id="form-insumo" novalidate>
+        <div class="campo">
+          <label for="nombre">Nombre</label>
+          <input id="nombre" name="nombre" type="text" maxlength="120" aria-describedby="error-nombre" required>
+          <span class="campo-error" id="error-nombre"></span>
+        </div>
+        <div class="campo">
+          <label for="costo">Costo (en pesos)</label>
+          <input id="costo" name="costo" type="number" min="0" step="0.01" aria-describedby="error-costo" required>
+          <span class="campo-error" id="error-costo"></span>
+        </div>
+        <div class="campo">
+          <label for="stock">Stock inicial</label>
+          <input id="stock" name="stock" type="number" min="0" step="1" aria-describedby="ayuda-stock error-stock" required>
+          <span class="ayuda" id="ayuda-stock">En la edición no se cambia: usá "Cargar" o "Retirar" en el listado.</span>
+          <span class="campo-error" id="error-stock"></span>
+        </div>
+        <p class="mensaje mensaje-error" id="error-general" role="alert" hidden></p>
+        <button class="boton" type="submit">Guardar</button>
+        <a class="boton boton-borde" href="/panel/insumos.html">Cancelar</a>
+      </form>
     </div>
   </main>
   <div id="pie-sitio"></div>
@@ -31,5 +49,6 @@
   <script type="module" src="/js/menu.js"></script>
   <script type="module" src="/js/guardia-panel.js"></script>
   <script type="module" src="/js/auth.js"></script>
+  <script type="module" src="/js/insumos.js"></script>
 </body>
 </html>
