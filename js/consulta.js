@@ -201,8 +201,9 @@ for (const [tipo, cfg] of Object.entries(TIPOS)) {
       estado.textContent = '';
       pintarItems();
     } catch (e) {
-      estado.textContent = e.datos?.campos
-        ? Object.values(e.datos.campos).join(' ')
+      const campos = Object.values(e.datos?.campos ?? {});
+      estado.textContent = campos.length
+        ? campos.join(' ')
         : (e.datos?.error ?? 'No se pudo agregar el ítem.');
     } finally {
       boton.disabled = false;
