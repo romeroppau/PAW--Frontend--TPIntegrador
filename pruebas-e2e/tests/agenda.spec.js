@@ -109,3 +109,48 @@ test('"Siguiente" trae los turnos de mañana sin recargar y deja la fecha en la 
   expect(pedidas).toEqual([HOY, MANIANA]);
   expect(await page.evaluate(() => window.sinRecargar)).toBe(true);
 });
+
+test('"Nuevo turno" lo carga y muestra su día en la agenda, sin recargar; un horario ocupado se ve en el campo hora', async ({ page }) => {
+  await simularSesion(page, VETERINARIO);
+  const turnosManiana = [];
+  await simularAgenda(page, { [HOY]: TURNOS_HOY, [MANIANA]: turnosManiana });
+  await page.route('**/api/pacientes/mascotas', (route) => responderJson(route, { mascotas: [
+    { id: 101, nombre: 'Firulais', especie: 'PERRO', duenio: { id: 102, nombre: 'Cliente de Prueba' } }
+  ] }));
+  const cuerpos = [];
+  await page.route('**/api/pacientes/turnos', (route) => {
+    if (route.request().method() !== 'POST') return route.fallback();
+    const cuerpo = route.request().postDataJSON();
+    cuerpos.push(cuerpo);
+    if (cuerpo.hora === '08:00') {
+      return responderJson(route, { error: 'Ya hay un turno a esa hora', campos: { hora: 'Ya tenés un turno a esa hora' } }, 409);
+    }
+    const nuevo = turno(110, cuerpo.hora, 'Firulais', 'PROGRAMADO', { fecha: cuerpo.fecha, motivo: cuerpo.motivo });
+    turnosManiana.push(nuevo);
+    return responderJson(route, { turno: nuevo }, 201);
+  });
+
+  await page.goto('/panel/agenda.html');
+  await expect(page.locator('#filas > tr')).toHaveCount(3);
+  await page.evaluate(() => { window.sinRecargar = true; });
+
+  await page.getByRole('button', { name: 'Nuevo turno' }).click();
+  await expect(page.locator('#mascota_id option')).toHaveCount(2);
+  await expect(page.locator('#turno-fecha')).toHaveValue(HOY);
+  await page.selectOption('#mascota_id', '101');
+  await page.fill('#hora', '08:00');
+  await page.getByRole('button', { name: 'Guardar turno' }).click();
+  await expect(page.locator('#error-hora')).toHaveText('Ya tenés un turno a esa hora');
+
+  await page.fill('#turno-fecha', MANIANA);
+  await page.fill('#hora', '10:30');
+  await page.selectOption('#motivo', 'VACUNACION');
+  await page.getByRole('button', { name: 'Guardar turno' }).click();
+
+  await expect(page.locator('#seccion-turno')).toBeHidden();
+  await expect(page).toHaveURL(new RegExp('\\?fecha=' + MANIANA + '$'));
+  await expect(page.locator('tr[data-id="110"]')).toContainText('Vacunación');
+  await expect(page.locator('#estado')).toContainText('Turno cargado: Firulais');
+  expect(cuerpos.at(-1)).toEqual({ mascota_id: 101, fecha: MANIANA, hora: '10:30', motivo: 'VACUNACION' });
+  expect(await page.evaluate(() => window.sinRecargar)).toBe(true);
+});

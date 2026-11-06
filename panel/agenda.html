@@ -25,7 +25,46 @@
       <p><a href="/paneles/panel-administrador.html">&larr; Volver al panel de administrador</a></p>
       <div class="barra-titulo">
         <h1>Agenda de turnos</h1>
+        <div class="acciones">
+          <button type="button" class="boton" id="nuevo-turno">Nuevo turno</button>
+        </div>
       </div>
+
+      <!-- Alta de un turno (los turnos se coordinan por WhatsApp y los carga el veterinario). -->
+      <section id="seccion-turno" class="tarjeta bloque contenedor-form" aria-labelledby="titulo-turno" hidden>
+        <h2 id="titulo-turno">Nuevo turno</h2>
+        <form id="form-turno" novalidate>
+          <div class="campo">
+            <label for="mascota_id">Mascota</label>
+            <select id="mascota_id" name="mascota_id" required>
+              <option value="">Elegí la mascota</option>
+            </select>
+            <span class="campo-error" id="error-mascota_id"></span>
+          </div>
+          <div class="campo campo-chico">
+            <label for="turno-fecha">Fecha</label>
+            <input id="turno-fecha" name="fecha" type="date" required>
+            <span class="campo-error" id="error-fecha"></span>
+          </div>
+          <div class="campo campo-chico">
+            <label for="hora">Hora</label>
+            <input id="hora" name="hora" type="time" required>
+            <span class="campo-error" id="error-hora"></span>
+          </div>
+          <div class="campo">
+            <label for="motivo">Motivo</label>
+            <select id="motivo" name="motivo">
+              <option value="CONSULTA">Consulta</option>
+              <option value="VACUNACION">Vacunación</option>
+              <option value="CHEQUEO_ADOPCION">Chequeo de adopción</option>
+            </select>
+            <span class="campo-error" id="error-motivo"></span>
+          </div>
+          <p class="campo-error" id="error-general" role="alert" hidden></p>
+          <button type="submit" class="boton" id="guardar-turno">Guardar turno</button>
+          <button type="button" class="boton boton-borde" id="cancelar-turno">Cancelar</button>
+        </form>
+      </section>
 
       <form id="form-dia" class="form-dia" novalidate>
         <button type="button" class="boton boton-borde boton-chico" id="dia-anterior" aria-label="Día anterior">&larr; Anterior</button>

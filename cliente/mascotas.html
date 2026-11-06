@@ -9,12 +9,13 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Nunito+Sans:wght@400;600;700&display=swap">
   <link rel="stylesheet" href="/css/base.css">
 </head>
-<!-- PANTALLA VACÍA (Entrega 4). La completa el rol 3 (Valentino).
-     Para completarla: reemplazar el contenido de <main> y agregar el script propio (js/mascotas.js).
-     Mantener estas dos cosas:
-       - data-rol del <body>: roles que pueden ver la página (separados por coma si son varios).
+<!-- Mascotas (Entrega 4, rol 3).
+     Mantener:
+       - data-rol del <body>: roles que pueden ver la página.
        - los scripts menu.js, guardia-panel.js y auth.js: el <main> queda oculto (hidden) hasta que
-         guardia-panel.js confirma el rol, y el menú y el botón "Salir" los arma auth.js. -->
+         guardia-panel.js confirma el rol, y el menú y el botón "Salir" los arma auth.js.
+     El cliente ve sus mascotas y las da de alta, edita y da de baja. El veterinario ve todas (con su
+     dueño y un buscador) y no las modifica. Todo con fetch, sin recargar la página. -->
 <body data-rol="CLIENTE,VETERINARIO">
   <a class="saltar" href="#contenido">Saltar al contenido</a>
   <div id="encabezado-sitio"></div>
@@ -22,8 +23,67 @@
   <main id="contenido" class="seccion" hidden>
     <div class="contenedor">
       <p><a href="/index.html">&larr; Volver al inicio</a></p>
-      <h1>Mis mascotas</h1>
-      <p class="mensaje">Pantalla en construcción: la completa el rol 3 (Valentino) en la Entrega 4.</p>
+      <div class="barra-titulo">
+        <h1 id="titulo">Mis mascotas</h1>
+        <div class="acciones">
+          <button type="button" class="boton" id="nueva" hidden>Nueva mascota</button>
+        </div>
+      </div>
+
+      <form id="form-buscar" class="campo campo-selector" role="search" hidden>
+        <label for="buscar">Buscar por mascota o dueño</label>
+        <input id="buscar" name="buscar" type="search" maxlength="80" autocomplete="off">
+      </form>
+
+      <p class="estado" id="estado" role="status"></p>
+
+      <section id="seccion-form" class="tarjeta bloque contenedor-form" aria-labelledby="titulo-form" hidden>
+        <h2 id="titulo-form">Nueva mascota</h2>
+        <form id="form-mascota" novalidate>
+          <div class="campo">
+            <label for="nombre">Nombre</label>
+            <input id="nombre" name="nombre" type="text" maxlength="80" required autocomplete="off">
+            <span class="campo-error" id="error-nombre"></span>
+          </div>
+          <div class="campo">
+            <label for="especie">Especie</label>
+            <select id="especie" name="especie" required>
+              <option value="">Elegí la especie</option>
+              <option value="PERRO">Perro</option>
+              <option value="GATO">Gato</option>
+              <option value="OTRO">Otro</option>
+            </select>
+            <span class="campo-error" id="error-especie"></span>
+          </div>
+          <div class="campo">
+            <label for="raza">Raza <span class="ayuda">(opcional)</span></label>
+            <input id="raza" name="raza" type="text" maxlength="80" autocomplete="off">
+            <span class="campo-error" id="error-raza"></span>
+          </div>
+          <div class="campo campo-chico">
+            <label for="fecha_nacimiento">Fecha de nacimiento <span class="ayuda">(opcional)</span></label>
+            <input id="fecha_nacimiento" name="fecha_nacimiento" type="date">
+            <p class="campo-ayuda">Con la fecha de nacimiento se arma su calendario de vacunas.</p>
+            <span class="campo-error" id="error-fecha_nacimiento"></span>
+          </div>
+          <div class="campo campo-chico">
+            <label for="peso_kg">Peso en kg <span class="ayuda">(opcional)</span></label>
+            <input id="peso_kg" name="peso_kg" type="number" min="0.01" max="999.99" step="0.01" inputmode="decimal">
+            <span class="campo-error" id="error-peso_kg"></span>
+          </div>
+          <p class="campo-error" id="error-general" role="alert" hidden></p>
+          <button type="submit" class="boton" id="guardar">Guardar</button>
+          <button type="button" class="boton boton-borde" id="cancelar">Cancelar</button>
+        </form>
+      </section>
+
+      <div class="tabla-scroll bloque" id="tabla" hidden>
+        <table>
+          <caption class="solo-lectores">Listado de mascotas</caption>
+          <thead><tr id="encabezados"><th scope="col">Nombre</th><th scope="col">Especie</th><th scope="col">Edad</th><th scope="col">Peso</th><th scope="col">Acciones</th></tr></thead>
+          <tbody id="filas"></tbody>
+        </table>
+      </div>
     </div>
   </main>
   <div id="pie-sitio"></div>
@@ -31,5 +91,6 @@
   <script type="module" src="/js/menu.js"></script>
   <script type="module" src="/js/guardia-panel.js"></script>
   <script type="module" src="/js/auth.js"></script>
+  <script type="module" src="/js/mascotas.js"></script>
 </body>
 </html>

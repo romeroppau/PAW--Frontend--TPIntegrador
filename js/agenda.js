@@ -13,7 +13,7 @@
  */
 import { api } from './api.js';
 import { exigirRol } from './auth.js';
-import { el } from './ui.js';
+import { el, limpiarErrores, mostrarErrores } from './ui.js';
 import { textoEstadoTurno, textoMotivoTurno, textoEspecieMascota } from './etiquetas.js';
 
 await exigirRol('VETERINARIO');
@@ -194,6 +194,67 @@ function botonEstado(turno, tr, accion, texto, clase, pregunta) {
   });
   return boton;
 }
+
+/* ------------------------------------------------------------------ */
+/* Nuevo turno                                                         */
+/* ------------------------------------------------------------------ */
+
+const seccionTurno = document.getElementById('seccion-turno');
+const formTurno = document.getElementById('form-turno');
+const selectMascota = formTurno.elements.mascota_id;
+let mascotasCargadas = false;
+
+// Abre el formulario con el día que se está mirando (o hoy, si ese día ya pasó).
+document.getElementById('nuevo-turno').addEventListener('click', async () => {
+  formTurno.reset();
+  limpiarErrores(formTurno);
+  formTurno.elements.fecha.min = hoy();
+  formTurno.elements.fecha.value = inputFecha.value >= hoy() ? inputFecha.value : hoy();
+  seccionTurno.hidden = false;
+
+  // La lista de mascotas se pide una sola vez, la primera vez que se abre el formulario.
+  if (!mascotasCargadas) {
+    try {
+      const { mascotas } = await api('/api/pacientes/mascotas');
+      selectMascota.append(...mascotas.map((m) => el('option',
+        `${m.nombre} (${textoEspecieMascota(m.especie)}) · ${m.duenio.nombre}`, { value: m.id })));
+      mascotasCargadas = true;
+    } catch {
+      mostrarErrores(formTurno, {}, 'No se pudo cargar la lista de mascotas.');
+    }
+  }
+  selectMascota.focus();
+});
+
+document.getElementById('cancelar-turno').addEventListener('click', () => { seccionTurno.hidden = true; });
+
+formTurno.addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  limpiarErrores(formTurno);
+  const boton = document.getElementById('guardar-turno');
+  boton.disabled = true;                                    // un doble clic no carga dos turnos
+  try {
+    // POST /api/pacientes/turnos. Responde { turno }. El veterinario es el de la sesión.
+    const { turno } = await api(API, {
+      metodo: 'POST',
+      cuerpo: {
+        mascota_id: Number(selectMascota.value),
+        fecha: formTurno.elements.fecha.value,
+        hora: formTurno.elements.hora.value,
+        motivo: formTurno.elements.motivo.value
+      }
+    });
+    seccionTurno.hidden = true;
+    // Se muestra el día del turno nuevo, que aparece en la agenda sin recargar la página.
+    await cargar(turno.fecha);
+    estado.textContent = `Turno cargado: ${turno.mascota.nombre}, ${textoDia(turno.fecha)} a las ${turno.hora}.`;
+  } catch (e) {
+    // 400: un error por campo. 409: ya hay un turno a esa hora (viene en campos.hora). 404: mascota de baja.
+    mostrarErrores(formTurno, e.datos?.campos, e.datos?.error ?? 'No se pudo cargar el turno.');
+  } finally {
+    boton.disabled = false;
+  }
+});
 
 /* ------------------------------------------------------------------ */
 /* Cambiar de día                                                      */
