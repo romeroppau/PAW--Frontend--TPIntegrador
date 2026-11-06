@@ -9,12 +9,13 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Nunito+Sans:wght@400;600;700&display=swap">
   <link rel="stylesheet" href="/css/base.css">
 </head>
-<!-- PANTALLA VACÍA (Entrega 4). La completa el rol 3 (Valentino).
-     Para completarla: reemplazar el contenido de <main> y agregar el script propio (js/calendario.js).
-     Mantener estas dos cosas:
-       - data-rol del <body>: roles que pueden ver la página (separados por coma si son varios).
+<!-- Calendario sanitario de una mascota (Entrega 4, rol 3).
+     Mantener:
+       - data-rol del <body>: roles que pueden ver la página.
        - los scripts menu.js, guardia-panel.js y auth.js: el <main> queda oculto (hidden) hasta que
-         guardia-panel.js confirma el rol, y el menú y el botón "Salir" los arma auth.js. -->
+         guardia-panel.js confirma el rol, y el menú y el botón "Salir" los arma auth.js.
+     Se abre con ?mascota=<id>. Sin ese parámetro, se elige la mascota de una lista (el cliente ve
+     las suyas; el veterinario, todas). -->
 <body data-rol="CLIENTE,VETERINARIO">
   <a class="saltar" href="#contenido">Saltar al contenido</a>
   <div id="encabezado-sitio"></div>
@@ -23,7 +24,32 @@
     <div class="contenedor">
       <p><a href="/index.html">&larr; Volver al inicio</a></p>
       <h1>Calendario sanitario</h1>
-      <p class="mensaje">Pantalla en construcción: la completa el rol 3 (Valentino) en la Entrega 4.</p>
+      <p>Vacunas y desparasitaciones de cada mascota, según su especie y su edad.</p>
+
+      <form id="form-mascota" class="campo campo-selector" novalidate>
+        <label for="mascota">Mascota</label>
+        <select id="mascota" name="mascota">
+          <option value="">Elegí una mascota</option>
+        </select>
+      </form>
+
+      <p class="estado" id="estado" role="status"></p>
+
+      <section id="calendario" class="bloque" aria-labelledby="titulo-mascota" hidden>
+        <div class="barra-titulo">
+          <h2 id="titulo-mascota"></h2>
+          <a id="enlace-historial" href="/cliente/historial.html">Ver historial clínico</a>
+        </div>
+        <p id="al-dia" class="mensaje"></p>
+        <p class="estado" id="vacio" hidden>Todavía no tiene vacunas ni desparasitaciones en su calendario.</p>
+        <div class="tabla-scroll" id="tabla">
+          <table>
+            <caption class="solo-lectores" id="leyenda-tabla">Calendario sanitario</caption>
+            <thead><tr><th scope="col">Fecha</th><th scope="col">Tipo</th><th scope="col">Vacuna o desparasitación</th><th scope="col">Estado</th></tr></thead>
+            <tbody id="filas"></tbody>
+          </table>
+        </div>
+      </section>
     </div>
   </main>
   <div id="pie-sitio"></div>
@@ -31,5 +57,6 @@
   <script type="module" src="/js/menu.js"></script>
   <script type="module" src="/js/guardia-panel.js"></script>
   <script type="module" src="/js/auth.js"></script>
+  <script type="module" src="/js/calendario.js"></script>
 </body>
 </html>

@@ -15,6 +15,9 @@ module.exports = defineConfig({
     baseURL: `http://localhost:${PUERTO}`,
     trace: 'retain-on-failure',
     locale: 'es-AR',
+    // En GitHub Actions se usa el Google Chrome que ya trae la máquina: no hace falta instalar
+    // Chromium (ver .github/workflows/pruebas.yml). En la computadora de cada uno, el de Playwright.
+    channel: process.env.CI ? 'chrome' : undefined,
   },
   projects: [
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
