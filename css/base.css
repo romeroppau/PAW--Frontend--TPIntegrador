@@ -247,8 +247,8 @@ form .boton + .boton { margin-left: .5rem; }
 .fila-baja td { color: var(--tinta-suave); }
 .ayuda { display: block; font-size: .9rem; color: var(--tinta-suave); }
 .campo-selector { max-width: 24rem; }
-.form-stock { flex-wrap: wrap; }
-.form-stock .campo-error { flex-basis: 100%; }
+.acciones > .campo-error { flex-basis: 100%; }
+.acciones > .campo-error:empty { display: none; }
 
 
 /* Agenda del veterinario (rol 3): selector de día y color de cada estado del turno.
