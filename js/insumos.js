@@ -74,8 +74,11 @@ function fila(insumo) {
   );
 
   // Cargar, retirar y dar de baja: solo para insumos activos.
+  // El error de cargar o retirar va al final de la celda, en su propia línea (no adentro del
+  // formulario), así los botones no se mueven cuando aparece. role="alert": se anuncia solo.
   if (insumo.activo) {
-    acciones.append(formularioStock(insumo, tr), botonBaja(insumo));
+    const error = el('span', '', { class: 'campo-error', role: 'alert' });
+    acciones.append(formularioStock(insumo, tr, error), botonBaja(insumo), error);
   }
 
   tr.append(acciones);
@@ -101,19 +104,17 @@ function celdaEstado(insumo) {
 }
 
 // Un casillero de cantidad y dos botones: Cargar (suma) y Retirar (resta sin consulta).
-function formularioStock(insumo, tr) {
+// error: el lugar de la fila donde se muestra un error (lo crea fila()).
+function formularioStock(insumo, tr, error) {
   const form = el('form', '', { class: 'form-stock' });
   const cantidad = el('input', '', {
     type: 'number', min: '1', step: '1', required: '',
     'aria-label': 'Cantidad de ' + insumo.nombre
   });
-  // Lugar para el error de esta fila (role="alert": el lector de pantalla lo anuncia).
-  const error = el('span', '', { class: 'campo-error', role: 'alert' });
   form.append(
     cantidad,
     el('button', 'Cargar', { type: 'submit', value: 'stock', class: 'boton boton-borde boton-chico', 'aria-label': 'Cargar stock de ' + insumo.nombre }),
-    el('button', 'Retirar', { type: 'submit', value: 'retiro', class: 'boton boton-borde boton-chico', 'aria-label': 'Retirar unidades de ' + insumo.nombre }),
-    error
+    el('button', 'Retirar', { type: 'submit', value: 'retiro', class: 'boton boton-borde boton-chico', 'aria-label': 'Retirar unidades de ' + insumo.nombre })
   );
 
   form.addEventListener('submit', async (ev) => {
