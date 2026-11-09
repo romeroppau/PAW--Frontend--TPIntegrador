@@ -13,7 +13,7 @@
  */
 import { api } from './api.js';
 import { exigirRol } from './auth.js';
-import { el, limpiarErrores, mostrarErrores } from './ui.js';
+import { confirmar, el, limpiarErrores, mostrarErrores } from './ui.js';
 import { textoEstadoTurno, textoMotivoTurno, textoEspecieMascota } from './etiquetas.js';
 
 await exigirRol('VETERINARIO');
@@ -173,7 +173,8 @@ function botonEstado(turno, tr, accion, texto, clase, pregunta) {
   });
 
   boton.addEventListener('click', async () => {
-    if (!confirm(pregunta)) return;
+    const aceptar = accion === 'cancelar' ? 'Cancelar turno' : 'Marcar ausente';
+    if (!await confirmar(pregunta, { aceptar, peligro: true })) return;
     const botones = tr.querySelectorAll('button');
     botones.forEach((b) => { b.disabled = true; });         // un doble clic no manda dos pedidos
     const error = tr.querySelector('.campo-error');

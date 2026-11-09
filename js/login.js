@@ -5,6 +5,7 @@
 // cuando hace falta y reintenta si Render está dormido. Si el backend responde un error (400, 401...),
 // lanza {estado, datos}, donde datos es el JSON de error ({"error": "..."}).
 import { api } from '/js/api.js';
+import { limpiarErrores, mostrarErrores } from '/js/ui.js';
 
 // A dónde ir después de iniciar sesión, según el rol.
 // Esas páginas las hacen otros roles: si cambian de nombre, se cambia solo acá.
@@ -18,14 +19,24 @@ const formulario = document.getElementById('form-login');
 const mensajeError = document.getElementById('mensaje-error');
 const botonEnviar = formulario.querySelector('button[type="submit"]');
 
-// 'submit' se dispara al enviar el formulario. Gracias a "required" en el HTML,
-// el navegador solo lo dispara si los dos campos están completos.
+// 'submit' se dispara al enviar el formulario. Tiene novalidate: los campos vacíos se avisan
+// debajo de cada uno, con el estilo del sitio, y no con el cartel del navegador.
 // async permite usar await adentro: "esperá a que llegue la respuesta antes de seguir".
 formulario.addEventListener('submit', async (evento) => {
   // Evita que el navegador recargue la página (lo que hace un formulario por defecto).
   evento.preventDefault();
 
   mostrarError('');
+  limpiarErrores(formulario);
+
+  const faltan = {};
+  if (document.getElementById('email').value.trim() === '') faltan.email = 'Ingresá tu email';
+  if (document.getElementById('password').value === '') faltan.password = 'Ingresá tu contraseña';
+  if (Object.keys(faltan).length > 0) {
+    mostrarErrores(formulario, faltan);
+    return;
+  }
+
   botonEnviar.disabled = true; // evita enviarlo dos veces mientras se espera la respuesta
 
   try {

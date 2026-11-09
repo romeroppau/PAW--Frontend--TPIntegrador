@@ -17,7 +17,7 @@
 import './menu.js';
 import { api } from './api.js';                                  // fetch común (cookie, CSRF, timeout, reintento)
 import { exigirRol } from './auth.js';                          // guardia de acceso compartida (ver auth.js)
-import { el, limpiarErrores, mostrarErrores } from './ui.js';    // utilidades de interfaz
+import { confirmar, el, limpiarErrores, mostrarErrores } from './ui.js';    // utilidades de interfaz
 import { textoCategoria } from './etiquetas.js';                // texto de cada código de categoría
 
 /* ------------------------------------------------------------------ */
@@ -128,7 +128,7 @@ function fila(p) {
     });
     baja.addEventListener('click', async () => {
       // Confirmación previa: la acción cambia el estado del producto en el catálogo público.
-      if (!confirm(`¿Dar de baja "${p.nombre}"? Queda inactivo y se conserva su historial.`)) return;
+      if (!await confirmar(`¿Dar de baja "${p.nombre}"? Queda inactivo y se conserva su historial.`, { aceptar: 'Dar de baja', peligro: true })) return;
       try {
         await api(`${base}/${p.id}`, { metodo: 'DELETE' });   // el backend marca activo = 0; no borra la fila
         listado();

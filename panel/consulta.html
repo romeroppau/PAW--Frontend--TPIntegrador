@@ -51,6 +51,7 @@
             </div>
             <p class="campo-error" id="error-general" role="alert" hidden></p>
             <button type="submit" class="boton" id="guardar">Guardar cambios</button>
+            <p class="mensaje" id="mensaje-guardar" role="status" hidden></p>
           </form>
         </section>
 
@@ -64,7 +65,7 @@
               <tbody id="filas-insumos"></tbody>
             </table>
           </div>
-          <form id="agregar-insumos" class="form-item">
+          <form id="agregar-insumos" class="form-item" novalidate>
             <div class="campo">
               <label for="sel-insumos">Insumo</label>
               <select id="sel-insumos" name="item" required><option value="">Elegí un insumo</option></select>
@@ -75,6 +76,7 @@
             </div>
             <button type="submit" class="boton boton-borde">Agregar insumo</button>
           </form>
+          <p class="mensaje" id="mensaje-insumos" role="alert" hidden></p>
         </section>
 
         <section class="bloque tarjeta" aria-labelledby="t-productos">
@@ -87,7 +89,7 @@
               <tbody id="filas-productos"></tbody>
             </table>
           </div>
-          <form id="agregar-productos" class="form-item">
+          <form id="agregar-productos" class="form-item" novalidate>
             <div class="campo">
               <label for="sel-productos">Producto</label>
               <select id="sel-productos" name="item" required><option value="">Elegí un producto</option></select>
@@ -98,6 +100,7 @@
             </div>
             <button type="submit" class="boton boton-borde">Agregar producto</button>
           </form>
+          <p class="mensaje" id="mensaje-productos" role="alert" hidden></p>
         </section>
 
         <section class="bloque tarjeta" aria-labelledby="t-resumen">
@@ -115,6 +118,7 @@
           </div>
           <p id="factura" class="mensaje mensaje-ok" role="status" hidden></p>
           <p><button type="button" class="boton boton-acento" id="finalizar">Finalizar consulta</button></p>
+          <p class="mensaje" id="mensaje-finalizar" role="alert" hidden></p>
         </section>
       </div>
     </div>

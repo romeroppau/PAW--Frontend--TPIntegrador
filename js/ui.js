@@ -56,3 +56,37 @@ export function mostrarErrores(form, errores = {}, general = '') {
   const caja = form.querySelector('#error-general');
   if (caja && general) { caja.textContent = general; caja.hidden = false; } // role="alert": se anuncia solo
 }
+
+/**
+ * Pide confirmación con un cuadro del estilo del sitio, en lugar del confirm() del navegador.
+ *
+ * Usa <dialog>: showModal() bloquea el resto de la página, lleva el foco al primer botón
+ * (el de volver, el más seguro) y cierra con Escape, que cuenta como no confirmar.
+ *
+ * @param {string} pregunta
+ * @param {object} [opciones]
+ * @param {string} [opciones.aceptar]  Texto del botón que confirma; mejor si nombra la acción.
+ * @param {boolean} [opciones.peligro] Botón en rojo, para bajas y cancelaciones.
+ * @returns {Promise<boolean>} true si se confirmó.
+ */
+export function confirmar(pregunta, { aceptar = 'Confirmar', peligro = false } = {}) {
+  return new Promise((resolver) => {
+    const dialogo = el('dialog', '', { class: 'dialogo', 'aria-labelledby': 'dialogo-pregunta' });
+    const volver = el('button', 'Volver', { type: 'button', class: 'boton boton-borde' });
+    const seguir = el('button', aceptar, { type: 'button', class: peligro ? 'boton boton-peligro' : 'boton' });
+    const botones = el('div', '', { class: 'dialogo-botones' });
+    botones.append(volver, seguir);
+    dialogo.append(el('p', pregunta, { id: 'dialogo-pregunta' }), botones);
+
+    volver.addEventListener('click', () => dialogo.close('no'));
+    seguir.addEventListener('click', () => dialogo.close('si'));
+    dialogo.addEventListener('close', () => {
+      const confirmado = dialogo.returnValue === 'si';
+      dialogo.remove();
+      resolver(confirmado);
+    });
+
+    document.body.append(dialogo);
+    dialogo.showModal();
+  });
+}
