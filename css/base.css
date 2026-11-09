@@ -165,7 +165,6 @@ th { background: var(--menta); color: var(--pino-oscuro); }
 .burbuja:nth-child(2) { transform: translateY(1.5rem); }
 .burbuja p { margin: 0 auto .4rem; font-size: .98rem; }
 .burbuja footer { font-weight: 700; color: var(--pino); }
-.aviso-ejemplo { font-size: .9rem; color: var(--tinta-suave); margin-top: 2.5rem; }
 
 .producto-destacado { display: grid; gap: .5rem; align-content: start; }
 .producto-destacado .imagen-provisoria { min-height: 160px; }

@@ -272,20 +272,26 @@ botonFinalizar.addEventListener('click', async () => {
 
 // Traduce el error de "finalizar" a un mensaje; en el 409 de stock indica qué falta.
 function mensajeFinalizar(e) {
+  if (e.estado === 409 && e.datos?.motivo === 'DADO_DE_BAJA') {
+    const bajas = (e.datos.items ?? []).map((i) => nombreItem(i));
+    return 'Estos ítems están dados de baja: ' + bajas.join(', ') + '. Quitalos de la consulta para poder finalizar.';
+  }
   if (e.estado === 409 && Array.isArray(e.datos?.items)) {
-    const faltan = e.datos.items.map((i) => {
-      const esInsumo = i.tipo === 'INSUMO';
-      const campo = esInsumo ? 'insumo_id' : 'producto_id';
-      const lista = consulta[esInsumo ? 'insumos' : 'productos'] ?? [];
-      const item = lista.find((x) => x[campo] === i.id);
-      return `${item?.nombre ?? i.tipo + ' ' + i.id} (stock disponible: ${i.stock})`;
-    });
+    const faltan = e.datos.items.map((i) => `${nombreItem(i)} (stock disponible: ${i.stock})`);
     return 'No hay stock suficiente de: ' + faltan.join(', ') + '.';
   }
   if (e.estado === 502) {
     return 'Inventario no responde. La consulta sigue abierta: probá de nuevo en un momento.';
   }
   return e.datos?.error ?? 'No se pudo finalizar la consulta.';
+}
+
+// Nombre de un ítem que devolvió Inventario ({ tipo, id }), buscado entre los de la consulta.
+function nombreItem(i) {
+  const esInsumo = i.tipo === 'INSUMO';
+  const campo = esInsumo ? 'insumo_id' : 'producto_id';
+  const lista = consulta[esInsumo ? 'insumos' : 'productos'] ?? [];
+  return lista.find((x) => x[campo] === i.id)?.nombre ?? `${i.tipo} ${i.id}`;
 }
 
 function mostrarFactura(f) {
