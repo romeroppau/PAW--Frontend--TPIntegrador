@@ -69,7 +69,7 @@ async function cargarDetalle() {
     }
 
     const mensaje = `Hola, quiero consultar por ${producto.nombre ?? 'un producto'} de HuellaVet.`;
-    $whatsapp.href = 'https://wa.me/5491155555555?text=' + encodeURIComponent(mensaje);
+    $whatsapp.href = 'https://wa.me/5491139010486?text=' + encodeURIComponent(mensaje);
     $estado.textContent = '';
     $error.hidden = true;
     $detalle.hidden = false;
