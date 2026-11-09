@@ -13,7 +13,7 @@
  */
 import { api } from './api.js';                              // fetch común (cookie, CSRF, timeout)
 import { exigirRol } from './auth.js';                       // guardia compartida
-import { el, limpiarErrores, mostrarErrores } from './ui.js'; // utilidades de interfaz
+import { confirmar, el, limpiarErrores, mostrarErrores } from './ui.js'; // utilidades de interfaz
 import { textoEstadoInsumo } from './etiquetas.js';          // "DISPONIBLE" -> "Disponible"
 
 // Espera a confirmar que es veterinario (y a tener el token CSRF). Si no, redirige al login
@@ -147,7 +147,7 @@ function botonBaja(insumo) {
     type: 'button', class: 'boton boton-peligro boton-chico', 'aria-label': 'Dar de baja ' + insumo.nombre
   });
   boton.addEventListener('click', async () => {
-    if (!confirm(`¿Dar de baja "${insumo.nombre}"? Queda inactivo y se conserva su historial.`)) return;
+    if (!await confirmar(`¿Dar de baja "${insumo.nombre}"? Queda inactivo y se conserva su historial.`, { aceptar: 'Dar de baja', peligro: true })) return;
     try {
       await api(`${base}/${insumo.id}`, { metodo: 'DELETE' });   // el backend pone activo = 0
       listado();

@@ -71,8 +71,8 @@ test('cancelar un turno cambia su fila sin recargar la página', async ({ page }
 
   await page.goto('/panel/agenda.html');
   await page.evaluate(() => { window.sinRecargar = true; });  // se pierde si la página se recarga
-  page.once('dialog', (dialogo) => dialogo.accept());
   await page.locator('tr[data-id="101"]').getByRole('button', { name: /Cancelar/ }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Cancelar turno' }).click();
 
   await expect(page.locator('tr[data-id="101"]')).toContainText('Cancelado');
   await expect(page.locator('tr[data-id="101"] button')).toHaveCount(0);
@@ -88,8 +88,8 @@ test('si el servidor rechaza el cambio, el error se ve en la fila', async ({ pag
     responderJson(route, { error: 'El turno no está programado', campos: {} }, 409));
 
   await page.goto('/panel/agenda.html');
-  page.once('dialog', (dialogo) => dialogo.accept());
   await page.locator('tr[data-id="101"]').getByRole('button', { name: /Ausente/ }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Marcar ausente' }).click();
 
   await expect(page.locator('tr[data-id="101"] [role="alert"]')).toHaveText('El turno no está programado');
   await expect(page.locator('tr[data-id="101"]')).toContainText('Programado');

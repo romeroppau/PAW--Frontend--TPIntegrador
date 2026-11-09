@@ -259,3 +259,12 @@ form .boton + .boton { margin-left: .5rem; }
 .resumen-agenda { color: var(--tinta-suave); font-weight: 600; }
 .insignia-atendido { background: #d7f0df; color: var(--ok); }
 .insignia-anulado { background: #e9eceb; color: var(--tinta-suave); }
+
+/* Cuadro de confirmación (confirmar() en js/ui.js) */
+.dialogo { border: 0; border-radius: var(--radio); padding: 1.5rem; width: min(28rem, calc(100vw - 2rem)); color: var(--tinta); background: var(--blanco); }
+.dialogo::backdrop { background: rgba(27, 42, 39, .55); }
+.dialogo p { margin-top: 0; }
+.dialogo-botones { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .75rem; }
+
+/* Ítem de la consulta que se dio de baja después de cargarlo */
+.marca-baja { font-size: .85rem; font-weight: 700; color: var(--error); white-space: nowrap; }

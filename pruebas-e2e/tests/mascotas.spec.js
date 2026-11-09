@@ -99,8 +99,8 @@ test('si no se puede dar de baja (turnos programados), el motivo se ve en la fil
     : route.fallback());
 
   await page.goto('/cliente/mascotas.html');
-  page.once('dialog', (dialogo) => dialogo.accept());
   await page.getByRole('button', { name: 'Dar de baja a Luna' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Dar de baja' }).click();
   await expect(page.locator('tr[data-id="103"] [role="alert"]')).toHaveText(/turnos programados/);
 });
 

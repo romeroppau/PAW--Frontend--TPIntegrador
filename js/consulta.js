@@ -10,7 +10,7 @@
 
 import { api } from './api.js';
 import { exigirRol } from './auth.js';
-import { el, limpiarErrores, mostrarErrores } from './ui.js';
+import { confirmar, el, limpiarErrores, mostrarErrores } from './ui.js';
 import { textoEstadoConsulta, textoEstadoFactura } from './etiquetas.js';
 
 await exigirRol('VETERINARIO');
@@ -25,12 +25,15 @@ const botonFinalizar = document.getElementById('finalizar');
 
 // Los dos tipos de ítem comparten pantalla y lógica; cambian las rutas y los campos.
 const TIPOS = {
-  insumos: { campoId: 'insumo_id', campoPrecio: 'costo_unitario', origen: '/api/inventario/insumos' },
-  productos: { campoId: 'producto_id', campoPrecio: 'precio_unitario', origen: '/api/inventario/productos' }
+  insumos: { campoId: 'insumo_id', campoPrecio: 'costo_unitario', origen: '/api/inventario/insumos', singular: 'insumo' },
+  productos: { campoId: 'producto_id', campoPrecio: 'precio_unitario', origen: '/api/inventario/productos', singular: 'producto' }
 };
 
 // Consulta actual, tal como la devolvió el servidor por última vez.
 let consulta = null;
+
+// Ítems que Inventario informó como dados de baja al intentar finalizar ("insumos:103").
+const bajas = new Set();
 
 // Los importes se calculan en centavos enteros para evitar errores de decimales.
 const aCentavos = (v) => Math.round(Number(v || 0) * 100);
@@ -39,6 +42,19 @@ const dinero = (c) => '$' + (c / 100).toLocaleString('es-AR', { minimumFractionD
 // La API puede devolver la consulta sola o dentro de { consulta }.
 const desenvolver = (r) => r.consulta ?? r;
 const cerrada = () => consulta.estado === 'FINALIZADA';
+
+// Máximo que entra en una factura. La regla la aplica el backend: acá solo sirve para explicar el error.
+const TOTAL_MAXIMO_CENTAVOS = 9999999999;
+
+// Muestra un mensaje al lado del botón que lo provocó: la página es larga y un mensaje arriba de todo
+// quedaría fuera de la pantalla. Con texto vacío lo oculta.
+function avisar(id, texto, tipo = 'error') {
+  const caja = document.getElementById(id);
+  caja.textContent = texto;
+  caja.className = tipo ? 'mensaje mensaje-' + tipo : 'mensaje';
+  caja.hidden = texto === '';
+  if (texto !== '') caja.scrollIntoView({ block: 'nearest' });   // por si el botón estaba al borde de la pantalla
+}
 
 /* ------------------------------------------------------------------ */
 /* Carga inicial                                                       */
@@ -113,8 +129,12 @@ function pintarItems() {
 function filaItem(tipo, cfg, it) {
   const unitario = aCentavos(it[cfg.campoPrecio]);
   const tr = el('tr');
+  const nombre = el('td', it.nombre);
+  if (bajas.has(`${tipo}:${it[cfg.campoId]}`)) {
+    nombre.append(' ', el('span', 'Dado de baja', { class: 'marca-baja' }));
+  }
   tr.append(
-    el('td', it.nombre),
+    nombre,
     el('td', it.cantidad),
     el('td', dinero(unitario)),
     el('td', dinero(unitario * it.cantidad))
@@ -129,10 +149,11 @@ function filaItem(tipo, cfg, it) {
       quitar.disabled = true;
       try {
         consulta = desenvolver(await api(`${API}/consultas/${consulta.id}/${tipo}/${it.id}`, { metodo: 'DELETE' }));
-        estado.textContent = '';
+        avisar('mensaje-' + tipo, '');
+        avisar('mensaje-finalizar', '');
         pintarItems();
       } catch (e) {
-        estado.textContent = e.datos?.error ?? 'No se pudo quitar el ítem.';
+        avisar('mensaje-' + tipo, e.datos?.error ?? 'No se pudo quitar el ítem.');
         quitar.disabled = false;
       }
     });
@@ -143,6 +164,7 @@ function filaItem(tipo, cfg, it) {
 }
 
 // Total en vivo: usa los ítems de la consulta y el valor base que está escrito en el formulario.
+let totalActual = 0;
 function pintarTotales() {
   const suma = (tipo) => (consulta[tipo] ?? [])
     .reduce((acc, it) => acc + aCentavos(it[TIPOS[tipo].campoPrecio]) * it.cantidad, 0);
@@ -150,11 +172,12 @@ function pintarTotales() {
   const base = aCentavos(form.elements.valor_base.value);
   const insumos = suma('insumos');
   const productos = suma('productos');
+  totalActual = base + insumos + productos;
 
   document.getElementById('r-base').textContent = dinero(base);
   document.getElementById('r-insumos').textContent = dinero(insumos);
   document.getElementById('r-productos').textContent = dinero(productos);
-  document.getElementById('r-total').textContent = dinero(base + insumos + productos);
+  document.getElementById('r-total').textContent = dinero(totalActual);
 }
 
 form.elements.valor_base.addEventListener('input', pintarTotales);
@@ -189,6 +212,10 @@ for (const [tipo, cfg] of Object.entries(TIPOS)) {
 
   formItem.addEventListener('submit', async (ev) => {
     ev.preventDefault();
+    if (!formItem.elements.namedItem('item').value) {
+      avisar('mensaje-' + tipo, `Elegí un ${cfg.singular} de la lista.`);
+      return;
+    }
     const boton = formItem.querySelector('button[type="submit"]');
     boton.disabled = true;                          // evita ítems duplicados por doble clic
     try {
@@ -198,13 +225,14 @@ for (const [tipo, cfg] of Object.entries(TIPOS)) {
       };
       consulta = desenvolver(await api(`${API}/consultas/${consulta.id}/${tipo}`, { metodo: 'POST', cuerpo }));
       formItem.reset();
-      estado.textContent = '';
+      avisar('mensaje-' + tipo, '');
+      avisar('mensaje-finalizar', '');
       pintarItems();
     } catch (e) {
       const campos = Object.values(e.datos?.campos ?? {});
-      estado.textContent = campos.length
+      avisar('mensaje-' + tipo, campos.length
         ? campos.join(' ')
-        : (e.datos?.error ?? 'No se pudo agregar el ítem.');
+        : (e.datos?.error ?? 'No se pudo agregar el ítem.'));
     } finally {
       boton.disabled = false;
     }
@@ -227,15 +255,20 @@ async function guardar() {
   consulta = desenvolver(await api(`${API}/consultas/${consulta.id}`, { metodo: 'PUT', cuerpo }));
 }
 
+// Si se sigue escribiendo, lo que está en pantalla ya no es lo guardado.
+form.addEventListener('input', () => avisar('mensaje-guardar', ''));
+
 form.addEventListener('submit', async (ev) => {
   ev.preventDefault();
   const boton = document.getElementById('guardar');
   boton.disabled = true;
+  avisar('mensaje-guardar', '');
   try {
     await guardar();
-    estado.textContent = 'Cambios guardados.';
+    avisar('mensaje-guardar', 'Cambios guardados.', 'ok');
   } catch (e) {
     mostrarErrores(form, e.datos?.campos, e.datos?.error ?? 'No se pudieron guardar los cambios.');
+    document.getElementById('error-general').scrollIntoView({ block: 'nearest' });
   } finally {
     boton.disabled = false;
   }
@@ -246,10 +279,12 @@ form.addEventListener('submit', async (ev) => {
 /* ------------------------------------------------------------------ */
 
 botonFinalizar.addEventListener('click', async () => {
-  if (!confirm('¿Finalizar la consulta? Se genera la factura y se descuenta el stock. No se puede deshacer.')) return;
+  const seguir = await confirmar('¿Finalizar la consulta? Se genera la factura y se descuenta el stock. No se puede deshacer.', { aceptar: 'Finalizar' });
+  if (!seguir) return;
 
   botonFinalizar.disabled = true;                   // un segundo clic no manda otro pedido
-  estado.textContent = 'Finalizando…';
+  avisar('mensaje-finalizar', 'Finalizando…', null);
+  bajas.clear();
   try {
     await guardar();                                // el backend valida lo guardado, no lo escrito en pantalla
     const r = await api(`${API}/consultas/${consulta.id}/finalizar`, { metodo: 'POST' });
@@ -257,14 +292,14 @@ botonFinalizar.addEventListener('click', async () => {
     pintarDatos();
     pintarItems();
     mostrarFactura(r.factura);
-    estado.textContent = 'Consulta finalizada.';
+    avisar('mensaje-finalizar', '');
   } catch (e) {
-    if (e.estado === 400 && e.datos?.campos) {
-      mostrarErrores(form, e.datos.campos, e.datos.error ?? 'Revisá los datos de la consulta.');
-      estado.textContent = '';
-    } else {
-      estado.textContent = mensajeFinalizar(e);
+    if (e.estado === 400) mostrarErrores(form, e.datos?.campos ?? {});   // además, el error debajo de cada campo
+    if (e.datos?.motivo === 'DADO_DE_BAJA') {
+      for (const i of e.datos.items ?? []) bajas.add(`${i.tipo === 'INSUMO' ? 'insumos' : 'productos'}:${i.id}`);
     }
+    pintarItems();
+    avisar('mensaje-finalizar', mensajeFinalizar(e));
   } finally {
     botonFinalizar.disabled = false;
   }
@@ -279,6 +314,14 @@ function mensajeFinalizar(e) {
   if (e.estado === 409 && Array.isArray(e.datos?.items)) {
     const faltan = e.datos.items.map((i) => `${nombreItem(i)} (stock disponible: ${i.stock})`);
     return 'No hay stock suficiente de: ' + faltan.join(', ') + '.';
+  }
+  if (e.estado === 400) {
+    const campos = Object.values(e.datos?.campos ?? {});
+    const detalle = (campos.length ? campos.join(' ') : (e.datos?.error ?? 'Revisá los datos de la consulta.')).replace(/\.?$/, '.');
+    const ayuda = totalActual > TOTAL_MAXIMO_CENTAVOS
+      ? ' El total es la suma del valor base, los insumos y los productos: bajá el valor base o quitá ítems.'
+      : '';
+    return 'No se pudo finalizar. ' + detalle + ayuda;
   }
   if (e.estado === 502) {
     return 'Inventario no responde. La consulta sigue abierta: probá de nuevo en un momento.';

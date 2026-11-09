@@ -11,7 +11,7 @@
  */
 import { api, debounce } from './api.js';
 import { exigirRol } from './auth.js';
-import { el, limpiarErrores, mostrarErrores } from './ui.js';
+import { confirmar, el, limpiarErrores, mostrarErrores } from './ui.js';
 import { textoEspecieMascota } from './etiquetas.js';
 
 const usuario = await exigirRol(['CLIENTE', 'VETERINARIO']);
@@ -178,7 +178,7 @@ function botonBaja(mascota, celda) {
     type: 'button', class: 'boton boton-peligro boton-chico', 'aria-label': 'Dar de baja a ' + mascota.nombre
   });
   boton.addEventListener('click', async () => {
-    if (!confirm(`¿Dar de baja a ${mascota.nombre}? Su historial y su calendario se conservan.`)) return;
+    if (!await confirmar(`¿Dar de baja a ${mascota.nombre}? Su historial y su calendario se conservan.`, { aceptar: 'Dar de baja', peligro: true })) return;
     boton.disabled = true;
     const error = celda.querySelector('.campo-error');
     error.textContent = '';
