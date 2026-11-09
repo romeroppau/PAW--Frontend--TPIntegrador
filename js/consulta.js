@@ -193,7 +193,7 @@ for (const [tipo, cfg] of Object.entries(TIPOS)) {
     boton.disabled = true;                          // evita ítems duplicados por doble clic
     try {
       const cuerpo = {
-        [cfg.campoId]: Number(formItem.elements.item.value),
+        [cfg.campoId]: Number(formItem.elements.namedItem('item').value),   // namedItem: "item" a secas es la función item() de la colección, no el <select>
         cantidad: Number(formItem.elements.cantidad.value)
       };
       consulta = desenvolver(await api(`${API}/consultas/${consulta.id}/${tipo}`, { metodo: 'POST', cuerpo }));
