@@ -1,7 +1,7 @@
 /**
  * mascotas.js — Mascotas (cliente/mascotas.html), rol 3, Entrega 4
  *
- * Cliente: ve sus mascotas y las da de alta, edita y da de baja.
+ * Cliente: ve sus mascotas y las da de alta, edita y da de baja. Puede cargarles una foto (Entrega 5).
  * Veterinario: ve todas, con su dueño y un buscador; no las modifica (el backend responde 403).
  * Todo con fetch: guardar o dar de baja actualiza la lista sin recargar la página.
  *
@@ -25,6 +25,13 @@ const buscar = document.getElementById('buscar');
 
 // Mascota que se está editando (null = alta de una nueva).
 let editando = null;
+
+// Cambia en cada carga del listado: así, después de cambiar una foto, el navegador no muestra la vieja.
+let versionFotos = Date.now();
+const urlFoto = (mascota) => `${API}/${mascota.id}/foto?v=${versionFotos}`;
+
+const TIPOS_FOTO = ['image/png', 'image/jpeg', 'image/webp'];
+const TAMANIO_MAXIMO_FOTO = 1024 * 1024;   // 1 MB, el mismo límite que el backend
 
 // "Hoy" de Argentina, para que el calendario no deje elegir un nacimiento futuro.
 const hoy = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' }).format(new Date());
@@ -57,6 +64,7 @@ async function cargar() {
   try {
     const { mascotas } = await api(API + (!esCliente && texto ? '?buscar=' + encodeURIComponent(texto) : ''));
     if (pedido !== pedidoActual) return;               // llegó tarde: ya se buscó otra cosa
+    versionFotos = Date.now();
     document.getElementById('filas').replaceChildren(...mascotas.map(fila));
     document.getElementById('tabla').hidden = mascotas.length === 0;
     estado.textContent = mascotas.length ? ''
@@ -82,6 +90,10 @@ function fila(mascota) {
   const tr = el('tr', '', { 'data-id': mascota.id });
 
   const nombre = el('td');
+  if (mascota.tiene_foto) {
+    nombre.classList.add('con-foto');
+    nombre.append(el('img', '', { src: urlFoto(mascota), alt: 'Foto de ' + mascota.nombre, class: 'miniatura', width: '48', height: '48', loading: 'lazy' }));
+  }
   nombre.append(el('strong', mascota.nombre));
   if (mascota.raza) nombre.append(el('span', mascota.raza, { class: 'ayuda' }));
   tr.append(nombre);
@@ -121,6 +133,14 @@ function abrirFormulario(mascota = null) {
       form.elements[campo].value = mascota[campo] ?? '';
     }
   }
+  // La foto actual (al editar) se muestra arriba del campo, con la opción de quitarla.
+  const fotoActual = document.getElementById('foto-actual');
+  const conFoto = Boolean(mascota?.tiene_foto);
+  fotoActual.replaceChildren(...(conFoto
+    ? [el('img', '', { src: urlFoto(mascota), alt: 'Foto actual de ' + mascota.nombre, class: 'foto-mascota', width: '120', height: '120' })]
+    : []));
+  fotoActual.hidden = !conFoto;
+  document.getElementById('campo-quitar-foto').hidden = !conFoto;
   seccionForm.hidden = false;
   form.elements.nombre.focus();
 }
@@ -154,6 +174,26 @@ form.addEventListener('submit', async (ev) => {
     peso_kg: valor('peso_kg') === '' ? null : Number(valor('peso_kg'))
   };
 
+  // Foto: si se eligió un archivo, viaja como data URL; si se marcó "Quitar", va null; si no, no se manda
+  // y el backend deja la que tenía. El tipo y el tamaño se revisan acá solo para avisar antes: el backend
+  // vuelve a revisar todo, incluido el contenido real del archivo.
+  const archivo = form.elements.foto.files[0];
+  if (archivo) {
+    if (!TIPOS_FOTO.includes(archivo.type)) {
+      mostrarErrores(form, { foto: 'La foto debe ser PNG, JPG o WEBP' });
+      guardar.disabled = false;
+      return;
+    }
+    if (archivo.size > TAMANIO_MAXIMO_FOTO) {
+      mostrarErrores(form, { foto: 'La foto no puede superar 1 MB' });
+      guardar.disabled = false;
+      return;
+    }
+    cuerpo.foto = await leerComoDataUrl(archivo);
+  } else if (editando && document.getElementById('quitar-foto').checked) {
+    cuerpo.foto = null;
+  }
+
   try {
     // POST para una nueva, PUT para editar. Los dos responden la mascota guardada.
     const guardada = editando
@@ -168,6 +208,16 @@ form.addEventListener('submit', async (ev) => {
     guardar.disabled = false;
   }
 });
+
+// FileReader trabaja con eventos: se lo envuelve en una promesa para usar await.
+function leerComoDataUrl(archivo) {
+  return new Promise((ok, fallo) => {
+    const lector = new FileReader();
+    lector.onload = () => ok(lector.result);           // "data:image/png;base64,...."
+    lector.onerror = () => fallo(lector.error);
+    lector.readAsDataURL(archivo);
+  });
+}
 
 /* ------------------------------------------------------------------ */
 /* Baja (cliente)                                                      */

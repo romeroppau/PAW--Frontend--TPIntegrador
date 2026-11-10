@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mis turnos | HuellaVet</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Nunito+Sans:wght@400;600;700&display=swap">
+  <link rel="stylesheet" href="/css/base.css">
+</head>
+<!-- Turnos del cliente: los próximos y los de los últimos 30 días (Entrega 5, rol 3).
+     Mantener:
+       - data-rol del <body>: roles que pueden ver la página.
+       - los scripts menu.js, guardia-panel.js y auth.js: el <main> queda oculto (hidden) hasta que
+         guardia-panel.js confirma el rol, y el menú y el botón "Salir" los arma auth.js.
+     Los turnos se piden y se cambian por WhatsApp: esta página solo los muestra. -->
+<body data-rol="CLIENTE">
+  <a class="saltar" href="#contenido">Saltar al contenido</a>
+  <div id="encabezado-sitio"></div>
+  <script src="/js/layout.js"></script>
+  <main id="contenido" class="seccion" hidden>
+    <div class="contenedor">
+      <p><a href="/paneles/panel-cliente.html">&larr; Volver a tu panel</a></p>
+      <h1>Mis turnos</h1>
+      <p>Para pedir, cambiar o cancelar un turno, escribinos por
+        <a href="https://wa.me/5491139010486?text=Hola%2C%20quiero%20consultar%20por%20un%20turno" target="_blank" rel="noopener noreferrer">WhatsApp</a>.</p>
+      <p class="estado" id="estado" role="status"></p>
+
+      <section class="bloque" aria-labelledby="titulo-proximos">
+        <h2 id="titulo-proximos">Próximos</h2>
+        <p class="estado" id="vacio-proximos" hidden></p>
+        <div class="tabla-scroll" id="tabla-proximos" hidden>
+          <table>
+            <caption class="solo-lectores">Turnos próximos</caption>
+            <thead><tr><th scope="col">Fecha</th><th scope="col">Hora</th><th scope="col">Mascota</th><th scope="col">Motivo</th><th scope="col">Estado</th></tr></thead>
+            <tbody id="filas-proximos"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="bloque" aria-labelledby="titulo-anteriores">
+        <h2 id="titulo-anteriores">Anteriores y cancelados</h2>
+        <p class="ayuda">Los de los últimos 30 días y los cancelados. El historial completo de cada mascota está en su historial clínico.</p>
+        <p class="estado" id="vacio-anteriores" hidden></p>
+        <div class="tabla-scroll" id="tabla-anteriores" hidden>
+          <table>
+            <caption class="solo-lectores">Turnos de los últimos 30 días y cancelados</caption>
+            <thead><tr><th scope="col">Fecha</th><th scope="col">Hora</th><th scope="col">Mascota</th><th scope="col">Motivo</th><th scope="col">Estado</th><th scope="col">Consulta</th></tr></thead>
+            <tbody id="filas-anteriores"></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </main>
+  <div id="pie-sitio"></div>
+
+  <script type="module" src="/js/menu.js"></script>
+  <script type="module" src="/js/guardia-panel.js"></script>
+  <script type="module" src="/js/auth.js"></script>
+  <script type="module" src="/js/turnos-cliente.js"></script>
+</body>
+</html>

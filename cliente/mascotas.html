@@ -71,6 +71,15 @@
             <input id="peso_kg" name="peso_kg" type="number" min="0.01" max="999.99" step="0.01" inputmode="decimal">
             <span class="campo-error" id="error-peso_kg"></span>
           </div>
+          <div class="campo">
+            <label for="foto">Foto <span class="ayuda">(opcional)</span></label>
+            <!-- La foto actual la muestra mascotas.js (un <img> sin src no pasa el validador del W3C). -->
+            <div id="foto-actual" class="foto-actual" hidden></div>
+            <input id="foto" name="foto" type="file" accept="image/png,image/jpeg,image/webp" aria-describedby="ayuda-foto error-foto">
+            <p class="campo-ayuda" id="ayuda-foto">PNG, JPG o WEBP de hasta 1 MB.</p>
+            <label class="casilla" id="campo-quitar-foto" hidden><input type="checkbox" id="quitar-foto" name="quitar_foto"> Quitar la foto actual</label>
+            <span class="campo-error" id="error-foto"></span>
+          </div>
           <p class="campo-error" id="error-general" role="alert" hidden></p>
           <button type="submit" class="boton" id="guardar">Guardar</button>
           <button type="button" class="boton boton-borde" id="cancelar">Cancelar</button>

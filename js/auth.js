@@ -77,6 +77,7 @@ const ENLACES_POR_ROL = {
   CLIENTE: [
     ['Mi panel', '/paneles/panel-cliente.html'],
     ['Mis mascotas', '/cliente/mascotas.html'],
+    ['Mis turnos', '/cliente/turnos.html'],
   ],
   RESCATISTA: [
     ['Mi panel', '/paneles/panel-rescatista.html'],
