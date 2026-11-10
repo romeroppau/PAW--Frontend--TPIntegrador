@@ -56,16 +56,15 @@
       <div class="contenedor">
         <div class="hero-intro">
           <p>Nosotros somos HuellaVet.</p>
-          <address>Calle Falsa 123</address>
+          <address>Av. San Martín 1450, Luján</address>
         </div>
         <div class="hero-turno">
-          <!-- Número de ejemplo: reemplazar por el de la veterinaria cuando exista -->
-          <a class="boton boton-acento boton-grande" href="https://wa.me/5491155555555?text=Hola%2C%20quiero%20reservar%20un%20turno" target="_blank" rel="noopener noreferrer">Reservar turno</a>
+          <a class="boton boton-acento boton-grande" href="https://wa.me/5491139010486?text=Hola%2C%20quiero%20reservar%20un%20turno" target="_blank" rel="noopener noreferrer">Reservar turno</a>
         </div>
         <div class="hero-ubicacion">
           <div>
             <h2>¿Dónde nos encontramos?</h2>
-            <p>Calle Falsa 123. Atendemos con turno previo, que se coordina por WhatsApp.</p>
+            <p>Av. San Martín 1450, Luján. Atendemos de lunes a sábado de 08:00 a 20:00, con turno previo que se coordina por WhatsApp.</p>
           </div>
           <div class="imagen-provisoria fachada" role="img" aria-label="Foto de la fachada de la veterinaria">Fachada de la veterinaria</div>
         </div>
@@ -97,46 +96,26 @@
         <h2 id="titulo-opiniones" class="titulo-seccion">¿Qué opinan nuestros clientes?</h2>
         <div class="burbujas">
           <blockquote class="burbuja">
-            <p>Opinión de ejemplo 1.</p>
-            <footer>Cliente</footer>
+            <p>Atendieron a mi perro de urgencia y me explicaron todo con mucha paciencia. Muy agradecida.</p>
+            <footer>Lucía F.</footer>
           </blockquote>
           <blockquote class="burbuja">
-            <p>Opinión de ejemplo 2.</p>
-            <footer>Cliente</footer>
+            <p>Me encanta poder ver las vacunas de mis gatos desde el celular. Ya no me olvido ninguna.</p>
+            <footer>Martín G.</footer>
           </blockquote>
           <blockquote class="burbuja">
-            <p>Opinión de ejemplo 3.</p>
-            <footer>Cliente</footer>
+            <p>Saco turno por WhatsApp en un minuto y siempre me atienden a horario.</p>
+            <footer>Carolina P.</footer>
           </blockquote>
         </div>
-        <p class="aviso-ejemplo">Textos de ejemplo. Las reseñas reales llegan en la Entrega 5.</p>
       </div>
     </section>
 
-    <section class="seccion" aria-labelledby="titulo-destacados">
+    <section class="seccion" id="seccion-destacados" aria-labelledby="titulo-destacados" hidden>
       <div class="contenedor">
         <h2 id="titulo-destacados" class="titulo-seccion">¡No te lo pierdas!</h2>
-        <!-- Provisorio: datos de ejemplo. El sábado 17 se completa con GET /api/tienda/productos -->
-        <div class="grilla" id="destacados">
-          <article class="tarjeta producto-destacado">
-            <div class="imagen-provisoria" role="img" aria-label="Imagen del producto">Imagen</div>
-            <p class="etiqueta">Producto más vendido</p>
-            <h3>Nombre del producto</h3>
-            <p class="precio">$0</p>
-          </article>
-          <article class="tarjeta producto-destacado">
-            <div class="imagen-provisoria" role="img" aria-label="Imagen del producto">Imagen</div>
-            <p class="etiqueta">Producto con descuento</p>
-            <h3>Nombre del producto</h3>
-            <p class="precio">$0</p>
-          </article>
-          <article class="tarjeta producto-destacado">
-            <div class="imagen-provisoria" role="img" aria-label="Imagen del producto">Imagen</div>
-            <p class="etiqueta">Producto que se está por agotar</p>
-            <h3>Nombre del producto</h3>
-            <p class="precio">$0</p>
-          </article>
-        </div>
+        <!-- Los primeros productos disponibles del catálogo: los carga js/portada.js. -->
+        <div class="grilla" id="destacados"></div>
       </div>
     </section>
   </main>
@@ -155,9 +134,8 @@
       <div>
         <h2>Contacto</h2>
         <address>
-          <p>+54 9 11 5555-5555</p>
-          <p>contacto@huellavet.example</p>
-          <p>Calle Falsa 123</p>
+          <p>+54 9 11 3901-0486</p>
+          <p>Av. San Martín 1450, Luján</p>
         </address>
       </div>
       <div>
@@ -169,5 +147,6 @@
 
   <script type="module" src="/js/menu.js"></script>
   <script type="module" src="/js/auth.js"></script>
+  <script type="module" src="/js/portada.js"></script>
 </body>
 </html>

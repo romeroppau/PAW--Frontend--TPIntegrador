@@ -9,12 +9,12 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Nunito+Sans:wght@400;600;700&display=swap">
   <link rel="stylesheet" href="/css/base.css">
 </head>
-<!-- PANTALLA VACÍA (Entrega 4). La completa el rol 4 (Cristian).
-     Para completarla: reemplazar el contenido de <main> y agregar el script propio (js/consulta.js).
-     Mantener estas dos cosas:
-       - data-rol del <body>: roles que pueden ver la página (separados por coma si son varios).
+<!-- Ficha de la consulta (Entrega 4, rol 4).
+     Mantener:
+       - data-rol del <body>: roles que pueden ver la página.
        - los scripts menu.js, guardia-panel.js y auth.js: el <main> queda oculto (hidden) hasta que
-         guardia-panel.js confirma el rol, y el menú y el botón "Salir" los arma auth.js. -->
+         guardia-panel.js confirma el rol, y el menú y el botón "Salir" los arma auth.js.
+     Se abre con ?id=<consulta> o con ?turno=<turno> (inicia la atención del turno y abre la consulta). -->
 <body data-rol="VETERINARIO">
   <a class="saltar" href="#contenido">Saltar al contenido</a>
   <div id="encabezado-sitio"></div>
@@ -22,8 +22,105 @@
   <main id="contenido" class="seccion" hidden>
     <div class="contenedor">
       <p><a href="/panel/agenda.html">&larr; Volver a la agenda</a></p>
-      <h1>Consulta</h1>
-      <p class="mensaje">Pantalla en construcción: la completa el rol 4 (Cristian) en la Entrega 4.</p>
+      <div class="barra-titulo">
+        <h1>Consulta</h1>
+        <p id="estado-consulta" class="etiqueta"></p>
+      </div>
+      <p class="estado" id="estado" role="status"></p>
+
+      <div id="ficha" hidden>
+        <section class="tarjeta" aria-labelledby="t-datos">
+          <h2 id="t-datos">Datos de la consulta</h2>
+          <form id="form-consulta" novalidate>
+            <div class="campo">
+              <label for="diagnostico">Diagnóstico</label>
+              <textarea id="diagnostico" name="diagnostico" rows="4" maxlength="5000"></textarea>
+              <p class="campo-ayuda">Obligatorio para finalizar la consulta.</p>
+              <span class="campo-error" id="error-diagnostico"></span>
+            </div>
+            <div class="campo">
+              <label for="observaciones">Observaciones</label>
+              <textarea id="observaciones" name="observaciones" rows="3" maxlength="5000"></textarea>
+              <span class="campo-error" id="error-observaciones"></span>
+            </div>
+            <div class="campo campo-chico">
+              <label for="valor_base">Valor base de la consulta ($)</label>
+              <input id="valor_base" name="valor_base" type="number" min="0" step="0.01" inputmode="decimal">
+              <p class="campo-ayuda">Obligatorio para finalizar la consulta.</p>
+              <span class="campo-error" id="error-valor_base"></span>
+            </div>
+            <p class="campo-error" id="error-general" role="alert" hidden></p>
+            <button type="submit" class="boton" id="guardar">Guardar cambios</button>
+            <p class="mensaje" id="mensaje-guardar" role="status" hidden></p>
+          </form>
+        </section>
+
+        <section class="bloque tarjeta" aria-labelledby="t-insumos">
+          <h2 id="t-insumos">Insumos utilizados</h2>
+          <p class="estado" id="vacio-insumos">No hay insumos cargados.</p>
+          <div class="tabla-scroll">
+            <table>
+              <caption class="solo-lectores">Insumos utilizados en la consulta</caption>
+              <thead><tr><th scope="col">Insumo</th><th scope="col">Cantidad</th><th scope="col">Costo unitario</th><th scope="col">Subtotal</th><th scope="col">Acciones</th></tr></thead>
+              <tbody id="filas-insumos"></tbody>
+            </table>
+          </div>
+          <form id="agregar-insumos" class="form-item" novalidate>
+            <div class="campo">
+              <label for="sel-insumos">Insumo</label>
+              <select id="sel-insumos" name="item" required><option value="">Elegí un insumo</option></select>
+            </div>
+            <div class="campo campo-chico">
+              <label for="cant-insumos">Cantidad</label>
+              <input id="cant-insumos" name="cantidad" type="number" min="1" step="1" value="1" required>
+            </div>
+            <button type="submit" class="boton boton-borde">Agregar insumo</button>
+          </form>
+          <p class="mensaje" id="mensaje-insumos" role="alert" hidden></p>
+        </section>
+
+        <section class="bloque tarjeta" aria-labelledby="t-productos">
+          <h2 id="t-productos">Productos vendidos</h2>
+          <p class="estado" id="vacio-productos">No hay productos cargados.</p>
+          <div class="tabla-scroll">
+            <table>
+              <caption class="solo-lectores">Productos vendidos en la consulta</caption>
+              <thead><tr><th scope="col">Producto</th><th scope="col">Cantidad</th><th scope="col">Precio unitario</th><th scope="col">Subtotal</th><th scope="col">Acciones</th></tr></thead>
+              <tbody id="filas-productos"></tbody>
+            </table>
+          </div>
+          <form id="agregar-productos" class="form-item" novalidate>
+            <div class="campo">
+              <label for="sel-productos">Producto</label>
+              <select id="sel-productos" name="item" required><option value="">Elegí un producto</option></select>
+            </div>
+            <div class="campo campo-chico">
+              <label for="cant-productos">Cantidad</label>
+              <input id="cant-productos" name="cantidad" type="number" min="1" step="1" value="1" required>
+            </div>
+            <button type="submit" class="boton boton-borde">Agregar producto</button>
+          </form>
+          <p class="mensaje" id="mensaje-productos" role="alert" hidden></p>
+        </section>
+
+        <section class="bloque tarjeta" aria-labelledby="t-resumen">
+          <h2 id="t-resumen">Resumen</h2>
+          <div class="tabla-scroll">
+            <table class="resumen">
+              <caption class="solo-lectores">Resumen de importes de la consulta</caption>
+              <tbody>
+                <tr><th scope="row">Valor base</th><td id="r-base"></td></tr>
+                <tr><th scope="row">Insumos</th><td id="r-insumos"></td></tr>
+                <tr><th scope="row">Productos</th><td id="r-productos"></td></tr>
+                <tr class="total"><th scope="row">Total</th><td id="r-total"></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p id="factura" class="mensaje mensaje-ok" role="status" hidden></p>
+          <p><button type="button" class="boton boton-acento" id="finalizar">Finalizar consulta</button></p>
+          <p class="mensaje" id="mensaje-finalizar" role="alert" hidden></p>
+        </section>
+      </div>
     </div>
   </main>
   <div id="pie-sitio"></div>
@@ -31,5 +128,6 @@
   <script type="module" src="/js/menu.js"></script>
   <script type="module" src="/js/guardia-panel.js"></script>
   <script type="module" src="/js/auth.js"></script>
+  <script type="module" src="/js/consulta.js"></script>
 </body>
 </html>

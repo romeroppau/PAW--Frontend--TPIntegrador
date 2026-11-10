@@ -9,12 +9,13 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Nunito+Sans:wght@400;600;700&display=swap">
   <link rel="stylesheet" href="/css/base.css">
 </head>
-<!-- PANTALLA VACÍA (Entrega 4). La completa el rol 3 (Valentino).
-     Para completarla: reemplazar el contenido de <main> y agregar el script propio (js/agenda.js).
-     Mantener estas dos cosas:
-       - data-rol del <body>: roles que pueden ver la página (separados por coma si son varios).
+<!-- Agenda del veterinario (Entrega 4, rol 3).
+     Mantener:
+       - data-rol del <body>: roles que pueden ver la página.
        - los scripts menu.js, guardia-panel.js y auth.js: el <main> queda oculto (hidden) hasta que
-         guardia-panel.js confirma el rol, y el menú y el botón "Salir" los arma auth.js. -->
+         guardia-panel.js confirma el rol, y el menú y el botón "Salir" los arma auth.js.
+     Se abre con ?fecha=AAAA-MM-DD (por defecto, hoy). Cambiar de día y cambiar el estado de un turno
+     se hace con fetch, sin recargar la página. -->
 <body data-rol="VETERINARIO">
   <a class="saltar" href="#contenido">Saltar al contenido</a>
   <div id="encabezado-sitio"></div>
@@ -22,8 +23,71 @@
   <main id="contenido" class="seccion" hidden>
     <div class="contenedor">
       <p><a href="/paneles/panel-administrador.html">&larr; Volver al panel de administrador</a></p>
-      <h1>Agenda de turnos</h1>
-      <p class="mensaje">Pantalla en construcción: la completa el rol 3 (Valentino) en la Entrega 4.</p>
+      <div class="barra-titulo">
+        <h1>Agenda de turnos</h1>
+        <div class="acciones">
+          <button type="button" class="boton" id="nuevo-turno">Nuevo turno</button>
+        </div>
+      </div>
+
+      <!-- Alta de un turno (los turnos se coordinan por WhatsApp y los carga el veterinario). -->
+      <section id="seccion-turno" class="tarjeta bloque contenedor-form" aria-labelledby="titulo-turno" hidden>
+        <h2 id="titulo-turno">Nuevo turno</h2>
+        <form id="form-turno" novalidate>
+          <div class="campo">
+            <label for="mascota_id">Mascota</label>
+            <select id="mascota_id" name="mascota_id" required>
+              <option value="">Elegí la mascota</option>
+            </select>
+            <span class="campo-error" id="error-mascota_id"></span>
+          </div>
+          <div class="campo campo-chico">
+            <label for="turno-fecha">Fecha</label>
+            <input id="turno-fecha" name="fecha" type="date" required>
+            <span class="campo-error" id="error-fecha"></span>
+          </div>
+          <div class="campo campo-chico">
+            <label for="hora">Hora</label>
+            <input id="hora" name="hora" type="time" min="08:00" max="19:59" required>
+            <p class="campo-ayuda">Horario de atención: de 08:00 a 20:00.</p>
+            <span class="campo-error" id="error-hora"></span>
+          </div>
+          <div class="campo">
+            <label for="motivo">Motivo</label>
+            <select id="motivo" name="motivo">
+              <option value="CONSULTA">Consulta</option>
+              <option value="VACUNACION">Vacunación</option>
+              <option value="CHEQUEO_ADOPCION">Chequeo de adopción</option>
+            </select>
+            <span class="campo-error" id="error-motivo"></span>
+          </div>
+          <p class="campo-error" id="error-general" role="alert" hidden></p>
+          <button type="submit" class="boton" id="guardar-turno">Guardar turno</button>
+          <button type="button" class="boton boton-borde" id="cancelar-turno">Cancelar</button>
+        </form>
+      </section>
+
+      <form id="form-dia" class="form-dia" novalidate>
+        <button type="button" class="boton boton-borde boton-chico" id="dia-anterior" aria-label="Día anterior">&larr; Anterior</button>
+        <div class="campo">
+          <label for="fecha">Día</label>
+          <input id="fecha" name="fecha" type="date" required>
+        </div>
+        <button type="button" class="boton boton-borde boton-chico" id="dia-siguiente" aria-label="Día siguiente">Siguiente &rarr;</button>
+        <button type="button" class="boton boton-chico" id="hoy">Hoy</button>
+      </form>
+
+      <h2 id="titulo-dia" class="titulo-dia"></h2>
+      <p class="estado" id="estado" role="status"></p>
+      <p class="resumen-agenda" id="resumen"></p>
+
+      <div class="tabla-scroll" id="tabla" hidden>
+        <table>
+          <caption class="solo-lectores" id="leyenda-tabla">Turnos del día</caption>
+          <thead><tr><th scope="col">Hora</th><th scope="col">Mascota</th><th scope="col">Dueño</th><th scope="col">Motivo</th><th scope="col">Estado</th><th scope="col">Acciones</th></tr></thead>
+          <tbody id="filas"></tbody>
+        </table>
+      </div>
     </div>
   </main>
   <div id="pie-sitio"></div>
@@ -31,5 +95,6 @@
   <script type="module" src="/js/menu.js"></script>
   <script type="module" src="/js/guardia-panel.js"></script>
   <script type="module" src="/js/auth.js"></script>
+  <script type="module" src="/js/agenda.js"></script>
 </body>
 </html>

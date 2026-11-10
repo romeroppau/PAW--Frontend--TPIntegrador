@@ -165,7 +165,6 @@ th { background: var(--menta); color: var(--pino-oscuro); }
 .burbuja:nth-child(2) { transform: translateY(1.5rem); }
 .burbuja p { margin: 0 auto .4rem; font-size: .98rem; }
 .burbuja footer { font-weight: 700; color: var(--pino); }
-.aviso-ejemplo { font-size: .9rem; color: var(--tinta-suave); margin-top: 2.5rem; }
 
 .producto-destacado { display: grid; gap: .5rem; align-content: start; }
 .producto-destacado .imagen-provisoria { min-height: 160px; }
@@ -225,3 +224,47 @@ th { background: var(--menta); color: var(--pino-oscuro); }
 .boton-chico { padding: .35rem .8rem; font-size: .9rem; }
 .sesion-nombre { font-weight: 700; color: var(--pino-oscuro); }
 form .boton + .boton { margin-left: .5rem; }
+
+
+/* Consulta e historial clínico */
+.bloque { margin-top: 1.5rem; }
+.campo-chico { max-width: 14rem; }
+.form-item { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 0 .75rem; margin-top: 1rem; }
+.form-item .campo { flex: 1 1 14rem; margin-bottom: 1rem; }
+.form-item .campo-chico { flex: 0 0 8rem; }
+.form-item .boton { margin-bottom: 1rem; }
+.resumen .total th, .resumen .total td { font-weight: 700; }
+.historial-lista { display: grid; gap: 1rem; }
+.historial-factura { font-weight: 700; }
+
+
+/* Insumos (rol 2): estado con color en el listado, filas dadas de baja y ayudas del formulario.
+   Colores con contraste suficiente sobre su fondo (accesibilidad). */
+.insignia { display: inline-block; padding: .15rem .6rem; border-radius: 999px; font-size: .9rem; font-weight: 700; background: #e3efe9; color: var(--pino); }
+.insignia-falta { background: #fbe4e2; color: var(--error); }
+.insignia-bajo { background: #fff1c7; color: #7a5300; }
+.fila-baja td { color: var(--tinta-suave); }
+.ayuda { display: block; font-size: .9rem; color: var(--tinta-suave); }
+.campo-selector { max-width: 24rem; }
+.acciones > .campo-error { flex-basis: 100%; }
+.acciones > .campo-error:empty { display: none; }
+
+
+/* Agenda del veterinario (rol 3): selector de día y color de cada estado del turno.
+   Colores con contraste suficiente sobre su fondo (accesibilidad). */
+.form-dia { display: flex; flex-wrap: wrap; align-items: flex-end; gap: .5rem .75rem; margin-bottom: 1rem; }
+.form-dia .campo { margin-bottom: 0; }
+.titulo-dia { font-size: 1.25rem; margin-top: .5rem; }
+.titulo-dia::first-letter { text-transform: uppercase; }
+.resumen-agenda { color: var(--tinta-suave); font-weight: 600; }
+.insignia-atendido { background: #d7f0df; color: var(--ok); }
+.insignia-anulado { background: #e9eceb; color: var(--tinta-suave); }
+
+/* Cuadro de confirmación (confirmar() en js/ui.js) */
+.dialogo { border: 0; border-radius: var(--radio); padding: 1.5rem; width: min(28rem, calc(100vw - 2rem)); color: var(--tinta); background: var(--blanco); }
+.dialogo::backdrop { background: rgba(27, 42, 39, .55); }
+.dialogo p { margin-top: 0; }
+.dialogo-botones { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .75rem; }
+
+/* Ítem de la consulta que se dio de baja después de cargarlo */
+.marca-baja { font-size: .85rem; font-weight: 700; color: var(--error); white-space: nowrap; }

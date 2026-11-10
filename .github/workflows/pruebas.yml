@@ -55,12 +55,18 @@ jobs:
       # Pruebas de punta a punta: Playwright abre las páginas en un navegador real (computadora y
       # celular), escribe, elige filtros y comprueba lo que se ve. La API se simula en cada prueba.
       # Va después del W3C para que el validador no revise lo que instala npm.
+      # Usa el Google Chrome que ya trae la máquina de GitHub (playwright.config.js, channel: 'chrome'):
+      # instalar Chromium con sus dependencias del sistema (apt-get) a veces se colgaba hasta el límite
+      # de 10 minutos. Cada paso tiene su propio límite, así un cuelgue falla rápido y se ve dónde fue.
+      - name: Instalar Playwright
+        working-directory: pruebas-e2e
+        timeout-minutes: 3
+        run: npm ci --no-audit --no-fund
+
       - name: Pruebas de punta a punta (Playwright)
         working-directory: pruebas-e2e
-        run: |
-          npm ci --no-audit --no-fund
-          npx playwright install --with-deps chromium
-          npx playwright test
+        timeout-minutes: 5
+        run: npx playwright test
 
       # Si fallan, el informe (con capturas de lo que veía el navegador) queda para descargar
       # en la pestaña Actions de GitHub, en "Artifacts".

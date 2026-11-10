@@ -53,7 +53,7 @@
         <p>Tu cuenta queda pendiente hasta que la apruebe la veterinaria. Mientras tanto podés ingresar, pero todavía no publicar animales en adopción.</p>
 
         <!-- Misma lógica que el registro de cliente (js/registro.js): solo cambia la ruta. -->
-        <form id="form-registro" data-endpoint="/api/auth/registro/rescatista">
+        <form id="form-registro" data-endpoint="/api/auth/registro/rescatista" novalidate>
           <div class="campo">
             <label for="nombre">Nombre y apellido</label>
             <input type="text" id="nombre" name="nombre" placeholder="ej.: Juan Gómez"
@@ -125,9 +125,8 @@
       <div>
         <h2>Contacto</h2>
         <address>
-          <p>+54 9 11 5555-5555</p>
-          <p>contacto@huellavet.example</p>
-          <p>Calle Falsa 123</p>
+          <p>+54 9 11 3901-0486</p>
+          <p>Av. San Martín 1450, Luján</p>
         </address>
       </div>
       <div>
