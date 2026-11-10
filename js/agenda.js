@@ -5,7 +5,8 @@
  *   - cambiar de día (anterior, siguiente, hoy o eligiendo la fecha);
  *   - cancelar un turno programado (libera el horario);
  *   - marcar ausente un turno programado de hoy o de un día anterior;
- *   - atender un turno de hoy (abre la consulta del rol 4) o ver la consulta de un turno atendido.
+ *   - atender un turno de hoy (abre la consulta del rol 4) o ver la consulta de un turno atendido;
+ *   - cargar un turno nuevo o reprogramar uno programado (Entrega 5), en el mismo formulario.
  *
  * Contrato de la API: docs/api/contrato-mascotas-turnos.md (repo Pacientes).
  * Seguridad: la guardia de acceso es solo comodidad de interfaz; la autorización real la hace
@@ -152,6 +153,11 @@ function acciones(turno, tr) {
       td.append(botonEstado(turno, tr, 'ausente', 'Ausente', 'boton boton-borde boton-chico',
         `¿Marcar que ${nombre} no vino al turno de las ${turno.hora}?`));
     }
+    const reprogramar = el('button', 'Reprogramar', {
+      type: 'button', class: 'boton boton-borde boton-chico', 'aria-label': `Reprogramar: turno de ${nombre} (${turno.hora})`
+    });
+    reprogramar.addEventListener('click', () => abrirFormularioTurno(turno));
+    td.append(reprogramar);
     td.append(botonEstado(turno, tr, 'cancelar', 'Cancelar', 'boton boton-peligro boton-chico',
       `¿Cancelar el turno de ${nombre} de las ${turno.hora}? El horario queda libre para otro turno.`));
   } else if (turno.consulta_id) {
@@ -197,21 +203,39 @@ function botonEstado(turno, tr, accion, texto, clase, pregunta) {
 }
 
 /* ------------------------------------------------------------------ */
-/* Nuevo turno                                                         */
+/* Nuevo turno y reprogramar                                           */
 /* ------------------------------------------------------------------ */
 
 const seccionTurno = document.getElementById('seccion-turno');
 const formTurno = document.getElementById('form-turno');
 const selectMascota = formTurno.elements.mascota_id;
+const botonGuardarTurno = document.getElementById('guardar-turno');
+// Al reprogramar solo cambian la fecha y la hora: la mascota y el motivo se ocultan.
+const camposSoloAlta = [selectMascota.closest('.campo'), formTurno.elements.motivo.closest('.campo')];
 let mascotasCargadas = false;
+// Turno que se está reprogramando (null = se está cargando uno nuevo).
+let reprogramando = null;
 
-// Abre el formulario con el día que se está mirando (o hoy, si ese día ya pasó).
-document.getElementById('nuevo-turno').addEventListener('click', async () => {
+// Abre el formulario. Sin turno, para cargar uno nuevo en el día que se está mirando (o hoy, si ese
+// día ya pasó). Con un turno, para reprogramarlo: arranca con su fecha y su hora.
+async function abrirFormularioTurno(turno = null) {
+  reprogramando = turno;
   formTurno.reset();
   limpiarErrores(formTurno);
   formTurno.elements.fecha.min = hoy();
-  formTurno.elements.fecha.value = inputFecha.value >= hoy() ? inputFecha.value : hoy();
+  for (const campo of camposSoloAlta) campo.hidden = turno !== null;
+  document.getElementById('titulo-turno').textContent = turno ? `Reprogramar el turno de ${turno.mascota.nombre}` : 'Nuevo turno';
+  botonGuardarTurno.textContent = turno ? 'Guardar cambios' : 'Guardar turno';
   seccionTurno.hidden = false;
+  seccionTurno.scrollIntoView({ block: 'nearest' });
+
+  if (turno) {
+    formTurno.elements.fecha.value = turno.fecha >= hoy() ? turno.fecha : hoy();
+    formTurno.elements.hora.value = turno.hora;
+    formTurno.elements.fecha.focus();
+    return;
+  }
+  formTurno.elements.fecha.value = inputFecha.value >= hoy() ? inputFecha.value : hoy();
 
   // La lista de mascotas se pide una sola vez, la primera vez que se abre el formulario.
   if (!mascotasCargadas) {
@@ -225,35 +249,42 @@ document.getElementById('nuevo-turno').addEventListener('click', async () => {
     }
   }
   selectMascota.focus();
-});
+}
 
-document.getElementById('cancelar-turno').addEventListener('click', () => { seccionTurno.hidden = true; });
+document.getElementById('nuevo-turno').addEventListener('click', () => abrirFormularioTurno());
+document.getElementById('cancelar-turno').addEventListener('click', () => {
+  seccionTurno.hidden = true;
+  reprogramando = null;
+});
 
 formTurno.addEventListener('submit', async (ev) => {
   ev.preventDefault();
   limpiarErrores(formTurno);
-  const boton = document.getElementById('guardar-turno');
-  boton.disabled = true;                                    // un doble clic no carga dos turnos
+  botonGuardarTurno.disabled = true;                        // un doble clic no carga dos turnos
+  const fecha = formTurno.elements.fecha.value;
+  const hora = formTurno.elements.hora.value;
   try {
-    // POST /api/pacientes/turnos. Responde { turno }. El veterinario es el de la sesión.
-    const { turno } = await api(API, {
-      metodo: 'POST',
-      cuerpo: {
-        mascota_id: Number(selectMascota.value),
-        fecha: formTurno.elements.fecha.value,
-        hora: formTurno.elements.hora.value,
-        motivo: formTurno.elements.motivo.value
-      }
-    });
+    // Reprogramar: POST /api/pacientes/turnos/{id}/reprogramar con la fecha y la hora.
+    // Nuevo: POST /api/pacientes/turnos (el veterinario es el de la sesión). Los dos responden { turno }.
+    const { turno } = reprogramando
+      ? await api(`${API}/${reprogramando.id}/reprogramar`, { metodo: 'POST', cuerpo: { fecha, hora } })
+      : await api(API, {
+        metodo: 'POST',
+        cuerpo: { mascota_id: Number(selectMascota.value), fecha, hora, motivo: formTurno.elements.motivo.value }
+      });
+    const accion = reprogramando ? 'Turno reprogramado' : 'Turno cargado';
     seccionTurno.hidden = true;
-    // Se muestra el día del turno nuevo, que aparece en la agenda sin recargar la página.
+    reprogramando = null;
+    // Se muestra el día del turno, que aparece en la agenda sin recargar la página.
     await cargar(turno.fecha);
-    estado.textContent = `Turno cargado: ${turno.mascota.nombre}, ${textoDia(turno.fecha)} a las ${turno.hora}.`;
+    estado.textContent = `${accion}: ${turno.mascota.nombre}, ${textoDia(turno.fecha)} a las ${turno.hora}.`;
   } catch (e) {
-    // 400: un error por campo. 409: ya hay un turno a esa hora (viene en campos.hora). 404: mascota de baja.
-    mostrarErrores(formTurno, e.datos?.campos, e.datos?.error ?? 'No se pudo cargar el turno.');
+    // 400: un error por campo. 409: ya hay un turno a esa hora (viene en campos.hora), o el turno ya no
+    // está programado. 404: la mascota está de baja o el turno no existe.
+    const porDefecto = reprogramando ? 'No se pudo reprogramar el turno.' : 'No se pudo cargar el turno.';
+    mostrarErrores(formTurno, e.datos?.campos, e.datos?.error ?? porDefecto);
   } finally {
-    boton.disabled = false;
+    botonGuardarTurno.disabled = false;
   }
 });
 

@@ -117,3 +117,61 @@ test('el veterinario ve todas las mascotas con su dueño, busca, y no puede modi
   await page.fill('#buscar', 'firu');
   await expect.poll(() => busquedas.at(-1)).toBe('firu');
 });
+
+// PNG de 1 x 1 píxel.
+const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=', 'base64');
+
+test('la foto: se ve en la lista, se carga como data URL y se puede quitar', async ({ page }) => {
+  await simularSesion(page, CLIENTE);
+  await simularListado(page, [mascota(101, 'Firulais', { tiene_foto: true })]);
+  await page.route(/\/api\/pacientes\/mascotas\/101\/foto/, (route) => route.fulfill({ status: 200, contentType: 'image/png', body: PNG }));
+  const cuerpos = [];
+  await page.route('**/api/pacientes/mascotas/101', (route) => {
+    if (route.request().method() !== 'PUT') return route.fallback();
+    cuerpos.push(route.request().postDataJSON());
+    return responderJson(route, mascota(101, 'Firulais'));
+  });
+
+  await page.goto('/cliente/mascotas.html');
+  await expect(page.getByRole('img', { name: 'Foto de Firulais' })).toHaveAttribute('src', /\/api\/pacientes\/mascotas\/101\/foto/);
+
+  // Cambiar la foto: viaja como data URL.
+  await page.getByRole('button', { name: 'Editar Firulais' }).click();
+  await expect(page.getByRole('img', { name: 'Foto actual de Firulais' })).toBeVisible();
+  await page.setInputFiles('#foto', { name: 'firulais.png', mimeType: 'image/png', buffer: PNG });
+  await page.getByRole('button', { name: 'Guardar' }).click();
+  await expect(page.locator('#estado')).toHaveText('Firulais quedó guardada.');
+  expect(cuerpos[0].foto).toMatch(/^data:image\/png;base64,/);
+
+  // Quitarla: va null. Sin tocar nada, el campo no se manda y la foto no cambia.
+  await page.getByRole('button', { name: 'Editar Firulais' }).click();
+  await page.check('#quitar-foto');
+  await page.getByRole('button', { name: 'Guardar' }).click();
+  await expect(page.locator('#estado')).toHaveText('Firulais quedó guardada.');
+  expect(cuerpos[1].foto).toBeNull();
+
+  await page.getByRole('button', { name: 'Editar Firulais' }).click();
+  await page.getByRole('button', { name: 'Guardar' }).click();
+  await expect(page.locator('#estado')).toHaveText('Firulais quedó guardada.');
+  expect('foto' in cuerpos[2]).toBe(false);
+});
+
+test('una foto de otro tipo se avisa en el campo, sin llamar a la API', async ({ page }) => {
+  await simularSesion(page, CLIENTE);
+  await simularListado(page, []);
+  let pedidos = 0;
+  await page.route('**/api/pacientes/mascotas', (route) => {
+    if (route.request().method() === 'POST') pedidos++;
+    return route.fallback();
+  });
+
+  await page.goto('/cliente/mascotas.html');
+  await page.getByRole('button', { name: 'Nueva mascota' }).click();
+  await page.fill('#nombre', 'Tom');
+  await page.selectOption('#especie', 'GATO');
+  await page.setInputFiles('#foto', { name: 'tom.gif', mimeType: 'image/gif', buffer: Buffer.from('GIF89a') });
+  await page.getByRole('button', { name: 'Guardar' }).click();
+
+  await expect(page.locator('#error-foto')).toHaveText('La foto debe ser PNG, JPG o WEBP');
+  expect(pedidos).toBe(0);
+});

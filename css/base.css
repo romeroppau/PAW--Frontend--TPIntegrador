@@ -260,6 +260,13 @@ form .boton + .boton { margin-left: .5rem; }
 .insignia-atendido { background: #d7f0df; color: var(--ok); }
 .insignia-anulado { background: #e9eceb; color: var(--tinta-suave); }
 
+/* Foto de la mascota (cliente/mascotas.html) */
+.miniatura { width: 48px; height: 48px; object-fit: cover; border-radius: 8px; flex: none; }
+.con-foto { display: flex; flex-wrap: wrap; align-items: center; gap: .25rem .6rem; }
+.foto-mascota { width: 120px; height: 120px; object-fit: cover; border-radius: var(--radio); }
+.campo .casilla { display: flex; align-items: center; gap: .5rem; font-weight: 600; }
+.campo .casilla input { width: auto; margin: 0; padding: 0; accent-color: var(--pino); }
+
 /* Cuadro de confirmación (confirmar() en js/ui.js) */
 .dialogo { border: 0; border-radius: var(--radio); padding: 1.5rem; width: min(28rem, calc(100vw - 2rem)); color: var(--tinta); background: var(--blanco); }
 .dialogo::backdrop { background: rgba(27, 42, 39, .55); }
