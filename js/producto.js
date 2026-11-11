@@ -4,7 +4,6 @@ import { textoCategoria, textoEspecie } from './etiquetas.js';
 const $estado = document.getElementById('estado-detalle');
 const $error = document.getElementById('error-detalle');
 const $detalle = document.getElementById('detalle-producto');
-const $imagen = document.getElementById('producto-imagen');
 const $sinImagen = document.getElementById('producto-sin-imagen');
 const $categoria = document.getElementById('producto-categoria');
 const $nombre = document.getElementById('producto-nombre');
@@ -54,18 +53,22 @@ async function cargarDetalle() {
     // Se admiten URLs o data URLs de imagen. Si el API devuelve otra representación,
     // hay que adaptar esta parte al formato acordado con Inventario.
     const srcImagen = producto.imagen_url ?? producto.imagenUrl ?? producto.imagen;
+    // La <img> se crea recién acá, con su src (en el HTML no hay una vacía: no sería válida).
+    document.getElementById('producto-imagen')?.remove();
+    $sinImagen.hidden = false;
     if (typeof srcImagen === 'string' && /^(https?:\/\/|data:image\/)/i.test(srcImagen)) {
-      $imagen.src = srcImagen;
-      $imagen.alt = producto.nombre ? `Imagen de ${producto.nombre}` : 'Imagen del producto';
-      $imagen.hidden = false;
-      $sinImagen.hidden = true;
-      $imagen.addEventListener('error', () => {
-        $imagen.hidden = true;
+      const imagen = document.createElement('img');
+      imagen.id = 'producto-imagen';
+      imagen.className = 'detalle-imagen';
+      imagen.alt = producto.nombre ? `Imagen de ${producto.nombre}` : 'Imagen del producto';
+      imagen.src = srcImagen;
+      // Si no carga, vuelve el recuadro "Imagen del producto".
+      imagen.addEventListener('error', () => {
+        imagen.remove();
         $sinImagen.hidden = false;
       }, { once: true });
-    } else {
-      $imagen.hidden = true;
-      $sinImagen.hidden = false;
+      $sinImagen.before(imagen);
+      $sinImagen.hidden = true;
     }
 
     const mensaje = `Hola, quiero consultar por ${producto.nombre ?? 'un producto'} de HuellaVet.`;

@@ -28,7 +28,7 @@
     <p id="estado-detalle" class="estado" role="status" aria-live="polite">Cargando producto…</p>
     <article id="detalle-producto" class="detalle-producto" hidden>
       <div class="detalle-imagen-wrap">
-        <img id="producto-imagen" class="detalle-imagen" alt="" hidden>
+        <!-- La <img> la crea producto.js solo si el producto tiene imagen: un <img> sin src no es HTML válido. -->
         <div id="producto-sin-imagen" class="imagen-provisoria detalle-sin-imagen" aria-hidden="true">Imagen del
           producto</div>
       </div>

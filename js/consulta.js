@@ -311,6 +311,12 @@ function mensajeFinalizar(e) {
     const bajas = (e.datos.items ?? []).map((i) => nombreItem(i));
     return 'Estos ítems están dados de baja: ' + bajas.join(', ') + '. Quitalos de la consulta para poder finalizar.';
   }
+  // Un intento anterior ya descontó otra cantidad de esos ítems: hay que volver a esa cantidad.
+  if (e.estado === 409 && e.datos?.motivo === 'OPERACION_DISTINTA') {
+    const items = (e.datos.items ?? []).map((i) => `${nombreItem(i)} (ya se descontaron ${i.cantidad_aplicada})`);
+    return 'Un intento anterior de finalizar ya descontó del stock otra cantidad de: ' + items.join(', ')
+      + '. Volvé a dejar esa cantidad y finalizá de nuevo.';
+  }
   if (e.estado === 409 && Array.isArray(e.datos?.items)) {
     const faltan = e.datos.items.map((i) => `${nombreItem(i)} (stock disponible: ${i.stock})`);
     return 'No hay stock suficiente de: ' + faltan.join(', ') + '.';
@@ -340,7 +346,8 @@ function nombreItem(i) {
 function mostrarFactura(f) {
   if (!f) return;
   const p = document.getElementById('factura');
-  p.textContent = `Factura ${f.numero} · ${textoEstadoFactura(f.estado)}`;
+  p.textContent = `Factura ${f.numero} · ${textoEstadoFactura(f.estado)} · `;
+  p.append(el('a', 'Ver factura', { href: '/cliente/factura.html?consulta=' + consulta.id }));
   p.hidden = false;
 }
 

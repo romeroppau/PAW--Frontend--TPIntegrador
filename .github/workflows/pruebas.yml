@@ -45,9 +45,8 @@ jobs:
 
       # Validador oficial del W3C (Nu Html Checker) sobre todos los .html.
       # Por ahora solo avisa: queda un error conocido (el <img> sin src de catalogo/producto.html).
-      # Cuando las páginas pasen el validador, borrar "continue-on-error" para que también bloquee.
+      # Si alguna página tiene errores de HTML, el chequeo falla y no se puede mergear.
       - name: Validador del W3C
-        continue-on-error: true
         run: |
           docker run --rm -v "$PWD:/src:ro" ghcr.io/validator/validator:latest \
             vnu --errors-only --skip-non-html /src
