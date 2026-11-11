@@ -119,7 +119,24 @@ function fila(p) {
       estado.textContent = e.datos?.campos?.cantidad ?? e.datos?.error ?? 'No se pudo cargar el stock.';
     }
   });
-  acc.append(f);
+  // A un producto dado de baja no se le carga stock (la API responde 409): solo se reactiva.
+  if (p.activo) acc.append(f);
+
+  // --- Reactivar: deshace la baja y el producto vuelve a la tienda con su stock e historial ---
+  if (!p.activo) {
+    const reactivar = el('button', 'Reactivar', {
+      type: 'button', class: 'boton boton-borde boton-chico', 'aria-label': 'Reactivar ' + p.nombre
+    });
+    reactivar.addEventListener('click', async () => {
+      try {
+        await api(`${base}/${p.id}/reactivar`, { metodo: 'POST' });
+        listado();
+      } catch {
+        estado.textContent = 'No se pudo reactivar el producto.';
+      }
+    });
+    acc.append(reactivar);
+  }
 
   // --- Baja lógica: solo para productos activos ---
   if (p.activo) {

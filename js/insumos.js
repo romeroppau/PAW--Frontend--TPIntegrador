@@ -76,9 +76,15 @@ function fila(insumo) {
   // Cargar, retirar y dar de baja: solo para insumos activos.
   // El error de cargar o retirar va al final de la celda, en su propia línea (no adentro del
   // formulario), así los botones no se mueven cuando aparece. role="alert": se anuncia solo.
+  // Un insumo dado de baja solo se puede reactivar.
+  const error = el('span', '', { class: 'campo-error', role: 'alert' });
   if (insumo.activo) {
-    const error = el('span', '', { class: 'campo-error', role: 'alert' });
-    acciones.append(formularioStock(insumo, tr, error), botonBaja(insumo), error);
+    acciones.append(formularioStock(insumo, tr, error));
+    // Con stock bajo se puede marcar que ya se pidió al proveedor (o desmarcarlo).
+    if (insumo.stock_bajo) acciones.append(botonPedido(insumo, tr, error));
+    acciones.append(botonBaja(insumo), error);
+  } else {
+    acciones.append(botonReactivar(insumo, error), error);
   }
 
   tr.append(acciones);
@@ -93,7 +99,10 @@ function celdaEstado(insumo) {
   }
 
   const td = el('td');
-  if (insumo.estado === 'EN_FALTA') {
+  if (insumo.estado === 'YA_PEDIDO') {
+    // Ya se pidió al proveedor: el faltante está resuelto, se muestra aparte del "Stock bajo".
+    td.append(el('span', textoEstadoInsumo(insumo.estado), { class: 'insignia insignia-pedido' }));
+  } else if (insumo.estado === 'EN_FALTA') {
     td.append(el('span', textoEstadoInsumo(insumo.estado), { class: 'insignia insignia-falta' }));
   } else if (insumo.stock_bajo) {
     td.append(el('span', 'Stock bajo', { class: 'insignia insignia-bajo' }));
@@ -139,6 +148,43 @@ function formularioStock(insumo, tr, error) {
     }
   });
   return form;
+}
+
+// "Ya pedido": POST .../{id}/pedido lo marca y DELETE lo desmarca. Responde { id, stock, estado, stock_bajo }.
+// Al cargar stock (llegó el pedido) la API lo vuelve a DISPONIBLE sola.
+function botonPedido(insumo, tr, error) {
+  const pedido = insumo.estado === 'YA_PEDIDO';
+  const boton = el('button', pedido ? 'Quitar "Ya pedido"' : 'Marcar "Ya pedido"', {
+    type: 'button', class: 'boton boton-borde boton-chico',
+    'aria-label': (pedido ? 'Quitar "Ya pedido" de ' : 'Marcar "Ya pedido" ') + insumo.nombre
+  });
+  boton.addEventListener('click', async () => {
+    error.textContent = '';
+    try {
+      const nuevo = await api(`${base}/${insumo.id}/pedido`, { metodo: pedido ? 'DELETE' : 'POST' });
+      tr.replaceWith(fila({ ...insumo, ...nuevo }));
+    } catch (e) {
+      error.textContent = e.datos?.error ?? 'No se pudo cambiar el estado';
+    }
+  });
+  return boton;
+}
+
+// Deshace la baja: el insumo vuelve con su stock y su historial.
+function botonReactivar(insumo, error) {
+  const boton = el('button', 'Reactivar', {
+    type: 'button', class: 'boton boton-borde boton-chico', 'aria-label': 'Reactivar ' + insumo.nombre
+  });
+  boton.addEventListener('click', async () => {
+    error.textContent = '';
+    try {
+      await api(`${base}/${insumo.id}/reactivar`, { metodo: 'POST' });
+      listado();
+    } catch (e) {
+      error.textContent = e.datos?.error ?? 'No se pudo reactivar el insumo';
+    }
+  });
+  return boton;
 }
 
 // Baja lógica, con confirmación.

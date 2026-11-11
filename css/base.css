@@ -236,6 +236,29 @@ form .boton + .boton { margin-left: .5rem; }
 .resumen .total th, .resumen .total td { font-weight: 700; }
 .historial-lista { display: grid; gap: 1rem; }
 .historial-factura { font-weight: 700; }
+.historial-factura a { font-weight: 600; margin-left: .25rem; }
+.lista-mascotas { display: grid; gap: .5rem; padding-left: 1.2rem; }
+
+/* Factura de la consulta (cliente/factura.html) */
+.factura { display: grid; gap: 1.25rem; }
+.factura-encabezado { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: .5rem 1rem; }
+.factura-encabezado h1 { margin: .2rem 0 0; }
+.factura-datos { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: .75rem 1.5rem; margin: 0; }
+.factura-datos dt { font-weight: 700; color: var(--tinta-suave); font-size: .9rem; }
+.factura-datos dd { margin: .1rem 0 0; }
+.factura-diagnostico { grid-column: 1 / -1; }
+.factura-detalle th, .factura-detalle td { padding: .5rem .6rem; text-align: left; border-bottom: 1px solid #e3e8e5; }
+.factura-detalle .numero { text-align: right; white-space: nowrap; }
+.factura-detalle tfoot th { text-align: right; font-weight: 600; background: transparent; }
+.factura-detalle .total th, .factura-detalle .total td { font-weight: 700; font-size: 1.1rem; border-bottom: 0; }
+
+/* Al imprimir la factura solo sale la factura: sin encabezado, pie, menú ni botones. */
+@media print {
+  /* layout.js cambia los marcadores por <header class="encabezado"> y <footer class="pie">. */
+  .encabezado, .pie, .saltar, .no-imprimir, #estado { display: none !important; }
+  body { background: #fff; }
+  .factura { box-shadow: none; border: 0; padding: 0; }
+}
 
 
 /* Insumos (rol 2): estado con color en el listado, filas dadas de baja y ayudas del formulario.
@@ -243,6 +266,7 @@ form .boton + .boton { margin-left: .5rem; }
 .insignia { display: inline-block; padding: .15rem .6rem; border-radius: 999px; font-size: .9rem; font-weight: 700; background: #e3efe9; color: var(--pino); }
 .insignia-falta { background: #fbe4e2; color: var(--error); }
 .insignia-bajo { background: #fff1c7; color: #7a5300; }
+.insignia-pedido { background: #e1ecf7; color: #1d4f7a; }
 .fila-baja td { color: var(--tinta-suave); }
 .ayuda { display: block; font-size: .9rem; color: var(--tinta-suave); }
 .campo-selector { max-width: 24rem; }
