@@ -2,8 +2,8 @@
  * publicaciones-rescatista.js — Mis publicaciones (rescatista/publicaciones.html), rol 3, Entrega 5
  *
  * El rescatista aprobado publica a una mascota que tiene a cargo, ve el estado de sus publicaciones
- * (y el motivo si la veterinaria la rechazó), revisa los postulantes, elige al adoptante y puede
- * cancelar la adopción. Si su cuenta está pendiente o rechazada, solo ve el aviso.
+ * (y el motivo si la veterinaria la rechazó), la edita o la da de baja, revisa los postulantes, elige al
+ * adoptante y puede cancelar la adopción. Si su cuenta está pendiente o rechazada, solo ve el aviso.
  * Contrato: docs/api/contrato-adopciones.md (repo Adopciones). Todo texto de la API va con el().
  */
 import { api } from './api.js';
@@ -38,10 +38,14 @@ if (usuario.estado_validacion === 'APROBADO') {
 
 /* ---------- Mis publicaciones ---------- */
 
+// Cambia en cada carga: así, después de cambiar la foto, el navegador no muestra la vieja.
+let versionFotos = Date.now();
+
 async function cargar() {
   estado.textContent = 'Cargando…';
   try {
     const { publicaciones } = await api('/api/adopciones/mis-publicaciones');
+    versionFotos = Date.now();
     document.getElementById('publicaciones').replaceChildren(...publicaciones.map(tarjeta));
     estado.textContent = publicaciones.length ? '' : 'Todavía no publicaste ningún animal.';
   } catch {
@@ -53,7 +57,7 @@ function tarjeta(publicacion) {
   const { mascota, adopcion } = publicacion;
   const articulo = el('article', '', { class: 'tarjeta tarjeta-adopcion' });
   articulo.append(el('img', '', {
-    src: `/api/adopciones/publicaciones/${publicacion.id}/foto`,
+    src: `/api/adopciones/publicaciones/${publicacion.id}/foto?v=${versionFotos}`,
     alt: 'Foto de ' + mascota.nombre, width: '400', height: '300', loading: 'lazy'
   }));
 
@@ -61,7 +65,7 @@ function tarjeta(publicacion) {
   const estados = el('p', '', { class: 'acciones' });
   estados.append(insignia(publicacion.estado_moderacion));
   if (adopcion) estados.append(insignia(adopcion.estado));
-  if (!publicacion.activa && !adopcion) estados.append(insignia('CANCELADA'));
+  if (!publicacion.activa && !adopcion) estados.append(insignia('BAJA'));
 
   cuerpo.append(
     el('h2', mascota.nombre),
@@ -71,11 +75,13 @@ function tarjeta(publicacion) {
   );
 
   if (publicacion.motivo_rechazo) {
-    cuerpo.append(el('p', 'Motivo del rechazo: ' + publicacion.motivo_rechazo, { class: 'mensaje mensaje-error' }));
+    cuerpo.append(el('p', `Motivo del rechazo: ${publicacion.motivo_rechazo}. Editala y vuelve a revisión.`, { class: 'mensaje mensaje-error' }));
   }
 
+  const acciones = el('div', '', { class: 'acciones' });
+  const error = el('span', '', { class: 'campo-error', role: 'alert' });
+
   if (adopcion) {
-    const acciones = el('div', '', { class: 'acciones' });
     const ver = el('button', `Postulantes (${adopcion.postulaciones_pendientes ?? 0} sin revisar)`, { type: 'button', class: 'boton boton-chico' });
     ver.addEventListener('click', () => verPostulantes(adopcion.id, mascota.nombre));
     acciones.append(ver);
@@ -85,7 +91,18 @@ function tarjeta(publicacion) {
       cancelar.addEventListener('click', () => cancelarAdopcion(adopcion.id, mascota.nombre, error));
       acciones.append(cancelar);
     }
-    const error = el('span', '', { class: 'campo-error', role: 'alert' });
+  }
+
+  // Editar y dar de baja: solo las publicaciones activas.
+  if (publicacion.activa) {
+    const editar = el('button', 'Editar', { type: 'button', class: 'boton boton-borde boton-chico', 'aria-label': 'Editar la publicación de ' + mascota.nombre });
+    editar.addEventListener('click', () => abrirFormulario(publicacion));
+    const baja = el('button', 'Dar de baja', { type: 'button', class: 'boton boton-borde boton-chico', 'aria-label': 'Dar de baja la publicación de ' + mascota.nombre });
+    baja.addEventListener('click', () => darDeBaja(publicacion, error));
+    acciones.append(editar, baja);
+  }
+
+  if (acciones.children.length) {
     acciones.append(error);
     cuerpo.append(acciones);
   }
@@ -102,6 +119,23 @@ async function cancelarAdopcion(id, nombre, error) {
     cargar();
   } catch (e) {
     error.textContent = mensajeDeError(e, 'No se pudo cancelar la adopción.');
+  }
+}
+
+async function darDeBaja(publicacion, error) {
+  const nombre = publicacion.mascota.nombre;
+  const enCurso = publicacion.adopcion && !TERMINADAS.includes(publicacion.adopcion.estado);
+  const pregunta = `¿Dar de baja la publicación de ${nombre}?`
+    + (enCurso ? ' Su adopción se cancela y las postulaciones quedan rechazadas.' : '')
+    + ` ${nombre} sigue a tu cargo y la podés volver a publicar.`;
+  if (!await confirmar(pregunta, { aceptar: 'Dar de baja', peligro: true })) return;
+  try {
+    await api(`/api/adopciones/publicaciones/${publicacion.id}`, { metodo: 'DELETE' });
+    seccionPostulantes.hidden = true;
+    seccionForm.hidden = true;
+    cargar();
+  } catch (e) {
+    error.textContent = mensajeDeError(e, 'No se pudo dar de baja la publicación.');
   }
 }
 
@@ -157,37 +191,57 @@ function filaPostulante(postulacion, adopcion, nombre) {
   return tr;
 }
 
-/* ---------- Nueva publicación ---------- */
+/* ---------- Nueva publicación y edición ---------- */
 
-async function abrirFormulario() {
+// Publicación que se está editando (null = una nueva). Al editar no se cambia la mascota y la foto
+// es opcional: si no se elige otra, queda la actual.
+let editando = null;
+
+async function abrirFormulario(publicacion = null) {
+  editando = publicacion;
   form.reset();
   limpiarErrores(form);
   const select = form.elements.mascota_id;
-  select.replaceChildren(el('option', 'Elegí una de tus mascotas', { value: '' }));
-  try {
-    const { mascotas } = await api('/api/pacientes/mascotas');
-    for (const m of mascotas) select.append(el('option', `${m.nombre} (${textoEspecieMascota(m.especie)})`, { value: m.id }));
-  } catch {
-    mostrarErrores(form, {}, 'No se pudieron cargar tus mascotas.');
+  document.getElementById('campo-mascota').hidden = Boolean(publicacion);
+  document.getElementById('ayuda-foto-edicion').hidden = !publicacion;
+  form.elements.foto.required = !publicacion;
+  document.getElementById('publicar').textContent = publicacion ? 'Guardar cambios' : 'Publicar';
+  document.getElementById('titulo-form').textContent = publicacion
+    ? 'Editar la publicación de ' + publicacion.mascota.nombre
+    : 'Nueva publicación';
+
+  if (publicacion) {
+    form.elements.titulo.value = publicacion.titulo;
+    form.elements.descripcion.value = publicacion.descripcion;
+  } else {
+    select.replaceChildren(el('option', 'Elegí una de tus mascotas', { value: '' }));
+    try {
+      const { mascotas } = await api('/api/pacientes/mascotas');
+      for (const m of mascotas) select.append(el('option', `${m.nombre} (${textoEspecieMascota(m.especie)})`, { value: m.id }));
+    } catch {
+      mostrarErrores(form, {}, 'No se pudieron cargar tus mascotas.');
+    }
   }
+
   seccionForm.hidden = false;
-  select.focus();
+  seccionForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  (publicacion ? form.elements.titulo : select).focus({ preventScroll: true });
 }
 
-document.getElementById('nueva').addEventListener('click', abrirFormulario);
-document.getElementById('cancelar').addEventListener('click', () => { seccionForm.hidden = true; });
+document.getElementById('nueva').addEventListener('click', () => abrirFormulario());
+document.getElementById('cancelar').addEventListener('click', () => { seccionForm.hidden = true; editando = null; });
 
 form.addEventListener('submit', async (ev) => {
   ev.preventDefault();
   limpiarErrores(form);
   const publicar = document.getElementById('publicar');
-  publicar.disabled = true;
+  publicar.disabled = true;                       // un doble clic no publica dos veces
 
   const archivo = form.elements.foto.files[0];
   const errores = {};
-  if (!archivo) errores.foto = 'La foto es obligatoria';
-  else if (!TIPOS_FOTO.includes(archivo.type)) errores.foto = 'La foto debe ser PNG, JPG o WEBP';
-  else if (archivo.size > TAMANIO_MAXIMO_FOTO) errores.foto = 'La foto no puede superar 1 MB';
+  if (!archivo && !editando) errores.foto = 'La foto es obligatoria';
+  else if (archivo && !TIPOS_FOTO.includes(archivo.type)) errores.foto = 'La foto debe ser PNG, JPG o WEBP';
+  else if (archivo && archivo.size > TAMANIO_MAXIMO_FOTO) errores.foto = 'La foto no puede superar 1 MB';
   if (Object.keys(errores).length) {
     mostrarErrores(form, errores);
     publicar.disabled = false;
@@ -195,18 +249,24 @@ form.addEventListener('submit', async (ev) => {
   }
 
   const cuerpo = {
-    mascota_id: Number(form.elements.mascota_id.value) || null,
     titulo: form.elements.titulo.value.trim(),
-    descripcion: form.elements.descripcion.value.trim(),
-    foto: await leerComoDataUrl(archivo)
+    descripcion: form.elements.descripcion.value.trim()
   };
+  if (archivo) cuerpo.foto = await leerComoDataUrl(archivo);
+  if (!editando) cuerpo.mascota_id = Number(form.elements.mascota_id.value) || null;
 
   try {
-    await api('/api/adopciones/publicaciones', { metodo: 'POST', cuerpo });
+    if (editando) {
+      await api(`/api/adopciones/publicaciones/${editando.id}`, { metodo: 'PUT', cuerpo });
+    } else {
+      await api('/api/adopciones/publicaciones', { metodo: 'POST', cuerpo });
+    }
     seccionForm.hidden = true;
+    editando = null;
     cargar();
   } catch (e) {
-    mostrarErrores(form, e?.datos?.campos ?? {}, mensajeDeError(e, 'No se pudo publicar. Probá de nuevo.'));
+    const general = editando ? 'No se pudo guardar. Probá de nuevo.' : 'No se pudo publicar. Probá de nuevo.';
+    mostrarErrores(form, e?.datos?.campos ?? {}, mensajeDeError(e, general));
   } finally {
     publicar.disabled = false;
   }
