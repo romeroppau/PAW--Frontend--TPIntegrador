@@ -12,7 +12,8 @@
 </head>
 <!-- Publicaciones del rescatista (Entrega 5, rol 3).
      El rescatista aprobado publica a las mascotas que tiene a cargo (las carga en "Mis mascotas"), ve el
-     estado de cada publicación, los postulantes, elige al adoptante y puede cancelar la adopción.
+     estado de cada publicación, la edita o la da de baja, ve los postulantes, elige al adoptante y puede
+     cancelar la adopción.
      Todo con fetch (js/publicaciones-rescatista.js). -->
 <body data-rol="RESCATISTA">
   <a class="saltar" href="#contenido">Saltar al contenido</a>
@@ -35,7 +36,7 @@
       <section id="seccion-form" class="tarjeta bloque contenedor-form" aria-labelledby="titulo-form" hidden>
         <h2 id="titulo-form">Nueva publicación</h2>
         <form id="form-publicacion" novalidate>
-          <div class="campo">
+          <div class="campo" id="campo-mascota">
             <label for="mascota_id">Mascota</label>
             <select id="mascota_id" name="mascota_id" required>
               <option value="">Elegí una de tus mascotas</option>
@@ -56,7 +57,7 @@
           <div class="campo">
             <label for="foto">Foto</label>
             <input id="foto" name="foto" type="file" accept="image/png,image/jpeg,image/webp" required aria-describedby="ayuda-foto error-foto">
-            <p class="campo-ayuda" id="ayuda-foto">PNG, JPG o WEBP de hasta 1 MB.</p>
+            <p class="campo-ayuda" id="ayuda-foto">PNG, JPG o WEBP de hasta 1 MB.<span id="ayuda-foto-edicion" hidden> Si no elegís otra, queda la actual.</span></p>
             <span class="campo-error" id="error-foto"></span>
           </div>
           <p class="campo-error" id="error-general" role="alert" hidden></p>

@@ -13,6 +13,7 @@ const ESTADOS = {
   CHEQUEO_PENDIENTE: ['Chequeo pendiente', 'insignia-espera'],
   FINALIZADA: ['Adoptado', 'insignia-listo'],
   CANCELADA: ['Cancelada', 'insignia-anulado'],
+  BAJA: ['Dada de baja', 'insignia-anulado'],
   // Postulación
   ELEGIDA: ['Elegida', 'insignia-listo'],
   // Rescatista
