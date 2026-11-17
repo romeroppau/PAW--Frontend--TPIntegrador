@@ -14,8 +14,10 @@ import { exigirRol } from './auth.js';
 import { confirmar, el, limpiarErrores, mostrarErrores } from './ui.js';
 import { textoEspecieMascota } from './etiquetas.js';
 
-const usuario = await exigirRol(['CLIENTE', 'VETERINARIO']);
-const esCliente = usuario.rol === 'CLIENTE';
+const usuario = await exigirRol(['CLIENTE', 'VETERINARIO', 'RESCATISTA']);
+// El rescatista (Entrega 5) maneja sus mascotas igual que un cliente, pero sin calendario ni historial.
+const esRescatista = usuario.rol === 'RESCATISTA';
+const esCliente = usuario.rol === 'CLIENTE' || esRescatista;
 
 const API = '/api/pacientes/mascotas';
 const estado = document.getElementById('estado');
@@ -109,10 +111,12 @@ function fila(mascota) {
   // Las acciones van en un <div>: con "acciones" (display: flex) en el <td>, la celda no se alinearía.
   const celda = el('td');
   const acciones = el('div', '', { class: 'acciones' });
-  acciones.append(
-    el('a', 'Calendario', { href: '/cliente/calendario.html?mascota=' + mascota.id, 'aria-label': 'Calendario sanitario de ' + mascota.nombre }),
-    el('a', 'Historial', { href: '/cliente/historial.html?mascota=' + mascota.id, 'aria-label': 'Historial clínico de ' + mascota.nombre })
-  );
+  if (!esRescatista) {
+    acciones.append(
+      el('a', 'Calendario', { href: '/cliente/calendario.html?mascota=' + mascota.id, 'aria-label': 'Calendario sanitario de ' + mascota.nombre }),
+      el('a', 'Historial', { href: '/cliente/historial.html?mascota=' + mascota.id, 'aria-label': 'Historial clínico de ' + mascota.nombre })
+    );
+  }
   if (esCliente) acciones.append(botonEditar(mascota), botonBaja(mascota, celda));
   celda.append(acciones, el('span', '', { class: 'campo-error', role: 'alert' }));
   tr.append(celda);

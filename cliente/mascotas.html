@@ -15,8 +15,9 @@
        - los scripts menu.js, guardia-panel.js y auth.js: el <main> queda oculto (hidden) hasta que
          guardia-panel.js confirma el rol, y el menú y el botón "Salir" los arma auth.js.
      El cliente ve sus mascotas y las da de alta, edita y da de baja. El veterinario ve todas (con su
-     dueño y un buscador) y no las modifica. Todo con fetch, sin recargar la página. -->
-<body data-rol="CLIENTE,VETERINARIO">
+     dueño y un buscador) y no las modifica. El rescatista (Entrega 5) maneja como el cliente los
+     animales que tiene a cargo, sin calendario ni historial. Todo con fetch, sin recargar la página. -->
+<body data-rol="CLIENTE,VETERINARIO,RESCATISTA">
   <a class="saltar" href="#contenido">Saltar al contenido</a>
   <div id="encabezado-sitio"></div>
   <script src="/js/layout.js"></script>

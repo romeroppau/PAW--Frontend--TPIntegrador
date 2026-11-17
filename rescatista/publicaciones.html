@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mis publicaciones | HuellaVet</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Nunito+Sans:wght@400;600;700&display=swap">
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/adopciones.css">
+</head>
+<!-- Publicaciones del rescatista (Entrega 5, rol 3).
+     El rescatista aprobado publica a las mascotas que tiene a cargo (las carga en "Mis mascotas"), ve el
+     estado de cada publicación, los postulantes, elige al adoptante y puede cancelar la adopción.
+     Todo con fetch (js/publicaciones-rescatista.js). -->
+<body data-rol="RESCATISTA">
+  <a class="saltar" href="#contenido">Saltar al contenido</a>
+  <div id="encabezado-sitio"></div>
+  <script src="/js/layout.js"></script>
+  <main id="contenido" class="seccion" hidden>
+    <div class="contenedor">
+      <p><a href="/paneles/panel-rescatista.html">&larr; Volver a mi panel</a></p>
+      <div class="barra-titulo">
+        <h1>Mis publicaciones</h1>
+        <div class="acciones">
+          <a class="boton boton-borde" href="/cliente/mascotas.html">Mis mascotas</a>
+          <button type="button" class="boton" id="nueva" hidden>Nueva publicación</button>
+        </div>
+      </div>
+
+      <p class="mensaje aviso-cuenta" id="aviso-cuenta" role="status" hidden></p>
+      <p class="estado" id="estado" role="status">Cargando…</p>
+
+      <section id="seccion-form" class="tarjeta bloque contenedor-form" aria-labelledby="titulo-form" hidden>
+        <h2 id="titulo-form">Nueva publicación</h2>
+        <form id="form-publicacion" novalidate>
+          <div class="campo">
+            <label for="mascota_id">Mascota</label>
+            <select id="mascota_id" name="mascota_id" required>
+              <option value="">Elegí una de tus mascotas</option>
+            </select>
+            <p class="campo-ayuda">Si no aparece, cargala primero en <a href="/cliente/mascotas.html">Mis mascotas</a>.</p>
+            <span class="campo-error" id="error-mascota_id"></span>
+          </div>
+          <div class="campo">
+            <label for="titulo">Título</label>
+            <input id="titulo" name="titulo" type="text" minlength="3" maxlength="120" required autocomplete="off" placeholder="Canela busca familia">
+            <span class="campo-error" id="error-titulo"></span>
+          </div>
+          <div class="campo">
+            <label for="descripcion">Descripción</label>
+            <textarea id="descripcion" name="descripcion" rows="4" minlength="10" maxlength="2000" required placeholder="Cómo es, qué cuidados necesita…"></textarea>
+            <span class="campo-error" id="error-descripcion"></span>
+          </div>
+          <div class="campo">
+            <label for="foto">Foto</label>
+            <input id="foto" name="foto" type="file" accept="image/png,image/jpeg,image/webp" required aria-describedby="ayuda-foto error-foto">
+            <p class="campo-ayuda" id="ayuda-foto">PNG, JPG o WEBP de hasta 1 MB.</p>
+            <span class="campo-error" id="error-foto"></span>
+          </div>
+          <p class="campo-error" id="error-general" role="alert" hidden></p>
+          <button type="submit" class="boton" id="publicar">Publicar</button>
+          <button type="button" class="boton boton-borde" id="cancelar">Cancelar</button>
+        </form>
+      </section>
+
+      <div class="grilla bloque" id="publicaciones"></div>
+
+      <section id="seccion-postulantes" class="bloque seccion-adopciones" aria-labelledby="titulo-postulantes" hidden>
+        <h2 id="titulo-postulantes">Postulantes</h2>
+        <p class="estado" id="estado-postulantes" role="status"></p>
+        <div class="tabla-scroll" id="tabla-postulantes" hidden>
+          <table>
+            <caption class="solo-lectores">Postulantes de la adopción</caption>
+            <thead><tr><th scope="col">Cliente</th><th scope="col">Vivienda</th><th scope="col">Otras mascotas</th><th scope="col">Tiempo</th><th scope="col">Estado</th><th scope="col">Acciones</th></tr></thead>
+            <tbody id="filas-postulantes"></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </main>
+  <div id="pie-sitio"></div>
+
+  <script type="module" src="/js/menu.js"></script>
+  <script type="module" src="/js/guardia-panel.js"></script>
+  <script type="module" src="/js/auth.js"></script>
+  <script type="module" src="/js/publicaciones-rescatista.js"></script>
+</body>
+</html>
