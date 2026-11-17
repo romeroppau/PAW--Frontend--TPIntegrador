@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Animales rescatados que buscan familia en HuellaVet.">
+  <title>Adopciones | HuellaVet</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Nunito+Sans:wght@400;600;700&display=swap">
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/adopciones.css">
+</head>
+<!-- Adopciones (Entrega 5, rol 3). Pública: cualquiera ve los animales disponibles.
+     El cliente con sesión se postula desde acá y ve el estado de sus postulaciones.
+     Todo con fetch (js/adopciones.js); contrato en docs/api/contrato-adopciones.md (repo Adopciones). -->
+<body>
+  <a class="saltar" href="#contenido">Saltar al contenido</a>
+  <div id="encabezado-sitio"></div>
+  <script src="/js/layout.js"></script>
+  <main id="contenido" class="seccion">
+    <div class="contenedor">
+      <p class="etiqueta">Adopciones responsables</p>
+      <div class="barra-titulo">
+        <h1>Animales que buscan familia</h1>
+      </div>
+      <p>Rescatistas de la zona publican a los animales que tienen a su cargo. Cada publicación la revisa
+        nuestra veterinaria, y antes de la entrega el animal pasa por un chequeo en HuellaVet.</p>
+      <p id="invitacion" class="ayuda">Para postularte, <a href="/login/login.html">iniciá sesión</a> con tu cuenta de cliente.</p>
+
+      <div class="filtro-especie" role="group" aria-label="Filtrar por especie">
+        <button type="button" class="boton boton-borde boton-chico" data-especie="" aria-pressed="true">Todos</button>
+        <button type="button" class="boton boton-borde boton-chico" data-especie="PERRO" aria-pressed="false">Perros</button>
+        <button type="button" class="boton boton-borde boton-chico" data-especie="GATO" aria-pressed="false">Gatos</button>
+        <button type="button" class="boton boton-borde boton-chico" data-especie="OTRO" aria-pressed="false">Otros</button>
+      </div>
+
+      <p class="estado" id="estado" role="status">Cargando…</p>
+      <div class="grilla" id="publicaciones"></div>
+
+      <section id="seccion-postulacion" class="tarjeta bloque contenedor-form" aria-labelledby="titulo-postulacion" hidden>
+        <h2 id="titulo-postulacion">Postularme</h2>
+        <form id="form-postulacion" novalidate>
+          <div class="campo">
+            <label for="tipo_vivienda">¿Dónde vivís?</label>
+            <input id="tipo_vivienda" name="tipo_vivienda" type="text" maxlength="60" required placeholder="Casa con patio, departamento…" autocomplete="off">
+            <span class="campo-error" id="error-tipo_vivienda"></span>
+          </div>
+          <div class="campo">
+            <label for="otras_mascotas">¿Tenés otras mascotas?</label>
+            <input id="otras_mascotas" name="otras_mascotas" type="text" maxlength="255" required placeholder="Ninguna, un perro…" autocomplete="off">
+            <span class="campo-error" id="error-otras_mascotas"></span>
+          </div>
+          <div class="campo">
+            <label for="tiempo_disponible">¿Cuánto tiempo le podés dedicar?</label>
+            <input id="tiempo_disponible" name="tiempo_disponible" type="text" maxlength="120" required placeholder="Trabajo desde casa, toda la tarde…" autocomplete="off">
+            <span class="campo-error" id="error-tiempo_disponible"></span>
+          </div>
+          <p class="campo-error" id="error-general" role="alert" hidden></p>
+          <button type="submit" class="boton" id="enviar">Enviar postulación</button>
+          <button type="button" class="boton boton-borde" id="cancelar">Cancelar</button>
+        </form>
+      </section>
+
+      <p class="mensaje mensaje-ok bloque" id="aviso" role="status" hidden></p>
+
+      <section id="seccion-mias" class="bloque seccion-adopciones" aria-labelledby="titulo-mias" hidden>
+        <h2 id="titulo-mias">Mis postulaciones</h2>
+        <p class="estado" id="estado-mias" role="status"></p>
+        <div class="tabla-scroll" id="tabla-mias" hidden>
+          <table>
+            <caption class="solo-lectores">Mis postulaciones</caption>
+            <thead><tr><th scope="col">Animal</th><th scope="col">Fecha</th><th scope="col">Estado</th></tr></thead>
+            <tbody id="filas-mias"></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </main>
+  <div id="pie-sitio"></div>
+
+  <script type="module" src="/js/menu.js"></script>
+  <script type="module" src="/js/auth.js"></script>
+  <script type="module" src="/js/adopciones.js"></script>
+</body>
+</html>

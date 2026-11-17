@@ -1,0 +1,26 @@
+/* Pantallas de adopciones (Entrega 5, rol 3). Los valores de marca vienen de base.css. */
+
+/* auto-fill (no auto-fit): con un solo animal, la tarjeta no ocupa todo el ancho. */
+.grilla:has(> .tarjeta-adopcion) { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+.barra-titulo + .seccion-adopciones { margin-top: 1.5rem; }
+.tarjeta-adopcion { display: flex; flex-direction: column; gap: .5rem; padding: 0; overflow: hidden; }
+.tarjeta-adopcion img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; background: var(--menta); }
+.tarjeta-adopcion .cuerpo { display: flex; flex-direction: column; gap: .5rem; padding: 0 1.25rem 1.25rem; flex: 1; }
+.tarjeta-adopcion h2, .tarjeta-adopcion h3 { margin: 0; font-size: 1.35rem; }
+.tarjeta-adopcion p { margin: 0; }
+.tarjeta-adopcion .datos { color: var(--tinta-suave); font-size: .95rem; }
+.tarjeta-adopcion .acciones { margin-top: auto; }
+
+.filtro-especie { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: 1.25rem; }
+.filtro-especie button[aria-pressed="true"] { background: var(--pino); color: var(--blanco); }
+
+.insignia-espera { background: #fff1c7; color: #7a5300; }
+.insignia-rechazo { background: #fbe4e2; color: var(--error); }
+.insignia-listo { background: #d7f0df; color: var(--ok); }
+
+.form-linea { display: flex; flex-wrap: wrap; gap: .5rem; align-items: flex-end; }
+.form-linea input { font: inherit; padding: .35rem .5rem; border: 2px solid var(--borde); border-radius: 8px; }
+.form-linea label { display: flex; flex-direction: column; font-size: .9rem; font-weight: 600; }
+
+.seccion-adopciones + .seccion-adopciones { margin-top: 2.5rem; }
+.aviso-cuenta { margin-bottom: 1.25rem; }

@@ -73,6 +73,7 @@ const ENLACES_POR_ROL = {
   VETERINARIO: [
     ['Panel', '/paneles/panel-administrador.html'],
     ['Agenda', '/panel/agenda.html'],
+    ['Adopciones y rescatistas', '/panel/adopciones.html'],
   ],
   CLIENTE: [
     ['Mi panel', '/paneles/panel-cliente.html'],
@@ -81,6 +82,8 @@ const ENLACES_POR_ROL = {
   ],
   RESCATISTA: [
     ['Mi panel', '/paneles/panel-rescatista.html'],
+    ['Mis mascotas', '/cliente/mascotas.html'],
+    ['Mis publicaciones', '/rescatista/publicaciones.html'],
   ],
 };
 

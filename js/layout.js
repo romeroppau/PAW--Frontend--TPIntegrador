@@ -29,7 +29,7 @@ const encabezado = `<header class="encabezado"><div class="contenedor encabezado
   <button type="button" class="menu-boton" id="menu-boton" aria-expanded="false" aria-controls="navegacion" aria-label="Abrir menú"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></svg></button>
   <nav id="navegacion" aria-label="Principal">
     <button type="button" class="menu-cerrar" id="menu-cerrar">&lsaquo; Volver</button>
-    <ul class="menu" id="menu"><li><a href="/catalogo/catalogo.html">Productos</a></li></ul>
+    <ul class="menu" id="menu"><li><a href="/catalogo/catalogo.html">Productos</a></li><li><a href="/adopciones/adopciones.html">Adopciones</a></li></ul>
     <div class="sesion" id="sesion"><a class="boton boton-borde" href="/login/login.html">Inicia sesión</a><a class="boton" href="/registros/registro.html">Registro</a></div>
   </nav></div></header>`;
 

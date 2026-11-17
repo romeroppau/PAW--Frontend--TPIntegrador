@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Adopciones y rescatistas | HuellaVet</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Nunito+Sans:wght@400;600;700&display=swap">
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/adopciones.css">
+</head>
+<!-- Adopciones de la veterinaria (Entrega 5, rol 3): validar rescatistas, moderar publicaciones,
+     programar el chequeo, completar y cancelar adopciones. Todo con fetch (js/adopciones-vet.js). -->
+<body data-rol="VETERINARIO">
+  <a class="saltar" href="#contenido">Saltar al contenido</a>
+  <div id="encabezado-sitio"></div>
+  <script src="/js/layout.js"></script>
+  <main id="contenido" class="seccion" hidden>
+    <div class="contenedor">
+      <p><a href="/paneles/panel-administrador.html">&larr; Volver al panel</a></p>
+      <div class="barra-titulo">
+        <h1>Adopciones y rescatistas</h1>
+      </div>
+
+      <section class="seccion-adopciones" id="rescatistas" aria-labelledby="titulo-rescatistas">
+        <h2 id="titulo-rescatistas">Rescatistas por aprobar</h2>
+        <p class="estado" id="estado-rescatistas" role="status">Cargando…</p>
+        <div class="tabla-scroll" id="tabla-rescatistas" hidden>
+          <table>
+            <caption class="solo-lectores">Rescatistas por aprobar</caption>
+            <thead><tr><th scope="col">Nombre</th><th scope="col">Organización</th><th scope="col">Contacto</th><th scope="col">Acciones</th></tr></thead>
+            <tbody id="filas-rescatistas"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="seccion-adopciones" id="moderacion" aria-labelledby="titulo-moderacion">
+        <h2 id="titulo-moderacion">Publicaciones por revisar</h2>
+        <p class="estado" id="estado-moderacion" role="status">Cargando…</p>
+        <div class="grilla" id="publicaciones"></div>
+      </section>
+
+      <section class="seccion-adopciones" id="en-curso" aria-labelledby="titulo-curso">
+        <h2 id="titulo-curso">Adopciones en curso</h2>
+        <p class="ayuda">Cuando el rescatista elige al adoptante, programá el chequeo. El turno aparece en la
+          <a href="/panel/agenda.html">agenda</a>: atendelo ese día como cualquier consulta y después completá la adopción.</p>
+        <p class="estado" id="estado-curso" role="status">Cargando…</p>
+        <div class="tabla-scroll" id="tabla-curso" hidden>
+          <table>
+            <caption class="solo-lectores">Adopciones en curso</caption>
+            <thead><tr><th scope="col">Animal</th><th scope="col">Estado</th><th scope="col">Adoptante</th><th scope="col">Chequeo</th><th scope="col">Acciones</th></tr></thead>
+            <tbody id="filas-curso"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="seccion-adopciones" id="finalizadas" aria-labelledby="titulo-finalizadas">
+        <h2 id="titulo-finalizadas">Adopciones finalizadas</h2>
+        <p class="estado" id="estado-finalizadas" role="status">Cargando…</p>
+        <div class="tabla-scroll" id="tabla-finalizadas" hidden>
+          <table>
+            <caption class="solo-lectores">Adopciones finalizadas</caption>
+            <thead><tr><th scope="col">Animal</th><th scope="col">Adoptante</th><th scope="col">Rescatista</th><th scope="col">Fecha</th></tr></thead>
+            <tbody id="filas-finalizadas"></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </main>
+  <div id="pie-sitio"></div>
+
+  <script type="module" src="/js/menu.js"></script>
+  <script type="module" src="/js/guardia-panel.js"></script>
+  <script type="module" src="/js/auth.js"></script>
+  <script type="module" src="/js/adopciones-vet.js"></script>
+</body>
+</html>
