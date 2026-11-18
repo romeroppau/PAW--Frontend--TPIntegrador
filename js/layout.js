@@ -45,3 +45,10 @@ document.getElementById('encabezado-sitio').outerHTML = encabezado;
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('pie-sitio').outerHTML = pie;
 });
+
+// Campana de notificaciones (solo se muestra con sesión).
+const estilosCampana = document.createElement('link');
+estilosCampana.rel = 'stylesheet';
+estilosCampana.href = '/css/notificaciones.css';
+document.head.append(estilosCampana);
+import('/js/notificaciones.js');
