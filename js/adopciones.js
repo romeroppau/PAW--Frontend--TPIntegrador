@@ -139,9 +139,15 @@ async function cargarMias() {
   }
 }
 
+const cargas = [cargar()];
 if (esCliente) {
   document.getElementById('seccion-mias').hidden = false;
-  cargarMias();
+  cargas.push(cargarMias());
 }
 
-cargar();
+// Desde el panel del cliente ("Mis postulaciones"): la sección se muestra recién con la sesión y
+// las tarjetas la corren hacia abajo al cargarse, así que se baja hasta ella cuando todo está listo.
+if (esCliente && location.hash === '#seccion-mias') {
+  await Promise.all(cargas);
+  document.getElementById('seccion-mias').scrollIntoView();
+}

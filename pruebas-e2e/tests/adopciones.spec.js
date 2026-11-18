@@ -120,6 +120,19 @@ test('si ya se postuló, el aviso del servidor se ve en el formulario', async ({
   await expect(page.locator('#error-general')).toHaveText('Ya te postulaste a esta adopción');
 });
 
+test('desde su panel, el cliente llega a las adopciones y a sus postulaciones; Huellitas ya no aparece', async ({ page }) => {
+  await simularSesion(page, CLIENTE);
+  await page.route(/\/api\/adopciones\/publicaciones(\?.*)?$/, (route) => responderJson(route, { publicaciones: [publicacion(1, 'Pipa')] }));
+  await page.route('**/api/adopciones/mis-postulaciones', (route) => responderJson(route, { postulaciones: [postulacion(7, 'Cliente Dos')] }));
+
+  await page.goto('/paneles/panel-cliente.html');
+  await expect(page.getByText('Huellitas')).toHaveCount(0);
+  await page.locator('#adopcion').getByRole('link', { name: 'Mis postulaciones' }).click();
+  await expect(page).toHaveURL(/\/adopciones\/adopciones\.html#seccion-mias$/);
+  await expect(page.locator('#filas-mias tr')).toContainText(['Pipa']);
+  await expect(page.locator('#seccion-mias')).toBeInViewport();
+});
+
 /* ---------- Rescatista ---------- */
 
 test('una rescatista pendiente ve el aviso y no puede publicar', async ({ page }) => {
