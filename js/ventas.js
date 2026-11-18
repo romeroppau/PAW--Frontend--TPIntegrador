@@ -94,7 +94,7 @@ function crearFila(pedido) {
     const hoy = pedido.retirar_hasta === hoyArgentina();
     fila.append(el('td', diaConNombre(pedido.retirar_hasta) + (hoy ? ' (hoy es el último día)' : ''), hoy ? { class: 'ultimo-dia' } : {}));
     const accion = el('td');
-    const boton = el('button', 'Entregado', { type: 'button', class: 'boton boton-chico', 'aria-label': `Marcar el pedido ${pedido.numero} como entregado` });
+    const boton = el('button', 'Marcar como entregado', { type: 'button', class: 'boton boton-chico', 'aria-label': `Marcar el pedido ${pedido.numero} como entregado` });
     boton.addEventListener('click', () => marcarEntregado(pedido, boton));
     accion.append(boton);
     fila.append(accion);
@@ -111,13 +111,16 @@ async function marcarEntregado(pedido, boton) {
   boton.disabled = true;
   try {
     await api(`/api/tienda/compras/${encodeURIComponent(pedido.numero)}/entregada`, { metodo: 'POST' });
+    // La fila se queda donde está, con "Entregado" en lugar del botón: así se ve qué pedido se acaba
+    // de marcar. Al cambiar de pestaña, buscar o recargar, ya aparece en "Entregados".
+    boton.replaceWith(el('span', 'Entregado', { class: 'estado-compra estado-entregada' }));
     mostrarAviso(`El pedido ${pedido.numero} quedó como entregado.`, true);
   } catch (error) {
     mostrarAviso(error?.estado === 409
       ? `El pedido ${pedido.numero} ya no está para retirar: se entregó o venció el plazo de retiro.`
       : textoDeError(error), false);
+    cargar();
   }
-  cargar();
 }
 
 function mostrarAviso(texto, ok) {

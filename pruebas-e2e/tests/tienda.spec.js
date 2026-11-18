@@ -330,6 +330,7 @@ test('ventas: pestañas, buscador y "Entregado" con confirmación', async ({ pag
 
   await expect(page.getByRole('tab', { name: 'Para retirar' })).toHaveAttribute('aria-selected', 'true');
   await expect(page.locator('thead')).toContainText('Fecha límite de retiro');
+  await expect(page.getByRole('button', { name: 'Marcar el pedido V-000101 como entregado' })).toHaveText('Marcar como entregado');
   const fila = page.locator('#filas > tr').first();
   await expect(fila).toContainText('V-000101');
   await expect(fila).toContainText('Cliente de Prueba');
@@ -351,7 +352,10 @@ test('ventas: pestañas, buscador y "Entregado" con confirmación', async ({ pag
   await page.getByRole('button', { name: 'Marcar el pedido V-000101 como entregado' }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Sí, lo retiró' }).click();
   await expect(page.locator('#aviso')).toHaveText('El pedido V-000101 quedó como entregado.');
-  await expect(page.locator('#estado')).toHaveText('No hay pedidos para retirar.');
+  // La fila se queda, con "Entregado" en lugar del botón.
+  await expect(fila).toContainText('V-000101');
+  await expect(fila.locator('.estado-entregada')).toHaveText('Entregado');
+  await expect(fila.getByRole('button')).toHaveCount(0);
 
   // Pestaña Entregados: cuándo y quién.
   await page.getByRole('tab', { name: 'Entregados' }).click();
