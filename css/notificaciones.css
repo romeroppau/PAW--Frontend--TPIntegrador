@@ -1,0 +1,13 @@
+.campana { position: relative; display: inline-block; margin-right: .5rem; }
+.campana-boton { position: relative; background: none; border: 0; cursor: pointer; color: inherit; padding: .4rem; }
+.campana-boton svg { width: 1.5rem; height: 1.5rem; }
+.campana-boton:focus-visible { outline: 3px solid currentColor; outline-offset: 2px; }
+.campana-contador { position: absolute; top: 0; right: 0; min-width: 1.1rem; padding: 0 .25rem;
+  border-radius: 999px; background: #b3261e; color: #fff; font-size: .75rem; line-height: 1.1rem; text-align: center; }
+.campana-panel { position: absolute; right: 0; z-index: 20; width: min(22rem, 90vw); max-height: 70vh; overflow: auto;
+  background: #fff; color: #1d1d1d; border: 1px solid #cfd8d5; border-radius: .5rem; padding: .75rem; box-shadow: 0 4px 16px rgba(0,0,0,.15); }
+.campana-lista { list-style: none; margin: 0; padding: 0; }
+.campana-item { padding: .5rem 0; border-bottom: 1px solid #e3e9e7; }
+.campana-item-nueva { font-weight: 600; }
+.campana-item p { margin: 0 0 .25rem; }
+.campana-vacio { padding: .5rem 0; }
