@@ -280,13 +280,39 @@ test('una compra pagada dice hasta cuándo retirarla, con la política', async (
   await expect(page.locator('#pendiente')).toBeHidden();
 });
 
+test('una compra pagada se puede cancelar: avisa que el importe no se reintegra', async ({ page }) => {
+  await simularSesion(page, CLIENTE);
+  await page.route('**/api/tienda/carrito', (route) => responderJson(route, VACIO));
+  const PAGADA = { ...PENDIENTE, numero: 'V-000099', estado: 'PAGADA', pagar_antes_de: null, segundos_para_pagar: null, retirar_hasta: '2026-11-25' };
+  await page.route('**/api/tienda/compras/V-000099', (route) => responderJson(route, PAGADA));
+  let cancelada = false;
+  await page.route('**/api/tienda/compras/V-000099/cancelar', (route) => {
+    cancelada = true;
+    return responderJson(route, { ...PAGADA, estado: 'CANCELADA', retirar_hasta: null, motivo_cancelacion: 'COMPRADOR' });
+  });
+  await page.goto('/tienda/compra.html?numero=V-000099');
+
+  await expect(page.locator('#politica')).toContainText('Si cancelás un pedido ya pagado, el importe tampoco se reintegra.');
+  await page.getByRole('button', { name: 'Cancelar pedido' }).click();
+  await expect(page.getByRole('dialog')).toContainText('¿Cancelás el pedido V-000099? Los productos vuelven a la tienda y el importe no se reintegra.');
+  await page.getByRole('dialog').getByRole('button', { name: 'Volver' }).click();
+  expect(cancelada).toBe(false);
+
+  await page.getByRole('button', { name: 'Cancelar pedido' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Cancelar pedido' }).click();
+  await expect(page.locator('#estado-compra')).toHaveText('Cancelada');
+  await expect(page.locator('#aviso')).toHaveText('Cancelaste esta compra.');
+  await expect(page.getByRole('button', { name: 'Cancelar pedido' })).toBeHidden();
+  expect(cancelada).toBe(true);
+});
+
 test('mis compras: cada una con su estado y lo que hay que hacer', async ({ page }) => {
   await simularSesion(page, CLIENTE);
   await page.route('**/api/tienda/carrito', (route) => responderJson(route, VACIO));
   await page.route('**/api/tienda/compras', (route) => responderJson(route, { datos: [
     { numero: 'V-000105', estado: 'PENDIENTE_PAGO', fecha: '2026-11-18 10:30:00', total: 4500, pagar_antes_de: '2026-11-18 10:45:00', retirar_hasta: '2026-11-25' },
     { numero: 'V-000101', estado: 'PAGADA', fecha: '2026-11-17 12:00:00', total: 31999.8, pagar_antes_de: null, retirar_hasta: '2026-11-24' },
-    { numero: 'V-000103', estado: 'CANCELADA', fecha: '2026-11-06 09:00:00', total: 7800, pagar_antes_de: null, retirar_hasta: null },
+    { numero: 'V-000103', estado: 'CANCELADA', fecha: '2026-11-06 09:00:00', total: 7800, pagar_antes_de: null, retirar_hasta: null, motivo_cancelacion: 'VENCIDA' },
   ] }));
   await page.goto('/tienda/compras.html');
 
@@ -296,6 +322,7 @@ test('mis compras: cada una con su estado y lo que hay que hacer', async ({ page
   await expect(filas.nth(0)).toContainText('Pagá antes de las 10:45');
   await expect(filas.nth(1)).toContainText('Retirala hasta el martes 24/11');
   await expect(filas.nth(2)).toContainText('Cancelada');
+  await expect(filas.nth(2)).toContainText('Venció el plazo de retiro');
   await expect(page.getByRole('link', { name: 'V-000101' })).toHaveAttribute('href', '/tienda/compra.html?numero=V-000101');
 });
 
@@ -319,6 +346,7 @@ test('ventas: pestañas, buscador y "Entregado" con confirmación', async ({ pag
     const q = new URL(route.request().url()).searchParams;
     consultas.push(q.toString());
     if (q.get('estado') === 'ENTREGADA') return responderJson(route, { datos: ENTREGADOS });
+    if (q.get('estado') === 'CANCELADA') return responderJson(route, { datos: [{ ...ENTREGADOS[0], numero: 'V-000099', estado: 'CANCELADA', motivo_cancelacion: 'COMPRADOR' }] });
     if (q.get('buscar') === 'nadie') return responderJson(route, { datos: [] });
     return responderJson(route, { datos: entregada ? [] : PARA_RETIRAR });
   });
@@ -362,6 +390,11 @@ test('ventas: pestañas, buscador y "Entregado" con confirmación', async ({ pag
   await expect(page.locator('thead')).toContainText('Entregado');
   await expect(page.locator('#filas')).toContainText('11/11/2026 12:40, por Veterinaria de Prueba');
   await expect(page.locator('#filas button')).toHaveCount(0);
+
+  // Pestaña Cancelados: con el motivo.
+  await page.getByRole('tab', { name: 'Cancelados' }).click();
+  await expect(page.locator('thead')).toContainText('Motivo');
+  await expect(page.locator('#filas')).toContainText('La canceló el comprador');
 });
 
 test('un cliente no entra a las ventas de la veterinaria', async ({ page }) => {

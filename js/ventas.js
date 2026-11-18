@@ -11,7 +11,7 @@
 import { api, debounce } from './api.js';
 import { exigirRol } from './auth.js';
 import { confirmar, el } from './ui.js';
-import { diaConNombre, fechaHora, hoyArgentina, precio, textoDeError } from './tienda.js';
+import { TEXTO_MOTIVO, diaConNombre, fechaHora, hoyArgentina, precio, textoDeError } from './tienda.js';
 
 const PESTANIAS = {
   PAGADA: {
@@ -26,7 +26,7 @@ const PESTANIAS = {
   },
   CANCELADA: {
     titulo: 'Pedidos cancelados',
-    columnas: ['Pedido', 'Fecha', 'Comprador', 'Productos', 'Total'],
+    columnas: ['Pedido', 'Fecha', 'Comprador', 'Productos', 'Total', 'Motivo'],
     vacio: 'No hay pedidos cancelados.',
   },
 };
@@ -100,6 +100,8 @@ function crearFila(pedido) {
     fila.append(accion);
   } else if (estadoActual === 'ENTREGADA') {
     fila.append(el('td', `${fechaHora(pedido.entregada_en)}, por ${pedido.entregada_por ?? '—'}`));
+  } else {
+    fila.append(el('td', TEXTO_MOTIVO[pedido.motivo_cancelacion] ?? '—'));
   }
   return fila;
 }

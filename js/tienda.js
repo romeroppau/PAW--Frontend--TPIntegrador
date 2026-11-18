@@ -8,7 +8,8 @@ import { api } from './api.js';
 
 /** Política de cancelación: se muestra en el carrito (antes de pagar) y en la compra. */
 export const POLITICA = 'Tenés 5 días hábiles desde la compra para retirar tu pedido en el local. '
-  + 'Si no lo retirás en ese plazo, el pedido se cancela y el importe no se reintegra.';
+  + 'Si no lo retirás en ese plazo, el pedido se cancela y el importe no se reintegra. '
+  + 'Si cancelás un pedido ya pagado, el importe tampoco se reintegra.';
 
 /** Texto de cada estado de una compra (el código no se muestra). */
 export const TEXTO_ESTADO = {
@@ -16,6 +17,13 @@ export const TEXTO_ESTADO = {
   PAGADA: 'Lista para retirar',
   ENTREGADA: 'Entregada',
   CANCELADA: 'Cancelada',
+};
+
+/** Por qué se canceló una compra (motivo_cancelacion), para la veterinaria. */
+export const TEXTO_MOTIVO = {
+  COMPRADOR: 'La canceló el comprador',
+  SIN_PAGO: 'No se pagó a tiempo',
+  VENCIDA: 'Venció el plazo de retiro',
 };
 
 const DIAS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];

@@ -3,7 +3,7 @@
  *
  * API (repo Inventario, docs/api/contrato-tienda.md):
  *   GET  /api/tienda/compras/{numero}            la compra con sus productos y sus plazos
- *   POST /api/tienda/compras/{numero}/cancelar   arrepentirse antes de pagar
+ *   POST /api/tienda/compras/{numero}/cancelar   cancelarla: antes de pagar, o ya pagada (sin devolución)
  *
  * Esperando el pago, muestra una cuenta regresiva que parte de segundos_para_pagar (lo cuenta el
  * servidor: así no importa si el reloj de la computadora está adelantado o atrasado). Al llegar a
@@ -29,6 +29,8 @@ const $pendiente = document.getElementById('pendiente');
 const $tiempo = document.getElementById('tiempo');
 const $aviso = document.getElementById('aviso');
 const $cancelar = document.getElementById('cancelar');
+const $pagada = document.getElementById('pagada');
+const $cancelarPedido = document.getElementById('cancelar-pedido');
 const $bloquePolitica = document.getElementById('bloque-politica');
 
 document.getElementById('politica').textContent = POLITICA;
@@ -73,11 +75,16 @@ function dibujar(compra) {
   // Lo que corresponde a cada estado.
   detenerReloj();
   $pendiente.hidden = compra.estado !== 'PENDIENTE_PAGO';
+  $pagada.hidden = compra.estado !== 'PAGADA';
   $bloquePolitica.hidden = !['PENDIENTE_PAGO', 'PAGADA'].includes(compra.estado);
   const avisos = {
     PAGADA: compra.retirar_hasta ? `Ya podés retirarla en el local, hasta el ${diaConNombre(compra.retirar_hasta)} inclusive.` : '',
     ENTREGADA: compra.entregada_en ? `La retiraste el ${fechaHora(compra.entregada_en)}.` : 'Ya la retiraste.',
-    CANCELADA: 'Esta compra está cancelada.',
+    CANCELADA: {
+      COMPRADOR: 'Cancelaste esta compra.',
+      SIN_PAGO: 'Esta compra se canceló porque no se pagó a tiempo.',
+      VENCIDA: 'Esta compra se canceló porque venció el plazo de retiro. El importe no se reintegra.',
+    }[compra.motivo_cancelacion] ?? 'Esta compra está cancelada.',
   };
   $aviso.textContent = avisos[compra.estado] ?? '';
   $aviso.hidden = $aviso.textContent === '';
@@ -124,23 +131,29 @@ async function vencio() {
   }
 }
 
-// ---------- Arrepentimiento ----------
+// ---------- Cancelar ----------
+// Antes de pagar (arrepentimiento) o ya pagada, mientras está para retirar: el importe no se reintegra.
 
-$cancelar.addEventListener('click', async () => {
-  const seguro = await confirmar(`¿Cancelás la compra ${numero}? Los productos vuelven a estar disponibles.`,
-    { aceptar: 'Cancelar compra', peligro: true });
+$cancelar.addEventListener('click', () => cancelar($cancelar,
+  `¿Cancelás la compra ${numero}? Los productos vuelven a estar disponibles.`, 'Cancelar compra'));
+
+$cancelarPedido.addEventListener('click', () => cancelar($cancelarPedido,
+  `¿Cancelás el pedido ${numero}? Los productos vuelven a la tienda y el importe no se reintegra.`, 'Cancelar pedido'));
+
+async function cancelar(boton, pregunta, aceptar) {
+  const seguro = await confirmar(pregunta, { aceptar, peligro: true });
   if (!seguro) return;
 
-  $cancelar.disabled = true;
+  boton.disabled = true;
   try {
     dibujar(await api('/api/tienda/compras/' + encodeURIComponent(numero) + '/cancelar', { metodo: 'POST' }));
   } catch (error) {
     mostrarError(textoDeError(error));
     cargar();
   } finally {
-    $cancelar.disabled = false;
+    boton.disabled = false;
   }
-});
+}
 
 function mostrarError(texto) {
   $estado.textContent = '';

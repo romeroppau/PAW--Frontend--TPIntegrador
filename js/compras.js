@@ -46,5 +46,8 @@ function plazo(compra) {
   if (compra.estado === 'PAGADA' && compra.retirar_hasta) {
     return `Retirala hasta el ${diaConNombre(compra.retirar_hasta)}`;
   }
+  if (compra.estado === 'CANCELADA') {
+    return { COMPRADOR: 'La cancelaste', SIN_PAGO: 'No se pagó a tiempo', VENCIDA: 'Venció el plazo de retiro' }[compra.motivo_cancelacion] ?? '';
+  }
   return '';
 }

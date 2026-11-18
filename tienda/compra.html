@@ -12,7 +12,7 @@
 </head>
 <!-- Una compra del comprador: tienda/compra.html?numero=V-000101. Lo maneja js/compra.js.
      Mientras espera el pago muestra cuánto tiempo queda (15 minutos desde "Ir a pagar") y el botón
-     para cancelarla. Contrato: repo Inventario, docs/api/contrato-tienda.md. -->
+     para cancelarla. Ya pagada, también se puede cancelar (sin devolución) hasta retirarla. Contrato: repo Inventario, docs/api/contrato-tienda.md. -->
 <body data-rol="CLIENTE,RESCATISTA">
   <a class="saltar" href="#contenido">Saltar al contenido</a>
   <div id="encabezado-sitio"></div>
@@ -36,6 +36,13 @@
         </section>
 
         <p id="aviso" class="caja-aviso" hidden></p>
+
+        <!-- Pagada (lista para retirar): el comprador la puede cancelar hasta que la retire o venza el
+             plazo. El importe no se reintegra. -->
+        <section id="pagada" class="bloque" hidden aria-label="Cancelar el pedido">
+          <button id="cancelar-pedido" class="boton boton-borde" type="button">Cancelar pedido</button>
+          <p class="ayuda">Si lo cancelás, los productos vuelven a la tienda y el importe no se reintegra.</p>
+        </section>
 
         <div class="tabla-scroll">
           <table>
