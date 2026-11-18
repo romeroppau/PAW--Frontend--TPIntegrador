@@ -144,6 +144,8 @@ test('el carrito: cambiar cantidad, quitar, y "Ir a pagar" solo después de acep
     return responderJson(route, carrito);
   });
   await page.route('**/api/tienda/carrito/confirmar', (route) => responderJson(route, { numero: 'V-000105', estado: 'PENDIENTE_PAGO' }, 201));
+  // "Ir a pagar" lleva directo al pago (en la prueba, la página del pago simulado).
+  await page.route('**/api/tienda/compras/V-000105/pago', (route) => responderJson(route, { url: '/tienda/pago-simulado.html?numero=V-000105' }));
   await page.route('**/api/tienda/compras/V-000105', (route) => responderJson(route, {
     numero: 'V-000105', estado: 'PENDIENTE_PAGO', fecha: '2026-11-18 10:30:00', total: 47999.7,
     pagar_antes_de: '2099-01-01 00:00:00', retirar_hasta: '2026-11-25', entregada_en: null, items: [],
@@ -168,7 +170,7 @@ test('el carrito: cambiar cantidad, quitar, y "Ir a pagar" solo después de acep
   await page.getByLabel('Leí y acepto la política de cancelación').check();
   await expect(pagar).toBeEnabled();
   await pagar.click();
-  await expect(page).toHaveURL('/tienda/compra.html?numero=V-000105');
+  await expect(page).toHaveURL('/tienda/pago-simulado.html?numero=V-000105');
 });
 
 test('un producto que ya no está a la venta bloquea el pago hasta quitarlo', async ({ page }) => {
@@ -233,6 +235,55 @@ test('esperando el pago: la cuenta regresiva baja y, al llegar a cero, se ve can
   await expect(page.locator('#estado-compra')).toHaveText('Cancelada');
   await expect(page.locator('#aviso')).toContainText('Se terminó el tiempo para pagar');
   await expect(page.locator('#pendiente')).toBeHidden();
+});
+
+test('"Pagar con Mercado Pago" lleva a pagar; al volver aprobado se confirma el pago y se ve el comprobante', async ({ page }) => {
+  await simularSesion(page, CLIENTE);
+  await page.route('**/api/tienda/carrito', (route) => responderJson(route, VACIO));
+  await page.route('**/api/tienda/compras/V-000105', (route) => responderJson(route, { ...PENDIENTE, segundos_para_pagar: 600 }));
+  await page.route('**/api/tienda/compras/V-000105/pago', (route) => responderJson(route, { url: '/tienda/pago-simulado.html?numero=V-000105' }));
+  await page.goto('/tienda/compra.html?numero=V-000105');
+  await page.getByRole('button', { name: 'Pagar con Mercado Pago' }).click();
+  await expect(page).toHaveURL('/tienda/pago-simulado.html?numero=V-000105');
+
+  // Vuelta de Mercado Pago con el número de pago: la página le pide al servidor que lo confirme.
+  let confirmado = null;
+  await page.route('**/api/tienda/compras/V-000105/pago/confirmar', (route) => {
+    confirmado = route.request().postDataJSON();
+    return responderJson(route, { ...PENDIENTE, estado: 'PAGADA', pagar_antes_de: null, segundos_para_pagar: null, operacion_mp: '123456789' });
+  });
+  await page.goto('/tienda/compra.html?numero=V-000105&payment_id=123456789&status=approved');
+  await expect(page.locator('#estado-compra')).toHaveText('Lista para retirar');
+  await expect(page.locator('#resultado-pago')).toHaveText('¡Listo! Tu pago se acreditó y el pedido está listo para retirar.');
+  await expect(page.locator('#aviso')).toContainText('Pagaste con Mercado Pago · operación N° 123456789.');
+  expect(confirmado).toEqual({ payment_id: '123456789' });
+  await expect(page).toHaveURL('/tienda/compra.html?numero=V-000105');   // sin payment_id: recargar no repite
+});
+
+test('al volver con el pago rechazado se avisa y se puede reintentar', async ({ page }) => {
+  await simularSesion(page, CLIENTE);
+  await page.route('**/api/tienda/carrito', (route) => responderJson(route, VACIO));
+  await page.route('**/api/tienda/compras/V-000105/pago/confirmar', (route) => responderJson(route, { ...PENDIENTE, segundos_para_pagar: 500 }));
+  await page.route('**/api/tienda/compras/V-000105', (route) => responderJson(route, { ...PENDIENTE, segundos_para_pagar: 500 }));
+  await page.goto('/tienda/compra.html?numero=V-000105&payment_id=987654321&status=rejected');
+  await expect(page.locator('#resultado-pago')).toHaveText('El pago fue rechazado. Volvé a intentarlo antes de que termine el tiempo.');
+  await expect(page.locator('#estado-compra')).toHaveText('Esperando el pago');
+  await expect(page.getByRole('button', { name: 'Pagar con Mercado Pago' })).toBeVisible();
+});
+
+test('el pago simulado aprueba y vuelve a la compra', async ({ page }) => {
+  await simularSesion(page, CLIENTE);
+  await page.route('**/api/tienda/carrito', (route) => responderJson(route, VACIO));
+  let cuerpo = null;
+  await page.route('**/api/tienda/pagos/simulado', (route) => {
+    cuerpo = route.request().postDataJSON();
+    return responderJson(route, { ...PENDIENTE, estado: 'PAGADA', resultado: 'aprobado' });
+  });
+  await page.route('**/api/tienda/compras/V-000105', (route) => responderJson(route, { ...PENDIENTE, estado: 'PAGADA', pagar_antes_de: null, segundos_para_pagar: null }));
+  await page.goto('/tienda/pago-simulado.html?numero=V-000105');
+  await page.getByRole('button', { name: 'Aprobar el pago' }).click();
+  await expect(page).toHaveURL('/tienda/compra.html?numero=V-000105&status=approved');
+  expect(cuerpo).toEqual({ numero: 'V-000105', resultado: 'aprobado' });
 });
 
 test('la cuenta regresiva parte de lo que dice el servidor, aunque el reloj de la computadora esté mal', async ({ page }) => {

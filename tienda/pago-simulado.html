@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pago simulado | HuellaVet</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Nunito+Sans:wght@400;600;700&display=swap">
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/tienda.css">
+</head>
+<!-- Pago simulado: reemplaza a Mercado Pago SOLO en las pruebas (ENTORNO local o ci). Aprueba o
+     rechaza el pago con POST /api/tienda/pagos/simulado y vuelve a la compra, como lo haría Mercado
+     Pago. En dev y producción la API responde 404 y la página lo dice. Lo maneja js/pago-simulado.js. -->
+<body data-rol="CLIENTE,RESCATISTA">
+  <a class="saltar" href="#contenido">Saltar al contenido</a>
+  <div id="encabezado-sitio"></div>
+  <script src="/js/layout.js"></script>
+  <main id="contenido" class="seccion" hidden>
+    <div class="contenedor contenedor-form">
+      <p class="etiqueta">SOLO PARA PRUEBAS</p>
+      <h1>Pago simulado</h1>
+      <p>En las pruebas no se usa Mercado Pago: elegí cómo termina el pago de la compra <strong id="numero"></strong>.</p>
+      <div class="acciones">
+        <button id="aprobar" class="boton" type="button">Aprobar el pago</button>
+        <button id="rechazar" class="boton boton-borde" type="button">Rechazar el pago</button>
+      </div>
+      <p class="mensaje mensaje-error" id="error" role="alert" hidden></p>
+    </div>
+  </main>
+  <div id="pie-sitio"></div>
+
+  <script type="module" src="/js/menu.js"></script>
+  <script type="module" src="/js/guardia-panel.js"></script>
+  <script type="module" src="/js/auth.js"></script>
+  <script type="module" src="/js/pago-simulado.js"></script>
+</body>
+</html>
