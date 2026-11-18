@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ventas de la tienda | HuellaVet</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Nunito+Sans:wght@400;600;700&display=swap">
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/tienda.css">
+</head>
+<!-- Ventas de la tienda (veterinaria): pestañas Para retirar | Entregados | Cancelados y un buscador
+     por número de pedido o nombre del comprador (busca dentro de la pestaña).
+     "Entregado" constata que el comprador retiró el pedido en el local.
+     Lo maneja js/ventas.js. API: GET /api/inventario/compras?estado=&buscar= y
+     POST /api/tienda/compras/{numero}/entregada (repo Inventario, docs/api/contrato-tienda.md). -->
+<body data-rol="VETERINARIO">
+  <a class="saltar" href="#contenido">Saltar al contenido</a>
+  <div id="encabezado-sitio"></div>
+  <script src="/js/layout.js"></script>
+  <main id="contenido" class="seccion" hidden>
+    <div class="contenedor">
+      <p><a href="/paneles/panel-administrador.html">&larr; Volver al panel</a></p>
+      <h1>Ventas de la tienda</h1>
+
+      <div class="campo campo-buscador">
+        <label for="buscar">Buscar por número de pedido o comprador</label>
+        <input id="buscar" type="search" placeholder="Ej.: 101 o Ana" autocomplete="off" maxlength="100">
+      </div>
+
+      <div class="pestanias" role="tablist" aria-label="Estado de los pedidos">
+        <button type="button" role="tab" id="pestania-PAGADA" data-estado="PAGADA" aria-controls="panel-ventas" aria-selected="true">Para retirar</button>
+        <button type="button" role="tab" id="pestania-ENTREGADA" data-estado="ENTREGADA" aria-controls="panel-ventas" aria-selected="false" tabindex="-1">Entregados</button>
+        <button type="button" role="tab" id="pestania-CANCELADA" data-estado="CANCELADA" aria-controls="panel-ventas" aria-selected="false" tabindex="-1">Cancelados</button>
+      </div>
+
+      <div id="panel-ventas" role="tabpanel" aria-labelledby="pestania-PAGADA">
+        <p class="estado" id="estado" role="status">Cargando pedidos…</p>
+        <p class="mensaje" id="aviso" role="alert" hidden></p>
+        <div class="tabla-scroll" id="tabla" hidden>
+          <table>
+            <caption class="solo-lectores" id="titulo-tabla">Pedidos para retirar</caption>
+            <!-- Los títulos cambian con la pestaña (ventas.js); estos son los de "Para retirar". -->
+            <thead><tr id="encabezados"><th scope="col">Pedido</th><th scope="col">Fecha</th><th scope="col">Comprador</th><th scope="col">Productos</th><th scope="col">Total</th><th scope="col">Fecha límite de retiro</th><th scope="col">Acción</th></tr></thead>
+            <tbody id="filas"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+  <div id="pie-sitio"></div>
+
+  <script type="module" src="/js/menu.js"></script>
+  <script type="module" src="/js/guardia-panel.js"></script>
+  <script type="module" src="/js/auth.js"></script>
+  <script type="module" src="/js/ventas.js"></script>
+</body>
+</html>

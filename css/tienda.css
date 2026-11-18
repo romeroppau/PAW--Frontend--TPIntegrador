@@ -1,0 +1,158 @@
+/* Estilos de las pantallas de la tienda: carrito, mis compras, una compra y las ventas de la
+   veterinaria. Los colores y medidas de marca vienen de base.css. */
+
+/* ---------- Carrito ---------- */
+.input-cantidad {
+  width: 5rem;
+  font: inherit;
+  padding: .35rem .5rem;
+  border: 1px solid var(--borde);
+  border-radius: 8px;
+}
+
+.input-cantidad:focus {
+  border-color: var(--pino);
+  outline: 2px solid var(--pino);
+  outline-offset: 1px;
+}
+
+.nota-item {
+  display: block;
+  font-size: .9rem;
+  font-weight: 600;
+}
+
+.nota-error {
+  color: var(--error);
+}
+
+.total {
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+tfoot th,
+tfoot td {
+  border-bottom: 0;
+}
+
+.caja-pago {
+  padding: 1.5rem;
+  background: var(--blanco);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+}
+
+.caja-pago h2 {
+  font-size: 1.35rem;
+}
+
+.casilla {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  margin: 1rem 0;
+  font-weight: 700;
+}
+
+.casilla input {
+  width: 1.2rem;
+  height: 1.2rem;
+  margin: 0;
+  accent-color: var(--pino);
+}
+
+/* ---------- Una compra ---------- */
+.caja-aviso {
+  max-width: none;
+  margin: 1.25rem 0;
+  padding: 1.25rem 1.5rem;
+  background: var(--menta);
+  border-radius: var(--radio);
+  font-weight: 600;
+}
+
+.caja-aviso[hidden] {
+  display: none;
+}
+
+.caja-aviso h2 {
+  font-size: 1.35rem;
+}
+
+.cuenta-regresiva {
+  font-size: 1.2rem;
+}
+
+.cuenta-regresiva [role="timer"] {
+  font-family: var(--fuente-titulo);
+  font-size: 1.6rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--pino-oscuro);
+}
+
+/* Estado de una compra, como etiqueta de color. */
+.estado-compra {
+  display: inline-block;
+  padding: .15rem .6rem;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: .9rem;
+  background: var(--menta);
+  color: var(--pino-oscuro);
+}
+
+.estado-pendiente_pago { background: #fdecd6; color: #7a4100; }
+.estado-pagada { background: var(--menta); color: var(--pino-oscuro); }
+.estado-entregada { background: #e3ecf7; color: #1f3d66; }
+.estado-cancelada { background: #f6dedd; color: var(--error); }
+
+/* ---------- Ventas de la veterinaria ---------- */
+.campo-buscador {
+  max-width: 28rem;
+}
+
+.pestanias {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .25rem;
+  margin: 1rem 0;
+  border-bottom: 2px solid var(--borde);
+}
+
+.pestanias [role="tab"] {
+  font: inherit;
+  font-weight: 700;
+  padding: .6rem 1.1rem;
+  background: transparent;
+  color: var(--tinta-suave);
+  border: 0;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  cursor: pointer;
+}
+
+.pestanias [role="tab"][aria-selected="true"] {
+  color: var(--pino-oscuro);
+  border-bottom-color: var(--pino);
+}
+
+.pestanias [role="tab"]:focus-visible {
+  outline: 2px solid var(--pino);
+  outline-offset: 2px;
+}
+
+.lista-items {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+.ultimo-dia {
+  color: var(--naranja-oscuro);
+  font-weight: 700;
+}
+
+/* El número de pedido no se corta en dos renglones ("V-" / "000101"). */
+#filas th[scope="row"] {
+  white-space: nowrap;
+}

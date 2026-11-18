@@ -51,7 +51,8 @@ formulario.addEventListener('submit', async (evento) => {
 
     // Si llegó acá, el login salió bien. Al cambiar de página se pierde lo que está en memoria
     // (incluido el csrf): la página siguiente lo vuelve a pedir con GET /api/auth/yo.
-    window.location.href = HOME_POR_ROL[datos.rol] ?? '/index.html';
+    // Si venía de otra página (por ejemplo, "Agregar al carrito" sin sesión), vuelve ahí.
+    window.location.href = destinoAnterior() ?? HOME_POR_ROL[datos.rol] ?? '/index.html';
   } catch (error) {
     // Si el backend respondió (400 o 401), su mensaje viene en error.datos.error
     // (por ejemplo, "Email o contraseña incorrectos"). Si no hay error.datos, ni siquiera hubo respuesta.
@@ -65,6 +66,15 @@ formulario.addEventListener('submit', async (evento) => {
     botonEnviar.disabled = false;
   }
 });
+
+// La página a la que hay que volver después de entrar: ?volver=/catalogo/producto.html?id=101.
+// Solo se aceptan direcciones de este mismo sitio: tienen que empezar con una sola "/".
+// Así nadie puede armar un enlace de login que, después de entrar, lleve a otro sitio
+// ("//sitio-falso.com" o "https://..."), que podría hacerse pasar por HuellaVet.
+function destinoAnterior() {
+  const volver = new URLSearchParams(window.location.search).get('volver');
+  return volver && /^\/(?![\/\\])/.test(volver) ? volver : null;
+}
 
 // Muestra el mensaje de error, o lo oculta si el texto está vacío.
 // textContent (y no innerHTML) muestra el texto tal cual, sin interpretarlo como HTML: evita XSS.

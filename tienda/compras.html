@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mis compras | HuellaVet</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Nunito+Sans:wght@400;600;700&display=swap">
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/tienda.css">
+</head>
+<!-- Las compras del comprador (cliente o rescatista), de la más nueva a la más vieja.
+     Lo maneja js/compras.js con GET /api/tienda/compras (repo Inventario, docs/api/contrato-tienda.md). -->
+<body data-rol="CLIENTE,RESCATISTA">
+  <a class="saltar" href="#contenido">Saltar al contenido</a>
+  <div id="encabezado-sitio"></div>
+  <script src="/js/layout.js"></script>
+  <main id="contenido" class="seccion" hidden>
+    <div class="contenedor">
+      <h1>Mis compras</h1>
+      <p>Los pedidos se retiran en el local de HuellaVet.</p>
+      <p class="estado" id="estado" role="status">Cargando tus compras…</p>
+
+      <div id="vacio" hidden>
+        <p>Todavía no hiciste compras.</p>
+        <p><a class="boton" href="/catalogo/catalogo.html">Ver productos</a></p>
+      </div>
+
+      <div class="tabla-scroll" id="tabla" hidden>
+        <table>
+          <caption class="solo-lectores">Tus compras</caption>
+          <thead><tr><th scope="col">Compra</th><th scope="col">Fecha</th><th scope="col">Total</th><th scope="col">Estado</th><th scope="col">Para tener en cuenta</th></tr></thead>
+          <tbody id="filas"></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+  <div id="pie-sitio"></div>
+
+  <script type="module" src="/js/menu.js"></script>
+  <script type="module" src="/js/guardia-panel.js"></script>
+  <script type="module" src="/js/auth.js"></script>
+  <script type="module" src="/js/compras.js"></script>
+</body>
+</html>
