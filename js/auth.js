@@ -75,6 +75,7 @@ const ENLACES_POR_ROL = {
     ['Agenda', '/panel/agenda.html'],
     ['Adopciones y rescatistas', '/panel/adopciones.html'],
     ['Ventas', '/panel/ventas.html'],
+    ['Reportes', '/panel/reportes.html'],
   ],
   CLIENTE: [
     ['Mi panel', '/paneles/panel-cliente.html'],

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Reportes | HuellaVet</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Nunito+Sans:wght@400;600;700&display=swap">
+  <link rel="stylesheet" href="/css/base.css">
+</head>
+<!-- Panel de reportes y sugerencias (Entrega 5, rol 4). Mantener data-rol y los scripts menu.js,
+     guardia-panel.js y auth.js: el <main> queda oculto hasta que se confirma el rol. -->
+<body data-rol="VETERINARIO">
+  <a class="saltar" href="#contenido">Saltar al contenido</a>
+  <div id="encabezado-sitio"></div>
+  <script src="/js/layout.js"></script>
+  <main id="contenido" class="seccion" hidden>
+    <div class="contenedor">
+      <h1>Reportes y sugerencias</h1>
+      <p class="estado" id="estado" role="status"></p>
+
+      <section class="tarjeta" aria-labelledby="t-promocionar">
+        <h2 id="t-promocionar">Qué promocionar</h2>
+        <p id="texto-promocionar"></p>
+        <div class="tabla-scroll">
+          <table>
+            <caption class="solo-lectores">Turnos por día y franja en las últimas 4 semanas</caption>
+            <thead>
+              <tr><th scope="col">Día</th><th scope="col">Franja</th><th scope="col">Turnos</th><th scope="col">Sugerencia</th></tr>
+            </thead>
+            <tbody id="filas-franjas"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="bloque tarjeta" aria-labelledby="t-liquidar">
+        <h2 id="t-liquidar">Qué liquidar</h2>
+        <p class="estado" id="vacio-liquidar" hidden>No hay productos por vencer con stock.</p>
+        <div class="tabla-scroll">
+          <table>
+            <caption class="solo-lectores">Productos por vencer con su descuento sugerido</caption>
+            <thead>
+              <tr>
+                <th scope="col">Producto</th><th scope="col">Vence</th><th scope="col">Días restantes</th>
+                <th scope="col">Stock</th><th scope="col">Precio</th><th scope="col">Descuento</th>
+                <th scope="col">Precio sugerido</th>
+              </tr>
+            </thead>
+            <tbody id="filas-liquidar"></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </main>
+  <div id="pie-sitio"></div>
+
+  <script type="module" src="/js/menu.js"></script>
+  <script type="module" src="/js/guardia-panel.js"></script>
+  <script type="module" src="/js/auth.js"></script>
+  <script type="module" src="/js/reportes.js"></script>
+</body>
+</html>
