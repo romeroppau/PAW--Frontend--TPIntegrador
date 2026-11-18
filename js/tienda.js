@@ -68,6 +68,18 @@ export function avisarCarrito(carrito) {
   document.dispatchEvent(new CustomEvent('carrito:cantidad', { detail: unidades(carrito) }));
 }
 
+/** El mensaje cuando Mercado Pago rechaza el pago. */
+export const PAGO_RECHAZADO = 'El pago fue rechazado. Volvé a intentar más tarde.';
+
+/**
+ * Lleva al comprador a pagar la compra (POST /api/tienda/compras/{numero}/pago): a Mercado Pago o,
+ * en las pruebas, a la página del pago simulado. Si no se puede, lanza el error de la API.
+ */
+export async function irAPagar(numero) {
+  const { url } = await api('/api/tienda/compras/' + encodeURIComponent(numero) + '/pago', { metodo: 'POST' });
+  location.href = url;
+}
+
 /** Lleva a iniciar sesión y, después de entrar, de vuelta a esta misma página. */
 export function irALogin() {
   location.href = '/login/login.html?volver=' + encodeURIComponent(location.pathname + location.search);

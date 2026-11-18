@@ -11,7 +11,7 @@
 import { api } from './api.js';
 import { exigirRol } from './auth.js';
 import { el } from './ui.js';
-import { POLITICA, avisarCarrito, precio, textoDeError } from './tienda.js';
+import { POLITICA, avisarCarrito, irAPagar, precio, textoDeError } from './tienda.js';
 
 const $estado = document.getElementById('estado');
 const $error = document.getElementById('error');
@@ -125,13 +125,18 @@ function actualizarBoton() {
 
 $acepto.addEventListener('change', actualizarBoton);
 
-// "Ir a pagar": crea la compra (aparta el stock) y lleva a la compra, donde corre el tiempo para pagar.
+// "Ir a pagar": crea la compra (aparta el stock por 15 minutos) y lleva directo a Mercado Pago.
+// Si no se puede ir a pagar, lleva a la compra: ahí corre el tiempo y está el botón para reintentar.
 $irAPagar.addEventListener('click', async () => {
   mostrarError('');
   $irAPagar.disabled = true;
   try {
     const compra = await api('/api/tienda/carrito/confirmar', { metodo: 'POST' });
-    location.href = '/tienda/compra.html?numero=' + encodeURIComponent(compra.numero);
+    try {
+      await irAPagar(compra.numero);
+    } catch {
+      location.href = '/tienda/compra.html?numero=' + encodeURIComponent(compra.numero) + '&pago=no_disponible';
+    }
   } catch (error) {
     const faltantes = error?.datos?.items;
     if (error?.estado === 409 && Array.isArray(faltantes)) {

@@ -4,6 +4,11 @@
  * API (repo Inventario, docs/api/contrato-tienda.md):
  *   GET  /api/tienda/compras/{numero}            la compra con sus productos y sus plazos
  *   POST /api/tienda/compras/{numero}/cancelar   cancelarla: antes de pagar, o ya pagada (sin devolución)
+ *   POST /api/tienda/compras/{numero}/pago       a dónde ir a pagar (Mercado Pago o, en pruebas, el simulado)
+ *   POST /api/tienda/compras/{numero}/pago/confirmar   al volver de Mercado Pago, con su payment_id
+ *
+ * Al volver de Mercado Pago la dirección trae ?payment_id=…&status=approved|rejected: se le pide al
+ * servidor que confirme ese pago (él se lo pregunta a Mercado Pago) y se muestra cómo quedó.
  *
  * Esperando el pago, muestra una cuenta regresiva que parte de segundos_para_pagar (lo cuenta el
  * servidor: así no importa si el reloj de la computadora está adelantado o atrasado). Al llegar a
@@ -12,7 +17,7 @@
 import { api } from './api.js';
 import { exigirRol } from './auth.js';
 import { confirmar, el } from './ui.js';
-import { POLITICA, TEXTO_ESTADO, diaConNombre, fechaArgentina, fechaHora, precio, textoDeError } from './tienda.js';
+import { PAGO_RECHAZADO, POLITICA, TEXTO_ESTADO, diaConNombre, fechaArgentina, fechaHora, irAPagar, precio, textoDeError } from './tienda.js';
 
 // Cuándo vence, en la hora de esta computadora: ahora + lo que dice el servidor que falta.
 // Si la API no mandara segundos_para_pagar, se usa pagar_antes_de.
@@ -32,10 +37,16 @@ const $cancelar = document.getElementById('cancelar');
 const $pagada = document.getElementById('pagada');
 const $cancelarPedido = document.getElementById('cancelar-pedido');
 const $bloquePolitica = document.getElementById('bloque-politica');
+const $pagar = document.getElementById('pagar');
+const $resultadoPago = document.getElementById('resultado-pago');
 
 document.getElementById('politica').textContent = POLITICA;
 
-const numero = new URLSearchParams(location.search).get('numero') ?? '';
+const parametros = new URLSearchParams(location.search);
+const numero = parametros.get('numero') ?? '';
+// Lo que agregó Mercado Pago (o el pago simulado) a la dirección al volver.
+const pagoId = parametros.get('payment_id') ?? '';
+const estadoPago = parametros.get('status') ?? parametros.get('collection_status') ?? '';
 let reloj = null;          // el setInterval de la cuenta regresiva
 let reintentos = 0;        // si el reloj de la compu va adelantado, se vuelve a preguntar unas veces
 
@@ -43,8 +54,42 @@ await exigirRol(['CLIENTE', 'RESCATISTA']);
 
 if (!/^V-\d+$/.test(numero)) {
   mostrarError('No encontramos esa compra. Volvé a Mis compras y elegila de la lista.');
+} else if (/^\d+$/.test(pagoId)) {
+  volverDeMercadoPago();
 } else {
   cargar();
+  if (estadoPago === 'rejected') mostrarResultadoPago(PAGO_RECHAZADO, false);
+  if (parametros.get('pago') === 'no_disponible') {
+    mostrarResultadoPago('No pudimos llevarte a Mercado Pago. Probá con "Pagar con Mercado Pago" antes de que termine el tiempo.', false);
+  }
+}
+
+// ---------- Vuelta de Mercado Pago ----------
+
+// Se le pide al servidor que confirme el pago. Después se saca payment_id de la dirección: si se
+// recarga la página, no se vuelve a confirmar (igual no se repetiría: el pago es único).
+async function volverDeMercadoPago() {
+  history.replaceState(null, '', '/tienda/compra.html?numero=' + encodeURIComponent(numero));
+  try {
+    const compra = await api('/api/tienda/compras/' + encodeURIComponent(numero) + '/pago/confirmar',
+      { metodo: 'POST', cuerpo: { payment_id: pagoId } });
+    dibujar(compra);
+    if (compra.estado === 'PAGADA') {
+      mostrarResultadoPago('¡Listo! Tu pago se acreditó y el pedido está listo para retirar.', true);
+    } else if (estadoPago === 'rejected') {
+      mostrarResultadoPago(PAGO_RECHAZADO, false);
+    }
+  } catch (error) {
+    // Si no se pudo confirmar ahora, se muestra la compra como está: el aviso de Mercado Pago la actualiza.
+    cargar();
+    mostrarResultadoPago('Estamos confirmando tu pago con Mercado Pago. Actualizá la página en unos minutos.', false);
+  }
+}
+
+function mostrarResultadoPago(texto, ok) {
+  $resultadoPago.textContent = texto;
+  $resultadoPago.className = 'mensaje ' + (ok ? 'mensaje-ok' : 'mensaje-error');
+  $resultadoPago.hidden = false;
 }
 
 async function cargar() {
@@ -78,7 +123,8 @@ function dibujar(compra) {
   $pagada.hidden = compra.estado !== 'PAGADA';
   $bloquePolitica.hidden = !['PENDIENTE_PAGO', 'PAGADA'].includes(compra.estado);
   const avisos = {
-    PAGADA: compra.retirar_hasta ? `Ya podés retirarla en el local, hasta el ${diaConNombre(compra.retirar_hasta)} inclusive.` : '',
+    PAGADA: (compra.operacion_mp ? `Pagaste con Mercado Pago · operación N° ${compra.operacion_mp}. ` : '')
+      + (compra.retirar_hasta ? `Ya podés retirarla en el local, hasta el ${diaConNombre(compra.retirar_hasta)} inclusive.` : ''),
     ENTREGADA: compra.entregada_en ? `La retiraste el ${fechaHora(compra.entregada_en)}.` : 'Ya la retiraste.',
     CANCELADA: {
       COMPRADOR: 'Cancelaste esta compra.',
@@ -130,6 +176,19 @@ async function vencio() {
     mostrarError(textoDeError(error));
   }
 }
+
+// ---------- Pagar ----------
+
+$pagar.addEventListener('click', async () => {
+  $pagar.disabled = true;
+  try {
+    await irAPagar(numero);
+  } catch (error) {
+    $pagar.disabled = false;
+    mostrarResultadoPago(error?.estado === 409 ? 'Esta compra ya no está esperando el pago.' : textoDeError(error), false);
+    cargar();
+  }
+});
 
 // ---------- Cancelar ----------
 // Antes de pagar (arrepentimiento) o ya pagada, mientras está para retirar: el importe no se reintegra.
