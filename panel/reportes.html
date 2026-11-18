@@ -51,6 +51,91 @@
           </table>
         </div>
       </section>
+
+      <section class="bloque tarjeta" id="turnos-atendidos" aria-labelledby="t-turnos">
+        <h2 id="t-turnos">Turnos atendidos</h2>
+        <form id="filtro-turnos" class="form-item" novalidate>
+          <div class="campo campo-chico">
+            <label for="turnos-desde">Desde</label>
+            <input id="turnos-desde" name="desde" type="date">
+          </div>
+          <div class="campo campo-chico">
+            <label for="turnos-hasta">Hasta</label>
+            <input id="turnos-hasta" name="hasta" type="date">
+          </div>
+          <button type="submit" class="boton boton-borde">Filtrar</button>
+        </form>
+        <p class="campo-error" id="error-turnos" role="alert" hidden></p>
+        <p class="estado" id="resumen-turnos" role="status"></p>
+        <p class="estado" id="vacio-turnos" hidden>No hay turnos atendidos en ese período.</p>
+        <div class="tabla-scroll">
+          <table>
+            <caption class="solo-lectores">Turnos atendidos con su consulta y su factura</caption>
+            <thead>
+              <tr>
+                <th scope="col">Fecha</th><th scope="col">Mascota</th><th scope="col">Motivo</th>
+                <th scope="col">Diagnóstico</th><th scope="col">Insumos</th><th scope="col">Productos</th>
+                <th scope="col">Factura</th><th scope="col">Total</th>
+              </tr>
+            </thead>
+            <tbody id="filas-turnos"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="bloque tarjeta" id="stock" aria-labelledby="t-stock">
+        <h2 id="t-stock">Stock y movimientos</h2>
+        <p class="estado" id="resumen-stock" role="status"></p>
+
+        <h3>Productos</h3>
+        <div class="tabla-scroll">
+          <table>
+            <caption class="solo-lectores">Stock actual de los productos activos</caption>
+            <thead>
+              <tr><th scope="col">Producto</th><th scope="col">Stock</th><th scope="col">Vence</th><th scope="col">Aviso</th></tr>
+            </thead>
+            <tbody id="filas-stock-productos"></tbody>
+          </table>
+        </div>
+
+        <h3>Insumos</h3>
+        <div class="tabla-scroll">
+          <table>
+            <caption class="solo-lectores">Stock actual de los insumos activos</caption>
+            <thead>
+              <tr><th scope="col">Insumo</th><th scope="col">Estado</th><th scope="col">Stock</th><th scope="col">Aviso</th></tr>
+            </thead>
+            <tbody id="filas-stock-insumos"></tbody>
+          </table>
+        </div>
+
+        <h3>Movimientos</h3>
+        <form id="filtro-movimientos" class="form-item" novalidate>
+          <div class="campo campo-chico">
+            <label for="mov-desde">Desde</label>
+            <input id="mov-desde" name="desde" type="date">
+          </div>
+          <div class="campo campo-chico">
+            <label for="mov-hasta">Hasta</label>
+            <input id="mov-hasta" name="hasta" type="date">
+          </div>
+          <button type="submit" class="boton boton-borde">Filtrar</button>
+        </form>
+        <p class="campo-error" id="error-movimientos" role="alert" hidden></p>
+        <p class="estado" id="vacio-movimientos" hidden>No hay movimientos en ese período.</p>
+        <div class="tabla-scroll">
+          <table>
+            <caption class="solo-lectores">Movimientos de inventario del período (los 100 más recientes)</caption>
+            <thead>
+              <tr>
+                <th scope="col">Fecha</th><th scope="col">Tipo</th><th scope="col">Motivo</th>
+                <th scope="col">Ítem</th><th scope="col">Cantidad</th>
+              </tr>
+            </thead>
+            <tbody id="filas-movimientos"></tbody>
+          </table>
+        </div>
+      </section>
     </div>
   </main>
   <div id="pie-sitio"></div>
