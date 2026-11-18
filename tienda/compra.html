@@ -22,6 +22,8 @@
       <p><a href="/tienda/compras.html">&larr; Mis compras</a></p>
       <p class="estado" id="estado" role="status">Cargando la compra…</p>
       <p class="mensaje mensaje-error" id="error" role="alert" hidden></p>
+      <!-- Lo que pasó con el pago al volver de Mercado Pago (aprobado, rechazado, confirmando...). -->
+      <p class="mensaje" id="resultado-pago" role="status" hidden></p>
 
       <article id="compra" hidden>
         <h1 id="titulo">Compra</h1>
@@ -32,7 +34,10 @@
           <h2 id="titulo-pendiente">Reservamos tus productos</h2>
           <p class="cuenta-regresiva">Te quedan <span id="tiempo" role="timer">15:00</span> para pagar.</p>
           <p>Si no pagás a tiempo, la compra se cancela sola y los productos vuelven a estar disponibles.</p>
-          <button id="cancelar" class="boton boton-borde" type="button">Cancelar compra</button>
+          <div class="acciones">
+            <button id="pagar" class="boton" type="button">Pagar con Mercado Pago</button>
+            <button id="cancelar" class="boton boton-borde" type="button">Cancelar compra</button>
+          </div>
         </section>
 
         <p id="aviso" class="caja-aviso" hidden></p>
