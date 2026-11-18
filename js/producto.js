@@ -1,5 +1,7 @@
 import { api } from './api.js';
 import { textoCategoria, textoEspecie } from './etiquetas.js';
+import { sesion } from './auth.js';
+import { agregarAlCarrito, irALogin } from './tienda.js';
 
 const $estado = document.getElementById('estado-detalle');
 const $error = document.getElementById('error-detalle');
@@ -11,6 +13,13 @@ const $especie = document.getElementById('producto-especie');
 const $precio = document.getElementById('producto-precio');
 const $descripcion = document.getElementById('producto-descripcion');
 const $whatsapp = document.getElementById('producto-whatsapp');
+const $formAgregar = document.getElementById('form-agregar');
+const $cantidad = document.getElementById('cantidad');
+const $botonAgregar = document.getElementById('boton-agregar');
+const $aviso = document.getElementById('aviso-carrito');
+
+// El producto que se está mirando (lo completa cargarDetalle).
+let productoActual = null;
 
 const id = new URLSearchParams(window.location.search).get('id');
 
@@ -73,6 +82,8 @@ async function cargarDetalle() {
 
     const mensaje = `Hola, quiero consultar por ${producto.nombre ?? 'un producto'} de HuellaVet.`;
     $whatsapp.href = 'https://wa.me/5491139010486?text=' + encodeURIComponent(mensaje);
+    productoActual = producto;
+    prepararCompra(producto);
     $estado.textContent = '';
     $error.hidden = true;
     $detalle.hidden = false;
@@ -84,6 +95,45 @@ async function cargarDetalle() {
       mostrarError('No se pudo cargar el producto. Probá nuevamente más tarde.');
     }
   }
+}
+
+// Agregar al carrito: la veterinaria no lo ve; sin stock, el botón queda apagado.
+async function prepararCompra(producto) {
+  const usuario = await sesion;
+  $formAgregar.hidden = usuario?.rol === 'VETERINARIO';
+  const sinStock = producto.disponible === false;
+  $botonAgregar.disabled = sinStock;
+  $cantidad.disabled = sinStock;
+  $botonAgregar.textContent = sinStock ? 'Sin stock' : 'Agregar al carrito';
+}
+
+$formAgregar.addEventListener('submit', async (evento) => {
+  evento.preventDefault();
+  if (!productoActual) return;
+
+  // Sin sesión: a iniciar sesión, y después vuelve a este producto.
+  if (!(await sesion)) {
+    irALogin();
+    return;
+  }
+
+  const cantidad = Number($cantidad.value);
+  if (!Number.isInteger(cantidad) || cantidad < 1 || cantidad > 99) {
+    mostrarAviso({ ok: false, texto: 'La cantidad tiene que ser un número entero entre 1 y 99.' });
+    $cantidad.setAttribute('aria-invalid', 'true');
+    return;
+  }
+  $cantidad.removeAttribute('aria-invalid');
+
+  $botonAgregar.disabled = true;
+  const resultado = await agregarAlCarrito(productoActual, cantidad);
+  $botonAgregar.disabled = false;
+  mostrarAviso(resultado);
+});
+
+function mostrarAviso({ ok, texto }) {
+  $aviso.textContent = texto;
+  $aviso.classList.toggle('aviso-error', !ok);
 }
 
 cargarDetalle();

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mi compra | HuellaVet</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Nunito+Sans:wght@400;600;700&display=swap">
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/tienda.css">
+</head>
+<!-- Una compra del comprador: tienda/compra.html?numero=V-000101. Lo maneja js/compra.js.
+     Mientras espera el pago muestra cuánto tiempo queda (15 minutos desde "Ir a pagar") y el botón
+     para cancelarla. Contrato: repo Inventario, docs/api/contrato-tienda.md. -->
+<body data-rol="CLIENTE,RESCATISTA">
+  <a class="saltar" href="#contenido">Saltar al contenido</a>
+  <div id="encabezado-sitio"></div>
+  <script src="/js/layout.js"></script>
+  <main id="contenido" class="seccion" hidden>
+    <div class="contenedor">
+      <p><a href="/tienda/compras.html">&larr; Mis compras</a></p>
+      <p class="estado" id="estado" role="status">Cargando la compra…</p>
+      <p class="mensaje mensaje-error" id="error" role="alert" hidden></p>
+
+      <article id="compra" hidden>
+        <h1 id="titulo">Compra</h1>
+        <p><span id="estado-compra" class="estado-compra"></span> · <span id="fecha"></span></p>
+
+        <!-- Esperando el pago: el tiempo que queda (lo actualiza compra.js cada segundo). -->
+        <section id="pendiente" class="caja-aviso" hidden aria-labelledby="titulo-pendiente">
+          <h2 id="titulo-pendiente">Reservamos tus productos</h2>
+          <p class="cuenta-regresiva">Te quedan <span id="tiempo" role="timer">15:00</span> para pagar.</p>
+          <p>Si no pagás a tiempo, la compra se cancela sola y los productos vuelven a estar disponibles.</p>
+          <button id="cancelar" class="boton boton-borde" type="button">Cancelar compra</button>
+        </section>
+
+        <p id="aviso" class="caja-aviso" hidden></p>
+
+        <div class="tabla-scroll">
+          <table>
+            <caption class="solo-lectores">Productos de la compra</caption>
+            <thead><tr><th scope="col">Producto</th><th scope="col">Precio</th><th scope="col">Cantidad</th><th scope="col">Subtotal</th></tr></thead>
+            <tbody id="filas"></tbody>
+            <tfoot><tr><th scope="row" colspan="3">Total</th><td id="total" class="total"></td></tr></tfoot>
+          </table>
+        </div>
+
+        <section id="bloque-politica" class="bloque" hidden aria-labelledby="titulo-politica">
+          <h2 id="titulo-politica">Política de cancelación</h2>
+          <p id="politica"></p>
+        </section>
+      </article>
+    </div>
+  </main>
+  <div id="pie-sitio"></div>
+
+  <script type="module" src="/js/menu.js"></script>
+  <script type="module" src="/js/guardia-panel.js"></script>
+  <script type="module" src="/js/auth.js"></script>
+  <script type="module" src="/js/compra.js"></script>
+</body>
+</html>

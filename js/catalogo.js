@@ -1,5 +1,7 @@
 import { api, debounce } from './api.js';
 import { textoCategoria } from './etiquetas.js';
+import { sesion } from './auth.js';
+import { agregarAlCarrito, irALogin } from './tienda.js';
 
 const $buscar = document.getElementById('buscar');
 const $categoria = document.getElementById('categoria');
@@ -7,6 +9,15 @@ const $especie = document.getElementById('especie');
 const $lista = document.getElementById('lista');
 const $estado = document.getElementById('estado');
 const $cargarMas = document.getElementById('cargar-mas');
+const $aviso = document.getElementById('aviso-carrito');
+
+// Quién inició sesión. Los productos se cargan sin esperarlo; la veterinaria no compra, así que
+// cuando se sabe que es ella, los botones "Agregar" se ocultan (clase en el <body>, ver catalogo.css).
+let usuario = null;
+const sesionLista = sesion.then((u) => {
+  usuario = u;
+  document.body.classList.toggle('rol-veterinario', u?.rol === 'VETERINARIO');
+});
 
 let pedidoActual = 0;
 let paginaActual = 1;
@@ -84,8 +95,45 @@ function crearTarjeta(producto) {
   enlace.textContent = 'Ver detalle';
   enlace.setAttribute('aria-label', `Ver detalle de ${producto.nombre ?? 'producto'}`);
 
-  li.append(categoria, nombre, precio, enlace);
+  const acciones = document.createElement('div');
+  acciones.className = 'acciones-producto';
+  acciones.append(enlace, crearBotonAgregar(producto));
+
+  li.append(categoria, nombre, precio, acciones);
   return li;
+}
+
+// "Agregar": suma 1 unidad al carrito. Sin sesión, lleva a iniciar sesión y vuelve al catálogo.
+function crearBotonAgregar(producto) {
+  const boton = document.createElement('button');
+  boton.type = 'button';
+  boton.className = 'boton boton-agregar';
+
+  if (producto.disponible === false) {
+    boton.textContent = 'Sin stock';
+    boton.disabled = true;
+    return boton;
+  }
+
+  boton.textContent = 'Agregar';
+  boton.setAttribute('aria-label', `Agregar ${producto.nombre ?? 'producto'} al carrito`);
+  boton.addEventListener('click', async () => {
+    await sesionLista;
+    if (!usuario) {
+      irALogin();
+      return;
+    }
+    boton.disabled = true;
+    const resultado = await agregarAlCarrito(producto, 1);
+    boton.disabled = false;
+    mostrarAviso(resultado);
+  });
+  return boton;
+}
+
+function mostrarAviso({ ok, texto }) {
+  $aviso.textContent = texto;
+  $aviso.classList.toggle('aviso-error', !ok);
 }
 
 function formatearPrecio(valor) {
