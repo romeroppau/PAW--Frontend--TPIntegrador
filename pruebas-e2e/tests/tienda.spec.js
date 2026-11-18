@@ -266,7 +266,7 @@ test('al volver con el pago rechazado se avisa y se puede reintentar', async ({ 
   await page.route('**/api/tienda/compras/V-000105/pago/confirmar', (route) => responderJson(route, { ...PENDIENTE, segundos_para_pagar: 500 }));
   await page.route('**/api/tienda/compras/V-000105', (route) => responderJson(route, { ...PENDIENTE, segundos_para_pagar: 500 }));
   await page.goto('/tienda/compra.html?numero=V-000105&payment_id=987654321&status=rejected');
-  await expect(page.locator('#resultado-pago')).toHaveText('El pago fue rechazado. Volvé a intentar más tarde.');
+  await expect(page.locator('#resultado-pago')).toHaveText('El pago fue rechazado. Volvé a intentarlo antes de que termine el tiempo.');
   await expect(page.locator('#estado-compra')).toHaveText('Esperando el pago');
   await expect(page.getByRole('button', { name: 'Pagar con Mercado Pago' })).toBeVisible();
 });

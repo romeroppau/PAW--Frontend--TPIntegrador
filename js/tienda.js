@@ -69,7 +69,7 @@ export function avisarCarrito(carrito) {
 }
 
 /** El mensaje cuando Mercado Pago rechaza el pago. */
-export const PAGO_RECHAZADO = 'El pago fue rechazado. Volvé a intentar más tarde.';
+export const PAGO_RECHAZADO = 'El pago fue rechazado. Volvé a intentarlo antes de que termine el tiempo.';
 
 /**
  * Lleva al comprador a pagar la compra (POST /api/tienda/compras/{numero}/pago): a Mercado Pago o,
