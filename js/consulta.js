@@ -349,6 +349,16 @@ function mostrarFactura(f) {
   p.textContent = `Factura ${f.numero} · ${textoEstadoFactura(f.estado)} · `;
   p.append(el('a', 'Ver factura', { href: '/cliente/factura.html?consulta=' + consulta.id }));
   p.hidden = false;
+  enlaceAdopcion();
+}
+
+// Chequeo de adopción (Entrega 5, rol 3): ya atendido, lo que sigue es completar la adopción, que la
+// veterinaria decide en el panel de adopciones (no se completa sola: el chequeo puede salir mal).
+function enlaceAdopcion() {
+  if (consulta.motivo !== 'CHEQUEO_ADOPCION' || document.getElementById('ir-adopcion')) return;
+  const p = el('p', '', { id: 'ir-adopcion' });
+  p.append(el('a', 'Ir a completar la adopción', { href: '/panel/adopciones.html#en-curso', class: 'boton' }));
+  document.getElementById('factura').after(p);
 }
 
 // Consulta ya finalizada al abrir la página: se muestra su factura.

@@ -380,3 +380,48 @@ test('si Pacientes no responde al completar, el error se ve en la fila y la adop
   await expect(fila.locator('.campo-error')).toHaveText('No se pudo transferir la mascota. Probá de nuevo.');
   await expect(fila.getByRole('button', { name: 'Completar adopción' })).toBeEnabled();
 });
+
+
+/* ---------- Del chequeo a completar la adopción ---------- */
+
+test('al finalizar la consulta de un chequeo de adopción aparece "Ir a completar la adopción"', async ({ page }) => {
+  await simularSesion(page, VETERINARIO);
+  const consulta = {
+    id: 7, turno_id: 120, mascota_id: 901, motivo: 'CHEQUEO_ADOPCION', estado: 'ABIERTA', diagnostico: 'Sana',
+    observaciones: null, valor_base: '0.00', finalizada_en: null, total: '0.00', insumos: [], productos: [],
+  };
+  await page.route('**/api/pacientes/consultas/7', (route) => responderJson(route, consulta));
+  await page.route('**/api/inventario/insumos', (route) => responderJson(route, { datos: [] }));
+  await page.route('**/api/inventario/productos', (route) => responderJson(route, { datos: [] }));
+  await page.route('**/api/pacientes/consultas/7/finalizar', (route) => responderJson(route, {
+    consulta: { ...consulta, estado: 'FINALIZADA' },
+    factura: { numero: 'C-000120', estado: 'PENDIENTE_PAGO', total: '0.00' },
+  }));
+  await simularPanelVet(page, { enCurso: [adopcionEnCurso('CHEQUEO_PENDIENTE', { id: 120, fecha: '2026-11-18', hora: '10:30', estado: 'ATENDIDO' })] });
+
+  await page.goto('/panel/consulta.html?id=7');
+  await expect(page.getByRole('link', { name: 'Ir a completar la adopción' })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Finalizar consulta' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Finalizar' }).click();
+
+  await page.getByRole('link', { name: 'Ir a completar la adopción' }).click();
+  await expect(page).toHaveURL(/\/panel\/adopciones\.html#en-curso$/);
+  // En celular la tabla se desplaza de costado: alcanza con que la sección quede a la vista.
+  await expect(page.locator('#titulo-curso')).toBeInViewport();
+  await expect(page.getByRole('button', { name: 'Completar adopción' })).toBeVisible();
+});
+
+test('una consulta común no ofrece completar ninguna adopción', async ({ page }) => {
+  await simularSesion(page, VETERINARIO);
+  await page.route('**/api/pacientes/consultas/7', (route) => responderJson(route, {
+    id: 7, turno_id: 101, mascota_id: 101, motivo: 'CONSULTA', estado: 'FINALIZADA', diagnostico: 'Otitis',
+    observaciones: null, valor_base: '8000.00', finalizada_en: '2026-11-18 10:00:00', total: '8000.00', insumos: [], productos: [],
+  }));
+  await page.route('**/api/pacientes/consultas/7/factura', (route) => responderJson(route, { factura: { numero: 'C-000101', estado: 'PENDIENTE_PAGO' } }));
+  await page.route('**/api/inventario/insumos', (route) => responderJson(route, { datos: [] }));
+  await page.route('**/api/inventario/productos', (route) => responderJson(route, { datos: [] }));
+
+  await page.goto('/panel/consulta.html?id=7');
+  await expect(page.locator('#factura')).toContainText('C-000101');
+  await expect(page.getByRole('link', { name: 'Ir a completar la adopción' })).toHaveCount(0);
+});

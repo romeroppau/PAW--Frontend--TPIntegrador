@@ -233,10 +233,11 @@ async function cargarFinalizadas() {
 }
 
 function cargarTodo() {
-  cargarRescatistas();
-  cargarModeracion();
-  cargarEnCurso();
-  cargarFinalizadas();
+  return Promise.all([cargarRescatistas(), cargarModeracion(), cargarEnCurso(), cargarFinalizadas()]);
 }
 
-cargarTodo();
+// Si se llega con un ancla (por ejemplo #en-curso, desde la consulta de un chequeo), se baja hasta la
+// sección cuando todo terminó de cargar: antes, las otras secciones la corren hacia abajo.
+await cargarTodo();
+const destino = location.hash ? document.getElementById(location.hash.slice(1)) : null;
+if (destino) destino.scrollIntoView();
