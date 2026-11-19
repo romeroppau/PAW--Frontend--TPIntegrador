@@ -24,3 +24,28 @@
 
 .seccion-adopciones + .seccion-adopciones { margin-top: 2.5rem; }
 .aviso-cuenta { margin-bottom: 1.25rem; }
+
+/* Detalle de una adopción (panel/adopcion.html) */
+.detalle-adopcion { display: grid; grid-template-columns: minmax(0, 20rem) 1fr; gap: 1.5rem; align-items: start; }
+.detalle-adopcion img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: var(--radio); background: var(--menta); }
+.detalle-adopcion .tarjeta + .tarjeta, .bloque-detalle + .bloque-detalle { margin-top: 1.5rem; }
+.detalle-adopcion h2, .bloque-detalle h2 { font-size: 1.4rem; }
+.titulo-con-estado { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem 1rem; }
+.titulo-con-estado h1 { margin: 0; }
+.personas { display: grid; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap: 1.5rem; }
+.personas h3 { font-size: 1.15rem; margin-bottom: .5rem; }
+.personas p { margin: 0 0 .25rem; }
+
+/* Recorrido: una línea de tiempo vertical */
+.recorrido { list-style: none; margin: 0; padding: 0 0 0 1.25rem; border-left: 3px solid var(--menta); }
+.recorrido li { position: relative; padding: 0 0 1rem .75rem; }
+.recorrido li::before {
+  content: ""; position: absolute; left: calc(-1.25rem - 9px); top: .45rem;
+  width: 15px; height: 15px; border-radius: 50%; background: var(--pino); border: 3px solid var(--blanco);
+}
+.recorrido li.pendiente::before { background: var(--borde); }
+.recorrido .cuando { display: block; font-size: .9rem; color: var(--tinta-suave); }
+
+@media (max-width: 800px) {
+  .detalle-adopcion { grid-template-columns: 1fr; }
+}

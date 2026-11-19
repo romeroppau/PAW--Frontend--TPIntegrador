@@ -268,14 +268,33 @@ test('en "Mis mascotas", la rescatista no ve el calendario ni el historial', asy
 /* ---------- Veterinaria ---------- */
 
 // Simula todo lo que carga el panel de la veterinaria, con listas que cada prueba puede cambiar.
+// El listado de adopciones pagina y busca como la API; los pedidos quedan en datos.pedidos.
 async function simularPanelVet(page, datos) {
   await simularSesion(page, VETERINARIO);
+  datos.pedidos = [];
   await page.route('**/api/rescatistas', (route) => responderJson(route, { rescatistas: datos.rescatistas ?? [] }));
   await page.route('**/api/adopciones/moderacion', (route) => responderJson(route, { publicaciones: datos.moderacion ?? [] }));
   await page.route(/\/api\/adopciones(\?.*)?$/, (route) => {
-    const estado = new URL(route.request().url()).searchParams.get('estado');
-    return responderJson(route, { adopciones: estado === 'FINALIZADA' ? (datos.finalizadas ?? []) : (datos.enCurso ?? []) });
+    const query = new URL(route.request().url()).searchParams;
+    datos.pedidos.push(Object.fromEntries(query));
+    const lista = { FINALIZADA: datos.finalizadas, CANCELADA: datos.canceladas }[query.get('estado')] ?? datos.enCurso ?? [];
+    const buscar = (query.get('buscar') ?? '').toLowerCase();
+    const filtradas = (lista ?? []).filter((a) => a.publicacion.mascota.nombre.toLowerCase().includes(buscar));
+    const pagina = Number(query.get('pagina') ?? 1);
+    const porPagina = Number(query.get('por_pagina') ?? 100);
+    return responderJson(route, {
+      adopciones: filtradas.slice((pagina - 1) * porPagina, pagina * porPagina),
+      total: filtradas.length, pagina, por_pagina: porPagina,
+    });
   });
+}
+
+// "Hoy" de Argentina y hace 30 días, como los calcula el panel.
+function diasAtras(dias) {
+  const hoy = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' }).format(new Date());
+  const d = new Date(hoy + 'T12:00:00Z');
+  d.setUTCDate(d.getUTCDate() - dias);
+  return d.toISOString().slice(0, 10);
 }
 
 function adopcionEnCurso(estado, turno = null) {
@@ -308,9 +327,18 @@ test('la veterinaria aprueba un rescatista y rechaza una publicación con su mot
   });
 
   await page.goto('/panel/adopciones.html');
+  // Cada pestaña dice cuántos hay esperando.
+  const pestanaRescatistas = page.getByRole('tab', { name: /Rescatistas/ });
+  await expect(pestanaRescatistas).toContainText('(1)');
+  await expect(page.getByRole('tab', { name: /Publicaciones por revisar/ })).toContainText('(1)');
+
+  await pestanaRescatistas.click();
+  await expect(page).toHaveURL(/#rescatistas$/);
   await page.locator('#filas-rescatistas').getByRole('button', { name: 'Aprobar' }).click();
   await expect(page.locator('#estado-rescatistas')).toHaveText('No hay rescatistas esperando la aprobación.');
+  await expect(pestanaRescatistas).not.toContainText('(');
 
+  await page.getByRole('tab', { name: /Publicaciones por revisar/ }).click();
   const tarjeta = page.locator('.tarjeta-adopcion', { hasText: 'Rocco' });
   await tarjeta.getByRole('button', { name: 'Rechazar' }).click();
   await expect(tarjeta.locator('.campo-error')).toHaveText('El motivo es obligatorio');
@@ -364,8 +392,111 @@ test('con el chequeo atendido se completa la adopción y pasa a las finalizadas'
   await page.locator('dialog').getByRole('button', { name: 'Completar adopción' }).click();
 
   await expect(page.locator('#estado-curso')).toHaveText('No hay adopciones en curso.');
+  await page.getByRole('tab', { name: 'Finalizadas' }).click();
   await expect(page.locator('#filas-finalizadas')).toContainText('17/11/2026');
   expect(completadas).toBe(1);
+});
+
+test('las finalizadas arrancan en los últimos 30 días, se pasan de página y se ven las canceladas', async ({ page }) => {
+  // 25 adoptadas: con 20 por página, son dos páginas.
+  const finalizadas = Array.from({ length: 25 }, (_, i) => ({
+    ...adopcionEnCurso('FINALIZADA'), id: 100 + i, fecha_fin: '2026-11-17 11:00:00',
+    publicacion: publicacion(100 + i, `Gato ${i + 1}`),
+  }));
+  const canceladas = [{ ...adopcionEnCurso('CANCELADA'), id: 200, adoptante: null, fecha_fin: '2026-11-12 09:00:00', publicacion: publicacion(200, 'Canela') }];
+  const datos = { finalizadas, canceladas };
+  await simularPanelVet(page, datos);
+
+  await page.goto('/panel/adopciones.html#finalizadas');
+  await expect(page.getByRole('tab', { name: 'Finalizadas' })).toHaveAttribute('aria-selected', 'true');
+  await expect(page.locator('#estado-finalizadas')).toHaveText('25 adopciones finalizadas.');
+  await expect(page.locator('#filas-finalizadas tr')).toHaveCount(20);
+  // La tabla larga se desplaza dentro de su recuadro: la página no se ensancha (en celular, si se
+  // ensanchara, el navegador la achica y los toques caen corridos).
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  const pedido = datos.pedidos.find((p) => p.estado === 'FINALIZADA');
+  expect(pedido).toMatchObject({ desde: diasAtras(30), hasta: diasAtras(0), por_pagina: '20', pagina: '1' });
+
+  const paginas = page.getByRole('navigation', { name: 'Páginas de las adopciones terminadas' });
+  await expect(paginas).toContainText('Página 1 de 2');
+  await expect(paginas.getByRole('button', { name: /Anterior/ })).toBeDisabled();
+  await paginas.getByRole('button', { name: /Siguiente/ }).click();
+  await expect(paginas).toContainText('Página 2 de 2');
+  await expect(page.locator('#filas-finalizadas tr')).toHaveCount(5);
+
+  // Cada fila enlaza a su detalle.
+  await expect(page.getByRole('link', { name: 'Ver el detalle de la adopción de Gato 25' }))
+    .toHaveAttribute('href', '/panel/adopcion.html?id=124');
+
+  // Elegir "Canceladas" filtra en el momento y vuelve a la página 1.
+  await page.getByLabel('Resultado').selectOption('CANCELADA');
+  await expect(page.locator('#estado-finalizadas')).toHaveText('1 adopción cancelada.');
+  await expect(page.locator('#filas-finalizadas')).toContainText('Canela');
+  await expect(paginas).toBeHidden();
+});
+
+test('la búsqueda de en curso filtra por nombre y avisa si no hay ninguna', async ({ page }) => {
+  const datos = { enCurso: [adopcionEnCurso('ADOPTANTE_ELEGIDO'), { ...adopcionEnCurso('CON_POSTULANTES'), id: 2, adoptante: null, publicacion: publicacion(2, 'Rocco') }] };
+  await simularPanelVet(page, datos);
+
+  await page.goto('/panel/adopciones.html');
+  await expect(page.getByRole('tab', { name: /En curso/ })).toContainText('(2)');
+  await page.getByLabel('Buscar', { exact: true }).first().fill('rocco');
+  await page.getByRole('button', { name: 'Buscar' }).click();
+  await expect(page.locator('#filas-curso tr')).toHaveCount(1);
+  await expect(page.locator('#filas-curso')).toContainText('Rocco');
+  // El número de la pestaña sigue contando todas.
+  await expect(page.getByRole('tab', { name: /En curso/ })).toContainText('(2)');
+
+  await page.getByLabel('Buscar', { exact: true }).first().fill('nadie');
+  await page.getByRole('button', { name: 'Buscar' }).click();
+  await expect(page.locator('#estado-curso')).toHaveText('Ninguna adopción en curso coincide con la búsqueda.');
+});
+
+test('el detalle de una adopción finalizada muestra a las personas, el recorrido y las postulaciones', async ({ page }) => {
+  await simularSesion(page, VETERINARIO);
+  const adopcion = {
+    ...adopcionEnCurso('FINALIZADA', { id: 120, fecha: '2026-11-17', hora: '10:30', estado: 'ATENDIDO', consulta_id: 7 }),
+    fecha_fin: '2026-11-17 11:00:00',
+    publicacion: publicacion(1, 'Pipa', {
+      rescatista: { id: 104, nombre: 'Rescatista Aprobada', organizacion: 'Patitas al Rescate', email: 'r@prueba.huellavet', telefono: '1155550104' },
+    }),
+    adoptante: { id: 103, nombre: 'Cliente Dos', telefono: '1155550103', email: 'c2@prueba.huellavet' },
+  };
+  await page.route('**/api/adopciones/1/detalle', (route) => responderJson(route, {
+    adopcion,
+    postulaciones: [
+      postulacion(1, 'Cliente Dos', { estado: 'ELEGIDA', cliente: { id: 103, nombre: 'Cliente Dos', telefono: '1155550103' } }),
+      postulacion(2, 'Cliente Uno', { estado: 'RECHAZADA', fecha: '2026-11-16 09:00:00' }),
+    ],
+  }));
+
+  await page.goto('/panel/adopcion.html?id=1');
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Adopción de Pipa');
+  await expect(page).toHaveTitle('Adopción de Pipa | HuellaVet');
+  await expect(page.locator('#insignia-estado')).toHaveText('Adoptado');
+  await expect(page.getByRole('link', { name: 'c2@prueba.huellavet' })).toHaveAttribute('href', 'mailto:c2@prueba.huellavet');
+  await expect(page.locator('#rescatista')).toContainText('Rescatista Aprobada (Patitas al Rescate)');
+
+  const recorrido = page.locator('#recorrido');
+  await expect(recorrido).toContainText('2 postulaciones');
+  await expect(recorrido).toContainText('Adoptante elegido: Cliente Dos');
+  await expect(recorrido).toContainText('Adopción completa: Pipa pasó a ser de Cliente Dos');
+  await expect(recorrido).toContainText('17/11/2026, 11:00');
+  await expect(page.getByRole('link', { name: 'Ver la consulta del chequeo' })).toHaveAttribute('href', '/panel/consulta.html?id=7');
+
+  await expect(page.locator('#filas-postulaciones tr')).toHaveCount(2);
+  await expect(page.locator('#filas-postulaciones')).toContainText('Rechazada');
+  await expect(page.getByRole('link', { name: /Volver a las adopciones/ })).toHaveAttribute('href', '/panel/adopciones.html#finalizadas');
+});
+
+test('el detalle de una adopción que no existe lo avisa', async ({ page }) => {
+  await simularSesion(page, VETERINARIO);
+  await page.route('**/api/adopciones/99/detalle', (route) => responderJson(route, { error: 'Adopción no encontrada', campos: {} }, 404));
+
+  await page.goto('/panel/adopcion.html?id=99');
+  await expect(page.locator('#estado')).toHaveText('No encontramos esa adopción.');
+  await expect(page.locator('#detalle')).toBeHidden();
 });
 
 test('si Pacientes no responde al completar, el error se ve en la fila y la adopción sigue en curso', async ({ page }) => {
@@ -406,8 +537,8 @@ test('al finalizar la consulta de un chequeo de adopción aparece "Ir a completa
 
   await page.getByRole('link', { name: 'Ir a completar la adopción' }).click();
   await expect(page).toHaveURL(/\/panel\/adopciones\.html#en-curso$/);
-  // En celular la tabla se desplaza de costado: alcanza con que la sección quede a la vista.
-  await expect(page.locator('#titulo-curso')).toBeInViewport();
+  // El enlace abre la pestaña "En curso".
+  await expect(page.getByRole('tab', { name: /En curso/ })).toHaveAttribute('aria-selected', 'true');
   await expect(page.getByRole('button', { name: 'Completar adopción' })).toBeVisible();
 });
 

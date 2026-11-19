@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Detalle de la adopción | HuellaVet</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Nunito+Sans:wght@400;600;700&display=swap">
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/adopciones.css">
+</head>
+<!-- Detalle de una adopción para la veterinaria (Entrega 5, rol 3): la publicación, el rescatista,
+     el adoptante, el recorrido (con el chequeo y su consulta) y todas las postulaciones.
+     Se abre con ?id=<adopción>. Datos: GET /api/adopciones/{id}/detalle (js/adopcion-detalle.js). -->
+<body data-rol="VETERINARIO">
+  <a class="saltar" href="#contenido">Saltar al contenido</a>
+  <div id="encabezado-sitio"></div>
+  <script src="/js/layout.js"></script>
+  <main id="contenido" class="seccion" hidden>
+    <div class="contenedor">
+      <p><a href="/panel/adopciones.html#finalizadas" id="volver">&larr; Volver a las adopciones</a></p>
+      <div class="barra-titulo titulo-con-estado">
+        <h1 id="titulo">Detalle de la adopción</h1>
+        <span id="insignia-estado"></span>
+      </div>
+      <p class="estado" id="estado" role="status">Cargando…</p>
+
+      <div id="detalle" hidden>
+        <div class="detalle-adopcion">
+          <img id="foto" src="" alt="" width="400" height="300">
+          <div>
+            <section class="tarjeta" aria-labelledby="t-publicacion">
+              <h2 id="t-publicacion">La publicación</h2>
+              <p><strong id="publicacion-titulo"></strong></p>
+              <p id="publicacion-descripcion"></p>
+              <dl class="factura-datos" id="datos-mascota"></dl>
+            </section>
+          </div>
+        </div>
+
+        <section class="tarjeta bloque-detalle" aria-labelledby="t-personas">
+          <h2 id="t-personas">Quiénes participaron</h2>
+          <div class="personas">
+            <div id="rescatista"><h3>Rescatista</h3></div>
+            <div id="adoptante"><h3>Adoptante</h3></div>
+          </div>
+        </section>
+
+        <section class="tarjeta bloque-detalle" aria-labelledby="t-recorrido">
+          <h2 id="t-recorrido">Recorrido</h2>
+          <ol class="recorrido" id="recorrido"></ol>
+        </section>
+
+        <section class="tarjeta bloque-detalle" aria-labelledby="t-postulaciones">
+          <h2 id="t-postulaciones">Postulaciones</h2>
+          <p class="estado" id="estado-postulaciones"></p>
+          <div class="tabla-scroll" id="tabla-postulaciones" hidden>
+            <table>
+              <caption class="solo-lectores">Postulaciones de la adopción, la primera arriba</caption>
+              <thead>
+                <tr><th scope="col">Cliente</th><th scope="col">Fecha</th><th scope="col">Vivienda</th>
+                  <th scope="col">Otras mascotas</th><th scope="col">Tiempo disponible</th><th scope="col">Estado</th></tr>
+              </thead>
+              <tbody id="filas-postulaciones"></tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+  <div id="pie-sitio"></div>
+
+  <script type="module" src="/js/menu.js"></script>
+  <script type="module" src="/js/guardia-panel.js"></script>
+  <script type="module" src="/js/auth.js"></script>
+  <script type="module" src="/js/adopcion-detalle.js"></script>
+</body>
+</html>

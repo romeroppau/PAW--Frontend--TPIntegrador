@@ -11,7 +11,9 @@
   <link rel="stylesheet" href="/css/adopciones.css">
 </head>
 <!-- Adopciones de la veterinaria (Entrega 5, rol 3): validar rescatistas, moderar publicaciones,
-     programar el chequeo, completar y cancelar adopciones. Todo con fetch (js/adopciones-vet.js). -->
+     programar el chequeo, completar y cancelar adopciones, y ver las terminadas. Cuatro pestañas;
+     la activa viaja en el hash (#rescatistas, #moderacion, #en-curso, #finalizadas).
+     Todo con fetch (js/adopciones-vet.js). -->
 <body data-rol="VETERINARIO">
   <a class="saltar" href="#contenido">Saltar al contenido</a>
   <div id="encabezado-sitio"></div>
@@ -23,8 +25,20 @@
         <h1>Adopciones y rescatistas</h1>
       </div>
 
-      <section class="seccion-adopciones" id="rescatistas" aria-labelledby="titulo-rescatistas">
-        <h2 id="titulo-rescatistas">Rescatistas por aprobar</h2>
+      <div class="pestanas" role="tablist" aria-label="Secciones de adopciones" id="pestanas">
+        <button type="button" role="tab" id="tab-rescatistas" aria-selected="false" tabindex="-1" aria-controls="panel-rescatistas" data-vista="rescatistas">
+          Rescatistas <span class="contador" id="cuenta-rescatistas"></span></button>
+        <button type="button" role="tab" id="tab-moderacion" aria-selected="false" tabindex="-1" aria-controls="panel-moderacion" data-vista="moderacion">
+          Publicaciones por revisar <span class="contador" id="cuenta-moderacion"></span></button>
+        <button type="button" role="tab" id="tab-en-curso" aria-selected="true" aria-controls="panel-en-curso" data-vista="en-curso">
+          En curso <span class="contador" id="cuenta-curso"></span></button>
+        <button type="button" role="tab" id="tab-finalizadas" aria-selected="false" tabindex="-1" aria-controls="panel-finalizadas" data-vista="finalizadas">
+          Finalizadas</button>
+      </div>
+
+      <!-- Rescatistas por aprobar -->
+      <section id="panel-rescatistas" role="tabpanel" aria-labelledby="tab-rescatistas" tabindex="0" hidden>
+        <h2 class="solo-lectores">Rescatistas por aprobar</h2>
         <p class="estado" id="estado-rescatistas" role="status">Cargando…</p>
         <div class="tabla-scroll" id="tabla-rescatistas" hidden>
           <table>
@@ -35,36 +49,81 @@
         </div>
       </section>
 
-      <section class="seccion-adopciones" id="moderacion" aria-labelledby="titulo-moderacion">
-        <h2 id="titulo-moderacion">Publicaciones por revisar</h2>
+      <!-- Moderación -->
+      <section id="panel-moderacion" role="tabpanel" aria-labelledby="tab-moderacion" tabindex="0" hidden>
+        <h2 class="solo-lectores">Publicaciones por revisar</h2>
         <p class="estado" id="estado-moderacion" role="status">Cargando…</p>
         <div class="grilla" id="publicaciones"></div>
       </section>
 
-      <section class="seccion-adopciones" id="en-curso" aria-labelledby="titulo-curso">
-        <h2 id="titulo-curso">Adopciones en curso</h2>
+      <!-- Adopciones en curso -->
+      <section id="panel-en-curso" role="tabpanel" aria-labelledby="tab-en-curso" tabindex="0">
+        <h2 class="solo-lectores">Adopciones en curso</h2>
         <p class="ayuda">Cuando el rescatista elige al adoptante, programá el chequeo. El turno aparece en la
           <a href="/panel/agenda.html">agenda</a>: atendelo ese día como cualquier consulta y después completá la adopción.</p>
+        <form class="form-item" id="filtro-curso" role="search" novalidate>
+          <div class="campo">
+            <label for="buscar-curso">Buscar</label>
+            <input id="buscar-curso" name="buscar" type="search" maxlength="60" autocomplete="off" placeholder="Mascota, adoptante o rescatista">
+          </div>
+          <button type="submit" class="boton boton-borde">Buscar</button>
+        </form>
+        <p class="campo-error" id="error-curso" role="alert"></p>
         <p class="estado" id="estado-curso" role="status">Cargando…</p>
         <div class="tabla-scroll" id="tabla-curso" hidden>
           <table>
-            <caption class="solo-lectores">Adopciones en curso</caption>
+            <caption class="solo-lectores">Adopciones en curso, las que esperan hace más primero</caption>
             <thead><tr><th scope="col">Animal</th><th scope="col">Estado</th><th scope="col">Adoptante</th><th scope="col">Chequeo</th><th scope="col">Acciones</th></tr></thead>
             <tbody id="filas-curso"></tbody>
           </table>
         </div>
+        <nav class="paginacion" id="paginas-curso" aria-label="Páginas de las adopciones en curso" hidden>
+          <button type="button" class="boton boton-borde boton-chico" data-ir="-1">&larr; Anterior</button>
+          <span class="estado" aria-live="polite"></span>
+          <button type="button" class="boton boton-borde boton-chico" data-ir="1">Siguiente &rarr;</button>
+        </nav>
       </section>
 
-      <section class="seccion-adopciones" id="finalizadas" aria-labelledby="titulo-finalizadas">
-        <h2 id="titulo-finalizadas">Adopciones finalizadas</h2>
+      <!-- Adopciones terminadas (finalizadas o canceladas) -->
+      <section id="panel-finalizadas" role="tabpanel" aria-labelledby="tab-finalizadas" tabindex="0" hidden>
+        <h2 class="solo-lectores">Adopciones finalizadas</h2>
+        <form class="form-item" id="filtro-finalizadas" role="search" novalidate>
+          <div class="campo campo-chico">
+            <label for="resultado">Resultado</label>
+            <select id="resultado" name="estado">
+              <option value="FINALIZADA">Adoptados</option>
+              <option value="CANCELADA">Canceladas</option>
+            </select>
+          </div>
+          <div class="campo campo-chico">
+            <label for="desde">Terminó desde</label>
+            <input id="desde" name="desde" type="date">
+          </div>
+          <div class="campo campo-chico">
+            <label for="hasta">Hasta</label>
+            <input id="hasta" name="hasta" type="date">
+          </div>
+          <div class="campo">
+            <label for="buscar-finalizadas">Buscar</label>
+            <input id="buscar-finalizadas" name="buscar" type="search" maxlength="60" autocomplete="off" placeholder="Mascota, adoptante o rescatista">
+          </div>
+          <button type="submit" class="boton boton-borde">Filtrar</button>
+        </form>
+        <p class="ayuda">Arranca con los últimos 30 días. Vaciá las fechas para ver todas.</p>
+        <p class="campo-error" id="error-finalizadas" role="alert"></p>
         <p class="estado" id="estado-finalizadas" role="status">Cargando…</p>
         <div class="tabla-scroll" id="tabla-finalizadas" hidden>
           <table>
-            <caption class="solo-lectores">Adopciones finalizadas</caption>
-            <thead><tr><th scope="col">Animal</th><th scope="col">Adoptante</th><th scope="col">Rescatista</th><th scope="col">Fecha</th></tr></thead>
+            <caption class="solo-lectores">Adopciones terminadas, las más recientes primero</caption>
+            <thead><tr><th scope="col">Animal</th><th scope="col">Adoptante</th><th scope="col">Rescatista</th><th scope="col">Empezó</th><th scope="col">Terminó</th><th scope="col">Detalle</th></tr></thead>
             <tbody id="filas-finalizadas"></tbody>
           </table>
         </div>
+        <nav class="paginacion" id="paginas-finalizadas" aria-label="Páginas de las adopciones terminadas" hidden>
+          <button type="button" class="boton boton-borde boton-chico" data-ir="-1">&larr; Anterior</button>
+          <span class="estado" aria-live="polite"></span>
+          <button type="button" class="boton boton-borde boton-chico" data-ir="1">Siguiente &rarr;</button>
+        </nav>
       </section>
     </div>
   </main>
