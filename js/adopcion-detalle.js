@@ -135,9 +135,10 @@ async function iniciar() {
   $('insignia-estado').replaceChildren(insignia(adopcion.estado));
   if (!TERMINADAS.includes(adopcion.estado)) $('volver').href = '/panel/adopciones.html#en-curso';
 
-  const foto = $('foto');
-  foto.src = `/api/adopciones/publicaciones/${publicacion.id}/foto`;
-  foto.alt = 'Foto de ' + mascota.nombre;
+  $('foto').replaceChildren(el('img', '', {
+    src: `/api/adopciones/publicaciones/${publicacion.id}/foto`,
+    alt: 'Foto de ' + mascota.nombre, width: '400', height: '300'
+  }));
   $('publicacion-titulo').textContent = publicacion.titulo;
   $('publicacion-descripcion').textContent = publicacion.descripcion;
 
