@@ -91,6 +91,25 @@ export function fechaHora(texto) {
   return `${d}/${m}/${a} ${hora.slice(0, 5)}`;
 }
 
+/** "2026-11-25" -> "25/11/2026" */
+export function fecha(texto) {
+  if (!texto) return '';
+  const [a, m, d] = texto.slice(0, 10).split('-');
+  return `${d}/${m}/${a}`;
+}
+
+/**
+ * El filtro Desde / Hasta de las listas por fecha (Mis compras y el historial de Ventas).
+ * Devuelve { desde, hasta } para el pedido (vacío = el servidor usa los últimos 30 días),
+ * o un texto de error si "desde" es después de "hasta".
+ */
+export function leerFechas($desde, $hasta) {
+  const desde = $desde.value;
+  const hasta = $hasta.value;
+  if (desde && hasta && desde > hasta) return 'La fecha "Desde" tiene que ser anterior o igual a "Hasta".';
+  return { desde, hasta };
+}
+
 /** "2026-11-25" -> "miércoles 25/11" */
 export function diaConNombre(texto) {
   const [a, m, d] = texto.split('-').map(Number);
