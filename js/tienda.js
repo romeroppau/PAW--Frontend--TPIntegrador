@@ -6,10 +6,15 @@
  */
 import { api } from './api.js';
 
-/** Política de cancelación: se muestra en el carrito (antes de pagar) y en la compra. */
-export const POLITICA = 'Tenés 5 días hábiles desde la compra para retirar tu pedido en el local. '
-  + 'Si no lo retirás en ese plazo, el pedido se cancela y el importe no se reintegra. '
-  + 'Si cancelás un pedido ya pagado, el importe tampoco se reintegra.';
+/**
+ * Política de cancelación: se muestra en el carrito (antes de pagar) y en la compra.
+ * Los días los configura la veterinaria: llegan del servidor (dias_habiles_para_retirar).
+ */
+export function politica(dias = 5) {
+  return `Tenés ${dias} días hábiles desde la compra para retirar tu pedido en el local. `
+    + 'Si no lo retirás en ese plazo, el pedido se cancela y el importe no se reintegra. '
+    + 'Si cancelás un pedido ya pagado, el importe tampoco se reintegra.';
+}
 
 /** Texto de cada estado de una compra (el código no se muestra). */
 export const TEXTO_ESTADO = {
