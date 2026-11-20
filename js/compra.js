@@ -142,10 +142,19 @@ function dibujar(compra) {
 
 // ---------- Cuenta regresiva ----------
 
+// El link de Mercado Pago vence 1 minuto antes que la compra (así un pago que empezó a tiempo tiene
+// ese minuto para terminar). En el último minuto ya no se puede empezar a pagar.
+const SEGUNDOS_DE_MARGEN_DEL_LINK = 60;
+
 function iniciarReloj(limite) {
+  $pagar.disabled = false;
   const actualizar = () => {
     const resta = Math.max(0, Math.floor((limite.getTime() - Date.now()) / 1000));
     $tiempo.textContent = `${Math.floor(resta / 60)}:${String(resta % 60).padStart(2, '0')}`;
+    if (resta <= SEGUNDOS_DE_MARGEN_DEL_LINK && !$pagar.disabled) {
+      $pagar.disabled = true;
+      mostrarResultadoPago('Ya no queda tiempo para pagar esta compra.', false);
+    }
     if (resta === 0) vencio();
   };
   actualizar();
@@ -185,7 +194,8 @@ $pagar.addEventListener('click', async () => {
     await irAPagar(numero);
   } catch (error) {
     $pagar.disabled = false;
-    mostrarResultadoPago(error?.estado === 409 ? 'Esta compra ya no está esperando el pago.' : textoDeError(error), false);
+    // 409: el servidor dice por qué (ya no espera el pago, o ya no queda tiempo para pagar).
+    mostrarResultadoPago(error?.estado === 409 ? (error.datos?.error ?? 'Esta compra ya no está esperando el pago.') : textoDeError(error), false);
     cargar();
   }
 });
