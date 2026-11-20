@@ -6,12 +6,13 @@
  *   PUT    /api/tienda/carrito/items/{producto}    cambiar la cantidad
  *   DELETE /api/tienda/carrito/items/{producto}    quitar
  *   POST   /api/tienda/carrito/confirmar           "Ir a pagar": crea la compra y aparta el stock
- * Los cambios devuelven el carrito actualizado: la tabla se vuelve a dibujar con esa respuesta.
+ *   GET    /api/tienda/productos/{id}/imagen       la foto de cada producto (si tiene)
+ * Los cambios devuelven el carrito actualizado: la lista se vuelve a dibujar con esa respuesta.
  */
 import { api } from './api.js';
 import { exigirRol } from './auth.js';
 import { el } from './ui.js';
-import { POLITICA, avisarCarrito, irAPagar, precio, textoDeError } from './tienda.js';
+import { POLITICA, avisarCarrito, diaConNombre, irAPagar, precio, textoDeError, unidades } from './tienda.js';
 
 const $estado = document.getElementById('estado');
 const $error = document.getElementById('error');
@@ -19,6 +20,9 @@ const $vacio = document.getElementById('vacio');
 const $contenido = document.getElementById('contenido-carrito');
 const $filas = document.getElementById('filas');
 const $total = document.getElementById('total');
+const $unidades = document.getElementById('unidades');
+const $minutos = document.getElementById('minutos');
+const $retirarHasta = document.getElementById('retirar-hasta');
 const $acepto = document.getElementById('acepto');
 const $motivo = document.getElementById('motivo-bloqueo');
 const $irAPagar = document.getElementById('ir-a-pagar');
@@ -51,6 +55,11 @@ function dibujar(carrito) {
 
   $filas.replaceChildren(...items.map(crearFila));
   $total.textContent = precio(carrito.total ?? 0);
+  const cuantos = unidades(carrito);
+  $unidades.textContent = cuantos === 1 ? '1 producto' : `${cuantos} productos`;
+  // Los plazos los manda el servidor: los minutos para pagar y, si compra hoy, el último día para retirar.
+  if (Number.isInteger(carrito.minutos_para_pagar)) $minutos.textContent = `${carrito.minutos_para_pagar} minutos`;
+  if (carrito.retirar_hasta_si_compra_hoy) $retirarHasta.textContent = diaConNombre(carrito.retirar_hasta_si_compra_hoy);
 
   const noALaVenta = items.filter((item) => !item.a_la_venta);
   const sinStock = items.filter((item) => item.a_la_venta && item.cantidad > item.stock);
@@ -60,43 +69,67 @@ function dibujar(carrito) {
   actualizarBoton();
 }
 
-function crearFila(item) {
-  const fila = el('tr');
+// Tachito de "Quitar" (SVG decorativo: el nombre del botón lo da aria-label).
+const TACHITO = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const HUELLA = '<svg viewBox="0 0 64 64" aria-hidden="true" focusable="false"><g fill="currentColor"><ellipse cx="14" cy="27" rx="7" ry="9"/><ellipse cx="29" cy="15" rx="7" ry="10"/><ellipse cx="45" cy="15" rx="7" ry="10"/><ellipse cx="57" cy="29" rx="6" ry="9"/><path d="M32 31c-9 0-18 9-18 17 0 6 5 9 11 8 3-.6 5-1.5 7-1.5s4 .9 7 1.5c6 1 11-2 11-8 0-8-9-17-18-17z"/></g></svg>';
 
-  const producto = el('td');
-  producto.append(el('a', item.nombre, { href: '/catalogo/producto.html?id=' + encodeURIComponent(item.producto_id) }));
-  if (!item.a_la_venta) {
-    producto.append(el('span', 'Ya no está a la venta: quitalo para seguir.', { class: 'nota-item nota-error' }));
-  } else if (item.cantidad > item.stock) {
-    producto.append(el('span', item.stock === 0 ? 'Sin stock.' : `Solo quedan ${item.stock}.`, { class: 'nota-item nota-error' }));
+// Un producto del carrito: foto | nombre y precio por unidad | − cantidad + | subtotal | tachito.
+function crearFila(item) {
+  const fila = el('li', '', { class: 'item-carrito' });
+  const enlace = '/catalogo/producto.html?id=' + encodeURIComponent(item.producto_id);
+
+  // Foto: la <img> se crea solo si el producto tiene foto (un <img> sin src no es HTML válido).
+  const foto = el('a', '', { href: enlace, class: 'item-foto', tabindex: '-1', 'aria-hidden': 'true' });
+  if (item.tiene_imagen) {
+    const imagen = el('img', '', { src: `/api/tienda/productos/${encodeURIComponent(item.producto_id)}/imagen`, alt: '', loading: 'lazy', width: '72', height: '72' });
+    imagen.addEventListener('error', () => { foto.innerHTML = HUELLA; }, { once: true });
+    foto.append(imagen);
+  } else {
+    foto.innerHTML = HUELLA;
   }
 
-  // Cantidad: se guarda al cambiarla (al salir del campo o con las flechas).
+  const datos = el('div', '', { class: 'item-datos' });
+  datos.append(el('a', item.nombre, { href: enlace, class: 'item-nombre' }), el('span', `${precio(item.precio_unitario)} c/u`, { class: 'item-unitario' }));
+  if (!item.a_la_venta) {
+    datos.append(el('span', 'Ya no está a la venta: quitalo para seguir.', { class: 'nota-item nota-error' }));
+  } else if (item.cantidad > item.stock) {
+    datos.append(el('span', item.stock === 0 ? 'Sin stock.' : `Solo quedan ${item.stock}.`, { class: 'nota-item nota-error' }));
+  }
+
+  // Cantidad: − y + cambian de a uno; el número también se puede escribir (se guarda al salir del campo).
+  const selector = el('div', '', { class: 'selector-cantidad' });
+  const menos = el('button', '−', { type: 'button', 'aria-label': `Restar uno de ${item.nombre}` });
+  const mas = el('button', '+', { type: 'button', 'aria-label': `Sumar uno de ${item.nombre}` });
   const cantidad = el('input', '', {
     type: 'number', min: '1', max: '99', value: String(item.cantidad), inputmode: 'numeric',
     class: 'input-cantidad', 'aria-label': `Cantidad de ${item.nombre}`,
   });
-  cantidad.disabled = !item.a_la_venta;
-  cantidad.addEventListener('change', () => cambiarCantidad(item, cantidad));
-  const celdaCantidad = el('td');
-  celdaCantidad.append(cantidad);
+  const bloqueado = !item.a_la_venta;
+  cantidad.disabled = bloqueado;
+  menos.disabled = bloqueado || item.cantidad <= 1;
+  mas.disabled = bloqueado || item.cantidad >= Math.min(99, item.stock);
+  menos.addEventListener('click', () => { cantidad.value = String(item.cantidad - 1); cambiarCantidad(item, cantidad, selector); });
+  mas.addEventListener('click', () => { cantidad.value = String(item.cantidad + 1); cambiarCantidad(item, cantidad, selector); });
+  cantidad.addEventListener('change', () => cambiarCantidad(item, cantidad, selector));
+  selector.append(menos, cantidad, mas);
 
-  const quitar = el('button', 'Quitar', { type: 'button', class: 'boton boton-borde boton-chico', 'aria-label': `Quitar ${item.nombre} del carrito` });
+  const quitar = el('button', '', { type: 'button', class: 'boton-quitar', 'aria-label': `Quitar ${item.nombre} del carrito`, title: 'Quitar' });
+  quitar.innerHTML = TACHITO;
   quitar.addEventListener('click', () => quitarItem(item, quitar));
-  const celdaQuitar = el('td');
-  celdaQuitar.append(quitar);
 
-  fila.append(producto, el('td', precio(item.precio_unitario)), celdaCantidad, el('td', precio(item.subtotal)), celdaQuitar);
+  fila.append(foto, datos, selector, el('strong', precio(item.subtotal), { class: 'item-subtotal' }), quitar);
   return fila;
 }
 
-async function cambiarCantidad(item, input) {
+async function cambiarCantidad(item, input, selector) {
   const nueva = Number(input.value);
   if (!Number.isInteger(nueva) || nueva < 1 || nueva > 99) {
     mostrarError(`La cantidad de ${item.nombre} tiene que ser un número entero entre 1 y 99.`);
     input.value = String(item.cantidad);
     return;
   }
+  // Mientras se guarda, el selector queda quieto: así dos toques rápidos no se pisan.
+  selector?.querySelectorAll('button, input').forEach((control) => { control.disabled = true; });
   await cambiar(() => api('/api/tienda/carrito/items/' + item.producto_id, { metodo: 'PUT', cuerpo: { cantidad: nueva } }), item.nombre);
 }
 
