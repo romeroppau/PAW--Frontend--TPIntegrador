@@ -12,8 +12,11 @@
 </head>
 <!-- Ventas de la tienda (veterinaria): pestañas Para retirar | Entregados | Cancelados y un buscador
      por número de pedido o nombre del comprador (busca dentro de la pestaña).
-     "Entregado" constata que el comprador retiró el pedido en el local.
-     Lo maneja js/ventas.js. API: GET /api/inventario/compras?estado=&buscar= y
+     - Para retirar arranca con el buscador listo para escribir y SIN la lista (cuando alguien viene
+       a retirar, se lo busca): solo cuántos pedidos vencen hoy ("Ver cuáles") y "Ver todos".
+     - Entregados y Cancelados (historial): los últimos 30 días, con filtro Desde / Hasta.
+     Las listas vienen de a 20 ("Ver más"). "Entregado" constata que el comprador retiró el pedido.
+     Lo maneja js/ventas.js. API: GET /api/inventario/compras, GET /api/inventario/compras/resumen y
      POST /api/tienda/compras/{numero}/entregada (repo Inventario, docs/api/contrato-tienda.md). -->
 <body data-rol="VETERINARIO">
   <a class="saltar" href="#contenido">Saltar al contenido</a>
@@ -36,7 +39,31 @@
       </div>
 
       <div id="panel-ventas" role="tabpanel" aria-labelledby="pestania-PAGADA">
-        <p class="estado" id="estado" role="status">Cargando pedidos…</p>
+        <!-- Para retirar, sin buscar: cuántos hay, sin traer la lista. -->
+        <div id="resumen-retirar" class="resumen-retirar" hidden>
+          <p id="vencen-hoy" hidden>
+            <span id="texto-vencen-hoy"></span>
+            <button type="button" class="boton boton-chico" id="ver-hoy" aria-pressed="false">Ver cuáles</button>
+          </p>
+          <p id="ninguno-hoy" hidden>Hoy no vence ningún pedido.</p>
+          <p><button type="button" class="boton boton-borde" id="ver-todos" aria-pressed="false">Ver todos los pedidos para retirar</button></p>
+        </div>
+
+        <!-- Entregados y Cancelados: por fechas (por defecto, los últimos 30 días). -->
+        <form id="filtro" class="filtro-fechas" novalidate hidden>
+          <div class="campo">
+            <label for="desde">Desde</label>
+            <input id="desde" name="desde" type="date">
+          </div>
+          <div class="campo">
+            <label for="hasta">Hasta</label>
+            <input id="hasta" name="hasta" type="date">
+          </div>
+          <button class="boton" type="submit">Filtrar</button>
+          <button class="boton boton-borde" type="button" id="ultimos-30">Últimos 30 días</button>
+        </form>
+
+        <p class="estado" id="estado" role="status"></p>
         <p class="mensaje" id="aviso" role="alert" hidden></p>
         <div class="tabla-scroll" id="tabla" hidden>
           <table>
@@ -46,6 +73,7 @@
             <tbody id="filas"></tbody>
           </table>
         </div>
+        <p><button class="boton boton-borde" type="button" id="ver-mas" hidden>Ver más</button></p>
       </div>
     </div>
   </main>
