@@ -49,7 +49,8 @@
           <div class="campo campo-chico">
             <label for="hora">Hora</label>
             <input id="hora" name="hora" type="time" min="08:00" max="19:59" required>
-            <p class="campo-ayuda">Horario de atención: de 08:00 a 20:00.</p>
+            <!-- El rango y este texto se actualizan con el horario que configuró la veterinaria (js/horario.js). -->
+            <p class="campo-ayuda" id="ayuda-hora">Horario de atención: de 08:00 a 20:00.</p>
             <span class="campo-error" id="error-hora"></span>
           </div>
           <div class="campo">

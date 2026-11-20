@@ -18,8 +18,12 @@ import { confirmar, el } from './ui.js';
 import { textoEspecieMascota } from './etiquetas.js';
 import { edad, fecha, insignia, mensajeDeError } from './etiquetas-adopciones.js';
 import { activarPestanas } from './pestanas.js';
+import { aplicarHorario, horarioDeAtencion } from './horario.js';
 
 await exigirRol(['VETERINARIO']);
+
+// El horario de atención que configuró la veterinaria, para el campo de hora del chequeo.
+const horario = await horarioDeAtencion();
 
 const POR_PAGINA = 20;
 const $ = (id) => document.getElementById(id);
@@ -263,7 +267,8 @@ function formChequeo(adopcion, error) {
   const inputFecha = el('input', '', { type: 'date', name: 'fecha', min: hoy, value: hoy, required: '' });
   etiquetaFecha.append(inputFecha);
   const etiquetaHora = el('label', 'Hora');
-  const inputHora = el('input', '', { type: 'time', name: 'hora', min: '08:00', max: '19:59', step: '600', required: '' });
+  const inputHora = el('input', '', { type: 'time', name: 'hora', step: '600', required: '' });
+  aplicarHorario(inputHora, horario);
   etiquetaHora.append(inputHora);
   form.append(etiquetaFecha, etiquetaHora, el('button', 'Programar chequeo', { type: 'submit', class: 'boton boton-chico' }));
 

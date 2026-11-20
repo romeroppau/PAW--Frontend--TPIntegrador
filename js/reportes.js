@@ -17,7 +17,9 @@ import { textoEstadoInsumo } from './etiquetas.js';
 await exigirRol('VETERINARIO');
 
 const PAGINA = 25;       // filas que se muestran de a una vez
-const STOCK_BAJO = 10;   // misma regla que el motor: 10 unidades o menos
+// Stock bajo: el límite que configuró la veterinaria (lo dice la API en resumen.limite_stock_bajo).
+// Mientras no llega, el de siempre: 10 unidades o menos.
+let stockBajo = 10;
 
 const $ = (id) => document.getElementById(id);
 const estado = $('estado');
@@ -120,7 +122,7 @@ function conFiltros(buscar, soloBajo, obtenerTodos, pintar) {
     const q = buscar.value.trim().toLowerCase();
     pintar(obtenerTodos().filter((x) =>
       (!q || String(x.nombre).toLowerCase().includes(q)) &&
-      (!soloBajo.checked || Number(x.stock) <= STOCK_BAJO)
+      (!soloBajo.checked || Number(x.stock) <= stockBajo)
     ));
   };
   buscar.addEventListener('input', aplicar);
@@ -250,7 +252,7 @@ let insumos = [];
 
 function avisoStock(stock) {
   if (Number(stock) === 0) return 'Sin stock';
-  return Number(stock) <= STOCK_BAJO ? 'Stock bajo' : '';
+  return Number(stock) <= stockBajo ? 'Stock bajo' : '';
 }
 
 function filaProducto(p) {
@@ -297,6 +299,8 @@ async function cargarStock() {
   if (q === null) return;
   try {
     const r = await api('/api/reportes/stock' + q);
+    stockBajo = Number(r.resumen?.limite_stock_bajo ?? stockBajo);
+    document.querySelectorAll('.limite-stock').forEach((s) => { s.textContent = String(stockBajo); });
     productos = (r.productos ?? []).sort(porStock);
     insumos = (r.insumos ?? []).sort(porStock);
 

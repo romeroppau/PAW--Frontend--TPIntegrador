@@ -47,3 +47,21 @@ test('stock avisa que el filtro de fechas está en Movimientos', async ({ page }
   await page.getByRole('tab', { name: 'Movimientos', exact: true }).click();
   await expect(page.locator('#mov-desde')).toBeVisible();
 });
+
+test('el stock bajo usa el límite que configuró la veterinaria', async ({ page }) => {
+  await simularSesion(page, VETERINARIO);
+  await page.route(/\/api\/reportes\/stock(\?.*)?$/, (route) => responderJson(route, {
+    productos: [
+      { id: 101, nombre: 'Alimento cachorro 3 kg', stock: 5, fecha_vencimiento: null },
+      { id: 102, nombre: 'Collar reflectivo', stock: 2, fecha_vencimiento: null },
+    ],
+    insumos: [], movimientos: [], resumen: { productos_stock_bajo: 1, insumos_stock_bajo: 0, limite_stock_bajo: 3 },
+  }));
+
+  await page.goto('/panel/reportes.html#stock-productos');
+  const soloBajo = page.locator('label:has(#bajo-productos)');
+  await expect(soloBajo).toHaveText('Solo stock bajo (3 o menos)');
+  await soloBajo.click();
+  await expect(page.locator('#filas-stock-productos tr')).toHaveCount(1);
+  await expect(page.locator('#filas-stock-productos')).toContainText('Collar reflectivo');
+});
