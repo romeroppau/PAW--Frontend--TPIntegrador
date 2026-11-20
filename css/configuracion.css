@@ -1,0 +1,20 @@
+/* Configuración de la veterinaria (Entrega 5, rol 3). Los valores de marca vienen de base.css. */
+
+.grupo-parametros {
+  border: 1px solid var(--borde); border-radius: var(--radio); background: var(--blanco);
+  padding: 1rem 1.25rem .25rem; margin: 0 0 1.5rem; min-width: 0;
+}
+.grupo-parametros legend {
+  font-family: var(--fuente-titulo); font-size: 1.3rem; font-weight: 700; color: var(--pino-oscuro);
+  padding: 0 .4rem;
+}
+
+.parametro { padding-bottom: 1rem; border-bottom: 1px solid var(--borde); }
+.parametro:last-child { border-bottom: 0; }
+.parametro .boton-chico { justify-self: start; }
+.valor-parametro { display: flex; align-items: center; gap: .6rem; }
+.valor-parametro input { max-width: 9rem; }
+.unidad { color: var(--tinta-suave); font-weight: 600; }
+.cambiado { margin: 0; font-size: .9rem; color: var(--naranja-oscuro); font-weight: 600; }
+
+.acciones-configuracion { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 1rem; }
