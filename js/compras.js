@@ -9,7 +9,7 @@
 import { api } from './api.js';
 import { exigirRol } from './auth.js';
 import { el } from './ui.js';
-import { TEXTO_ESTADO, diaConNombre, fecha, fechaHora, leerFechas, precio, textoDeError } from './tienda.js';
+import { TEXTO_ESTADO, textoDelReintegro, diaConNombre, fecha, fechaHora, leerFechas, precio, textoDeError } from './tienda.js';
 
 const $filtro = document.getElementById('filtro');
 const $desde = document.getElementById('desde');
@@ -101,6 +101,8 @@ function plazo(compra) {
     return `Retirala hasta el ${diaConNombre(compra.retirar_hasta)}`;
   }
   if (compra.estado === 'CANCELADA') {
+    const reintegro = textoDelReintegro(compra.reintegro);
+    if (compra.motivo_cancelacion === 'COMPRADOR' && reintegro) return `La cancelaste · reintegro de ${reintegro}`;
     return { COMPRADOR: 'La cancelaste', SIN_PAGO: 'No se pagó a tiempo', VENCIDA: 'Venció el plazo de retiro' }[compra.motivo_cancelacion] ?? '';
   }
   return '';

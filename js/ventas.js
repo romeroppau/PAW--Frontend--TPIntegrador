@@ -15,7 +15,7 @@
 import { api, debounce } from './api.js';
 import { exigirRol } from './auth.js';
 import { confirmar, el } from './ui.js';
-import { TEXTO_MOTIVO, diaConNombre, fecha, fechaHora, hoyArgentina, leerFechas, precio, textoDeError } from './tienda.js';
+import { TEXTO_MOTIVO, textoDelReintegro, diaConNombre, fecha, fechaHora, hoyArgentina, leerFechas, precio, textoDeError } from './tienda.js';
 
 const PESTANIAS = {
   PAGADA: {
@@ -188,7 +188,9 @@ function crearFila(pedido) {
   } else if (estadoActual === 'ENTREGADA') {
     fila.append(el('td', `${fechaHora(pedido.entregada_en)}, por ${pedido.entregada_por ?? '—'}`));
   } else {
-    fila.append(el('td', TEXTO_MOTIVO[pedido.motivo_cancelacion] ?? '—'));
+    const reintegro = textoDelReintegro(pedido.reintegro);
+    const pendiente = pedido.reintegro?.estado === 'PENDIENTE' ? ', en proceso' : '';
+    fila.append(el('td', (TEXTO_MOTIVO[pedido.motivo_cancelacion] ?? '—') + (reintegro ? ` · reintegro de ${reintegro}${pendiente}` : '')));
   }
   return fila;
 }

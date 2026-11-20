@@ -8,7 +8,7 @@
 import { api } from './api.js';
 import { exigirRol } from './auth.js';
 import { el } from './ui.js';
-import { TEXTO_MOTIVO, diaConNombre, fechaHora, precio } from './tienda.js';
+import { TEXTO_MOTIVO, textoDelReintegro, diaConNombre, fechaHora, precio } from './tienda.js';
 
 // En la factura, el estado se dice desde el pago (no "Esperando el pago": una factura ya está paga).
 const TEXTO_ESTADO_FACTURA = {
@@ -72,6 +72,10 @@ function mostrar(f) {
     poner('titulo-dato-estado', 'Cancelada');
     poner('dato-estado-valor', [fechaHora(f.cancelada_en), TEXTO_MOTIVO[f.motivo_cancelacion]].filter(Boolean).join(' · ') || '—');
   }
+
+  const reintegro = textoDelReintegro(f.reintegro);
+  document.getElementById('dato-reintegro').hidden = !reintegro;
+  if (reintegro) poner('reintegro', reintegro + (f.reintegro.estado === 'PENDIENTE' ? ' · en proceso' : ''));
 
   document.getElementById('filas').replaceChildren(...(f.items ?? []).map((item) => {
     const fila = el('tr');

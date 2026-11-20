@@ -370,30 +370,95 @@ test('una compra pagada dice hasta cuándo retirarla, con la política', async (
   await expect(page.locator('#pendiente')).toBeHidden();
 });
 
-test('una compra pagada se puede cancelar: avisa que el importe no se reintegra', async ({ page }) => {
+// La política de reintegro de una compra pagada de $ 14.500 (último día miércoles 25/11).
+const POLITICA_REINTEGRO = {
+  anticipado: 75, ultimo_momento: 50, horas: 48, anticipado_hasta: '2026-11-23 23:59:59',
+  monto_anticipado: 10875, monto_ultimo_momento: 7250, porcentaje_hoy: 75, monto_hoy: 10875,
+};
+
+test('una compra pagada se puede cancelar con anticipación: se devuelve el 75 %', async ({ page }) => {
+  await page.clock.install({ time: new Date('2026-11-20T12:00:00-03:00') });
   await simularSesion(page, CLIENTE);
   await page.route('**/api/tienda/carrito', (route) => responderJson(route, VACIO));
-  const PAGADA = { ...PENDIENTE, numero: 'V-000099', estado: 'PAGADA', pagar_antes_de: null, segundos_para_pagar: null, retirar_hasta: '2026-11-25' };
+  const PAGADA = {
+    ...PENDIENTE, numero: 'V-000099', estado: 'PAGADA', total: 14500, pagar_antes_de: null, segundos_para_pagar: null,
+    retirar_hasta: '2026-11-25', politica_reintegro: POLITICA_REINTEGRO,
+  };
   await page.route('**/api/tienda/compras/V-000099', (route) => responderJson(route, PAGADA));
   let cancelada = false;
   await page.route('**/api/tienda/compras/V-000099/cancelar', (route) => {
     cancelada = true;
-    return responderJson(route, { ...PAGADA, estado: 'CANCELADA', retirar_hasta: null, motivo_cancelacion: 'COMPRADOR' });
+    return responderJson(route, {
+      ...PAGADA, estado: 'CANCELADA', retirar_hasta: null, motivo_cancelacion: 'COMPRADOR', politica_reintegro: null,
+      reintegro: { porcentaje: 75, monto: 10875, estado: 'HECHO' },
+    });
   });
   await page.goto('/tienda/compra.html?numero=V-000099');
 
-  await expect(page.locator('#politica')).toContainText('Si cancelás un pedido ya pagado, el importe tampoco se reintegra.');
+  await expect(page.locator('#politica')).toContainText('con 48 horas o más antes del final del último día para retirar, te devolvemos el 75 % del importe; si cancelás después, el 50 %.');
+  await expect(page.locator('#ayuda-cancelar')).toHaveText('Si lo cancelás hasta el lunes 23/11 a las 23:59, te devolvemos $ 10.875,00 (el 75 %); después, $ 7.250,00 (el 50 %).');
   await page.getByRole('button', { name: 'Cancelar pedido' }).click();
-  await expect(page.getByRole('dialog')).toContainText('¿Cancelás el pedido V-000099? Los productos vuelven a la tienda y el importe no se reintegra.');
+  await expect(page.getByRole('dialog')).toContainText('¿Cancelás el pedido V-000099? Los productos vuelven a la tienda y te devolvemos $ 10.875,00 (el 75 % de lo que pagaste).');
   await page.getByRole('dialog').getByRole('button', { name: 'Volver' }).click();
   expect(cancelada).toBe(false);
 
   await page.getByRole('button', { name: 'Cancelar pedido' }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Cancelar pedido' }).click();
   await expect(page.locator('#estado-compra')).toHaveText('Cancelada');
-  await expect(page.locator('#aviso')).toHaveText('Cancelaste esta compra.');
+  await expect(page.locator('#aviso')).toHaveText('Cancelaste esta compra. Te devolvimos $ 10.875,00 (el 75 %) de lo que pagaste a tu medio de pago; puede tardar unos días en verse.');
   await expect(page.getByRole('button', { name: 'Cancelar pedido' })).toBeHidden();
   expect(cancelada).toBe(true);
+});
+
+test('cancelar a último momento devuelve el 50 % (y si Mercado Pago tarda, se ve en proceso)', async ({ page }) => {
+  await page.clock.install({ time: new Date('2026-11-24T10:00:00-03:00') });
+  await simularSesion(page, CLIENTE);
+  await page.route('**/api/tienda/carrito', (route) => responderJson(route, VACIO));
+  const PAGADA = {
+    ...PENDIENTE, numero: 'V-000099', estado: 'PAGADA', total: 14500, pagar_antes_de: null, segundos_para_pagar: null,
+    retirar_hasta: '2026-11-25', politica_reintegro: { ...POLITICA_REINTEGRO, porcentaje_hoy: 50, monto_hoy: 7250 },
+  };
+  await page.route('**/api/tienda/compras/V-000099', (route) => responderJson(route, PAGADA));
+  await page.route('**/api/tienda/compras/V-000099/cancelar', (route) => responderJson(route, {
+    ...PAGADA, estado: 'CANCELADA', retirar_hasta: null, motivo_cancelacion: 'COMPRADOR', politica_reintegro: null,
+    reintegro: { porcentaje: 50, monto: 7250, estado: 'PENDIENTE' },
+  }));
+  await page.goto('/tienda/compra.html?numero=V-000099');
+
+  await expect(page.locator('#ayuda-cancelar')).toHaveText('Si lo cancelás, los productos vuelven a la tienda y te devolvemos $ 7.250,00 (el 50 % de lo que pagaste).');
+  await page.getByRole('button', { name: 'Cancelar pedido' }).click();
+  await expect(page.getByRole('dialog')).toContainText('te devolvemos $ 7.250,00 (el 50 % de lo que pagaste).');
+  await page.getByRole('dialog').getByRole('button', { name: 'Cancelar pedido' }).click();
+  await expect(page.locator('#aviso')).toHaveText('Cancelaste esta compra. Te vamos a devolver $ 7.250,00 (el 50 %) de lo que pagaste: lo estamos procesando con Mercado Pago.');
+});
+
+test('el reintegro se ve en Mis compras, en la factura y en Ventas', async ({ page }) => {
+  const CANCELADA = {
+    numero: 'V-000099', estado: 'CANCELADA', fecha: '2026-11-18 10:00:00', total: 14500, pagar_antes_de: null, retirar_hasta: null,
+    motivo_cancelacion: 'COMPRADOR', tiene_factura: true, reintegro: { porcentaje: 75, monto: 10875, estado: 'HECHO' },
+  };
+  await simularSesion(page, CLIENTE);
+  await page.route('**/api/tienda/carrito', (route) => responderJson(route, VACIO));
+  await page.route('**/api/tienda/compras?*', (route) => responderJson(route, { pagina: 1, por_pagina: 20, hay_mas: false, desde: '2026-10-22', hasta: '2026-11-20', datos: [CANCELADA] }));
+  await page.goto('/tienda/compras.html');
+  await expect(page.locator('#filas')).toContainText('La cancelaste · reintegro de $ 10.875,00 (el 75 %)');
+
+  await page.route('**/api/tienda/compras/V-000099/factura', (route) => responderJson(route, {
+    ...CANCELADA, comprador: { nombre: 'Cliente de Prueba' }, pago: { medio: 'Mercado Pago', operacion: '123' },
+    cancelada_en: '2026-11-20 11:00:00', items: [],
+  }));
+  await page.goto('/tienda/factura.html?numero=V-000099');
+  await expect(page.locator('#dato-reintegro')).toContainText('$ 10.875,00 (el 75 %)');
+
+  await simularSesion(page, VET);
+  await page.route('**/api/inventario/compras/resumen', (route) => responderJson(route, { para_retirar: 0, vencen_hoy: 0 }));
+  await page.route('**/api/inventario/compras?*', (route) => responderJson(route, {
+    pagina: 1, por_pagina: 20, hay_mas: false, desde: '2026-10-22', hasta: '2026-11-20',
+    datos: [{ ...CANCELADA, comprador: 'Cliente de Prueba', items: [], reintegro: { porcentaje: 50, monto: 7250, estado: 'PENDIENTE' } }],
+  }));
+  await page.goto('/panel/ventas.html');
+  await page.getByRole('tab', { name: 'Cancelados' }).click();
+  await expect(page.locator('#filas')).toContainText('La canceló el comprador · reintegro de $ 7.250,00 (el 50 %), en proceso');
 });
 
 test('mis compras: cada una con su estado, lo que hay que hacer y la factura de las pagadas', async ({ page }) => {
@@ -690,4 +755,16 @@ test('la política del carrito usa los días que configuró la veterinaria', asy
   await expect(page.locator('#minutos')).toHaveText('20 minutos');
   await expect(page.locator('#politica')).toContainText('Tenés 7 días hábiles');
   await expect(page.locator('#retirar-hasta')).toHaveText('viernes 27/11');
+});
+
+test('la política del carrito usa el reintegro que configuró la veterinaria', async ({ page }) => {
+  await simularSesion(page, CLIENTE);
+  await page.route('**/api/tienda/carrito', (route) => responderJson(route, {
+    ...CARRITO, dias_habiles_para_retirar: 5, politica_reintegro: { anticipado: 80, ultimo_momento: 40, horas: 72 },
+  }));
+  await page.goto('/tienda/carrito.html');
+  await expect(page.locator('#politica')).toHaveText(
+    'Tenés 5 días hábiles desde la compra para retirar tu pedido en el local. '
+    + 'Si cancelás un pedido ya pagado con 72 horas o más antes del final del último día para retirar, te devolvemos el 80 % del importe; si cancelás después, el 40 %. '
+    + 'Si no lo retirás a tiempo, el pedido se cancela y el importe no se reintegra.');
 });

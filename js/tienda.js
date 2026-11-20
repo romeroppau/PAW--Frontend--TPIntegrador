@@ -6,14 +6,57 @@
  */
 import { api } from './api.js';
 
+/** La política de reintegro por defecto (la configura la veterinaria; llega del servidor). */
+const REINTEGRO_POR_DEFECTO = { anticipado: 75, ultimo_momento: 50, horas: 48 };
+
 /**
  * Política de cancelación: se muestra en el carrito (antes de pagar) y en la compra.
- * Los días los configura la veterinaria: llegan del servidor (dias_habiles_para_retirar).
+ * Los días y el reintegro los configura la veterinaria: llegan del servidor
+ * (dias_habiles_para_retirar y politica_reintegro).
  */
-export function politica(dias = 5) {
+export function politica(dias = 5, reintegro = REINTEGRO_POR_DEFECTO) {
   return `Tenés ${dias} días hábiles desde la compra para retirar tu pedido en el local. `
-    + 'Si no lo retirás en ese plazo, el pedido se cancela y el importe no se reintegra. '
-    + 'Si cancelás un pedido ya pagado, el importe tampoco se reintegra.';
+    + textoReintegro(reintegro ?? REINTEGRO_POR_DEFECTO)
+    + ' Si no lo retirás a tiempo, el pedido se cancela y el importe no se reintegra.';
+}
+
+function textoReintegro({ anticipado, ultimo_momento: ultimoMomento, horas }) {
+  if (anticipado === 0) return 'Si cancelás un pedido ya pagado, el importe no se reintegra.';
+  if (anticipado === ultimoMomento) return `Si cancelás un pedido ya pagado, te devolvemos el ${anticipado} % del importe.`;
+  return `Si cancelás un pedido ya pagado con ${horas} horas o más antes del final del último día para retirar, `
+    + `te devolvemos el ${anticipado} % del importe; `
+    + (ultimoMomento === 0 ? 'si cancelás después, no se reintegra.' : `si cancelás después, el ${ultimoMomento} %.`);
+}
+
+/**
+ * Cuánto se devuelve si cancela AHORA una compra pagada (politica_reintegro de la compra):
+ * { porcentaje, monto }. Se compara con el reloj de la computadora; igual decide el servidor.
+ */
+export function reintegroAhora(p) {
+  const anticipado = Date.now() <= fechaArgentina(p.anticipado_hasta).getTime();
+  return anticipado
+    ? { porcentaje: p.anticipado, monto: p.monto_anticipado }
+    : { porcentaje: p.ultimo_momento, monto: p.monto_ultimo_momento };
+}
+
+/** La política de una compra pagada con fechas y montos: "Si lo cancelás hasta el lunes 23/11 a las 23:59…". */
+export function reintegroConFechas(p) {
+  const montoUltimo = p.monto_ultimo_momento > 0 ? `${precio(p.monto_ultimo_momento)} (el ${p.ultimo_momento} %)` : null;
+  const ahora = reintegroAhora(p);
+  if (p.anticipado === p.ultimo_momento || ahora.porcentaje !== p.anticipado) {
+    return ahora.monto > 0
+      ? `Si lo cancelás, los productos vuelven a la tienda y te devolvemos ${precio(ahora.monto)} (el ${ahora.porcentaje} % de lo que pagaste).`
+      : 'Si lo cancelás, los productos vuelven a la tienda y el importe no se reintegra.';
+  }
+  const hasta = `${diaConNombre(p.anticipado_hasta.slice(0, 10))} a las ${p.anticipado_hasta.slice(11, 16)}`;
+  return `Si lo cancelás hasta el ${hasta}, te devolvemos ${precio(p.monto_anticipado)} (el ${p.anticipado} %); `
+    + (montoUltimo ? `después, ${montoUltimo}.` : 'después, el importe no se reintegra.');
+}
+
+/** El reintegro de una compra cancelada por el comprador: "$ 10.875,00 (el 75 %)", o null. */
+export function textoDelReintegro(reintegro) {
+  if (!reintegro || !(reintegro.monto > 0)) return null;
+  return `${precio(reintegro.monto)} (el ${reintegro.porcentaje} %)`;
 }
 
 /** Texto de cada estado de una compra (el código no se muestra). */
@@ -63,7 +106,7 @@ export function bloquePrecio(producto, clases = '') {
   ahora.textContent = precio(promo.precio);
   const insignia = document.createElement('span');
   insignia.className = 'insignia insignia-promo';
-  insignia.textContent = `${promo.porcentaje} % off`;
+  insignia.textContent = `${promo.porcentaje} % off`;
   const hasta = document.createElement('span');
   hasta.className = 'promo-hasta';
   hasta.textContent = `Promoción hasta el ${diaMes(promo.hasta)}`;
