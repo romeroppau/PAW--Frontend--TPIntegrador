@@ -13,7 +13,8 @@
 <!-- Carrito del comprador (cliente o rescatista). Lo maneja js/carrito.js.
      Contrato: repo Inventario, docs/api/contrato-tienda.md.
      "Ir a pagar" confirma la compra (aparta el stock por 15 minutos): solo se habilita después de
-     marcar que leyó la política de cancelación. -->
+     marcar que leyó la política de cancelación. Al costado, el resumen: total, cómo sigue la compra
+     (minutos para pagar y fecha de retiro) y la política. -->
 <body data-rol="CLIENTE,RESCATISTA">
   <a class="saltar" href="#contenido">Saltar al contenido</a>
   <div id="encabezado-sitio"></div>
@@ -30,27 +31,36 @@
         <p><a class="boton" href="/catalogo/catalogo.html">Ver productos</a></p>
       </div>
 
-      <div id="contenido-carrito" hidden>
-        <div class="tabla-scroll">
-          <table class="tabla-carrito">
-            <caption class="solo-lectores">Productos de tu carrito</caption>
-            <thead><tr><th scope="col">Producto</th><th scope="col">Precio</th><th scope="col">Cantidad</th><th scope="col">Subtotal</th><th scope="col"><span class="solo-lectores">Quitar</span></th></tr></thead>
-            <tbody id="filas"></tbody>
-            <tfoot><tr><th scope="row" colspan="3">Total</th><td id="total" class="total"></td><td></td></tr></tfoot>
-          </table>
-        </div>
+      <div id="contenido-carrito" class="carrito-grilla" hidden>
+        <section class="carrito-lista" aria-labelledby="titulo-productos">
+          <h2 id="titulo-productos" class="solo-lectores">Productos de tu carrito</h2>
+          <div class="carrito-encabezado" aria-hidden="true">
+            <span>Producto</span><span>Cantidad</span><span>Precio</span><span></span>
+          </div>
+          <!-- Cada producto (lo arma carrito.js): foto, nombre y precio por unidad, cantidad con − / +,
+               subtotal y el tachito para quitarlo. -->
+          <ul id="filas" class="lista-carrito"></ul>
+        </section>
 
-        <section class="bloque caja-pago" aria-labelledby="titulo-politica">
-          <h2 id="titulo-politica">Política de cancelación</h2>
-          <p id="politica"></p>
-          <p class="ayuda">Al tocar "Ir a pagar" reservamos tus productos por 15 minutos para que hagas el pago.</p>
+        <aside class="resumen-carrito" aria-labelledby="titulo-resumen">
+          <h2 id="titulo-resumen">Resumen</h2>
+          <p class="resumen-unidades" id="unidades"></p>
+          <p class="resumen-total"><span>Total</span> <strong id="total"></strong></p>
+
+          <h3>¿Cómo sigue?</h3>
+          <ol class="pasos-compra">
+            <li>Pagás con Mercado Pago. Tenés <strong id="minutos">15 minutos</strong>: si no, la compra se cancela sola.</li>
+            <li>Retirás tu pedido en la veterinaria hasta el <strong id="retirar-hasta"></strong> inclusive.</li>
+          </ol>
+          <p class="politica-linea"><strong>Política de cancelación:</strong> <span id="politica"></span></p>
+
           <div class="casilla">
             <input id="acepto" type="checkbox">
             <label for="acepto">Leí y acepto la política de cancelación</label>
           </div>
           <p class="campo-error" id="motivo-bloqueo" hidden></p>
-          <button id="ir-a-pagar" class="boton boton-grande" type="button" disabled>Ir a pagar</button>
-        </section>
+          <button id="ir-a-pagar" class="boton boton-grande boton-pagar" type="button" disabled>Ir a pagar</button>
+        </aside>
       </div>
     </div>
   </main>

@@ -14,8 +14,10 @@ const item = (producto_id, nombre, precio_unitario, cantidad, extra = {}) => ({
   stock: 20, a_la_venta: true, ...extra,
 });
 const CARRITO = {
-  items: [item(101, 'Alimento cachorro 3 kg', 15999.9, 2), item(110, 'Collar ajustable', 5200, 1)],
+  items: [item(101, 'Alimento cachorro 3 kg', 15999.9, 2, { tiene_imagen: true }), item(110, 'Collar ajustable', 5200, 1)],
   total: 37199.8,
+  minutos_para_pagar: 15,
+  retirar_hasta_si_compra_hoy: '2026-11-25',
 };
 
 /** Catálogo con los productos de ejemplo (y uno sin stock). */
@@ -151,19 +153,41 @@ test('el carrito: cambiar cantidad, quitar, y "Ir a pagar" solo después de acep
     pagar_antes_de: '2099-01-01 00:00:00', retirar_hasta: '2026-11-25', entregada_en: null, items: [],
   }));
 
+  // La foto del producto 101 (un PNG de 1x1).
+  await page.route('**/api/tienda/productos/101/imagen', (route) => route.fulfill({
+    status: 200, contentType: 'image/png',
+    body: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==', 'base64'),
+  }));
   await page.goto('/tienda/carrito.html');
-  await expect(page.locator('#filas > tr')).toHaveCount(2);
+  await expect(page.locator('#filas > li')).toHaveCount(2);
   await expect(page.locator('#total')).toHaveText(/37\.199,80/);
   await expect(page.locator('#politica')).toContainText('5 días hábiles');
   await expect(page.locator('#enlace-carrito')).toHaveText('Carrito (3)');
 
-  await page.getByLabel('Cantidad de Alimento cachorro 3 kg').fill('3');
+  // Cada fila: foto (o la huellita si no tiene), nombre, precio por unidad y subtotal.
+  const primera = page.locator('#filas > li').first();
+  await expect(primera.locator('img')).toHaveAttribute('src', '/api/tienda/productos/101/imagen');
+  await expect(primera).toContainText('$ 15.999,90 c/u');
+  await expect(primera).toContainText(/31\.999,80/);
+  await expect(page.locator('#filas > li').nth(1).locator('img')).toHaveCount(0);
+
+  // El resumen: productos, plazos con la fecha concreta.
+  await expect(page.locator('#unidades')).toHaveText('3 productos');
+  await expect(page.locator('#minutos')).toHaveText('15 minutos');
+  await expect(page.locator('#retirar-hasta')).toHaveText('miércoles 25/11');
+
+  // − está apagado con 1 unidad; + suma de a uno.
+  await expect(page.getByRole('button', { name: 'Restar uno de Collar ajustable' })).toBeDisabled();
+  await page.getByRole('button', { name: 'Sumar uno de Alimento cachorro 3 kg' }).click();
+  await expect(page.getByLabel('Cantidad de Alimento cachorro 3 kg')).toHaveValue('3');
+
+  await page.getByLabel('Cantidad de Alimento cachorro 3 kg').fill('4');
   await page.getByLabel('Cantidad de Alimento cachorro 3 kg').press('Tab');
-  await expect(page.locator('#total')).toHaveText(/53\.199,70/);
+  await expect(page.locator('#total')).toHaveText(/69\.199,60/);
 
   await page.getByRole('button', { name: 'Quitar Collar ajustable del carrito' }).click();
-  await expect(page.locator('#filas > tr')).toHaveCount(1);
-  expect(pedidos).toEqual(['PUT /api/tienda/carrito/items/101', 'DELETE /api/tienda/carrito/items/110']);
+  await expect(page.locator('#filas > li')).toHaveCount(1);
+  expect(pedidos).toEqual(['PUT /api/tienda/carrito/items/101', 'PUT /api/tienda/carrito/items/101', 'DELETE /api/tienda/carrito/items/110']);
 
   const pagar = page.getByRole('button', { name: 'Ir a pagar' });
   await expect(pagar).toBeDisabled();
@@ -284,6 +308,21 @@ test('el pago simulado aprueba y vuelve a la compra', async ({ page }) => {
   await page.getByRole('button', { name: 'Aprobar el pago' }).click();
   await expect(page).toHaveURL('/tienda/compra.html?numero=V-000105&status=approved');
   expect(cuerpo).toEqual({ numero: 'V-000105', resultado: 'aprobado' });
+});
+
+test('en el último minuto ya no se puede empezar a pagar', async ({ page }) => {
+  await page.clock.install({ time: new Date('2026-11-18T11:59:00-03:00') });
+  await page.clock.pauseAt(new Date('2026-11-18T12:00:00-03:00'));
+  await simularSesion(page, CLIENTE);
+  await page.route('**/api/tienda/carrito', (route) => responderJson(route, VACIO));
+  await page.route('**/api/tienda/compras/V-000105', (route) => responderJson(route, { ...PENDIENTE, segundos_para_pagar: 90 }));
+  await page.goto('/tienda/compra.html?numero=V-000105');
+
+  const pagar = page.getByRole('button', { name: 'Pagar con Mercado Pago' });
+  await expect(pagar).toBeEnabled();
+  await page.clock.runFor(31_000);   // quedan 59 segundos
+  await expect(pagar).toBeDisabled();
+  await expect(page.locator('#resultado-pago')).toHaveText('Ya no queda tiempo para pagar esta compra.');
 });
 
 test('la cuenta regresiva parte de lo que dice el servidor, aunque el reloj de la computadora esté mal', async ({ page }) => {
@@ -452,4 +491,32 @@ test('un cliente no entra a las ventas de la veterinaria', async ({ page }) => {
   await simularSesion(page, CLIENTE);
   await page.goto('/panel/ventas.html');
   await expect(page).toHaveURL(/\/login\/login\.html/);
+});
+
+test('el panel del rescatista tiene acceso a la tienda (también compra)', async ({ page }) => {
+  await simularSesion(page, RESCATISTA);
+  await page.route('**/api/tienda/carrito', (route) => responderJson(route, VACIO));
+  await page.goto('/paneles/panel-rescatista.html');
+  const tienda = page.locator('#tienda');
+  await expect(tienda.getByRole('link', { name: 'Ver catálogo de productos' })).toHaveAttribute('href', '/catalogo/catalogo.html');
+  await expect(tienda.getByRole('link', { name: 'Mi carrito' })).toHaveAttribute('href', '/tienda/carrito.html');
+  await expect(tienda.getByRole('link', { name: 'Mis compras' })).toHaveAttribute('href', '/tienda/compras.html');
+});
+
+test('el catálogo muestra la foto de cada producto, o la huellita si no tiene', async ({ page }) => {
+  await simularSesion(page, null);
+  await simularCatalogo(page);
+  // Gana la última ruta registrada: primero la general (sin foto) y después la del 101.
+  await page.route('**/api/tienda/productos/*/imagen', (route) => responderJson(route, { error: 'Imagen no encontrada' }, 404));
+  await page.route('**/api/tienda/productos/101/imagen', (route) => route.fulfill({
+    status: 200, contentType: 'image/png',
+    body: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==', 'base64'),
+  }));
+  await page.goto('/catalogo/catalogo.html');
+
+  const conFoto = page.locator('#lista > li').filter({ hasText: 'Alimento cachorro 3 kg' }).locator('.foto-producto');
+  await expect(conFoto.locator('img')).toHaveAttribute('src', '/api/tienda/productos/101/imagen');
+  const sinFoto = page.locator('#lista > li').filter({ hasText: 'Collar reflectivo' }).locator('.foto-producto');
+  await expect(sinFoto.locator('svg')).toBeVisible();
+  await expect(sinFoto.locator('img')).toHaveCount(0);
 });
