@@ -520,3 +520,14 @@ test('el catálogo muestra la foto de cada producto, o la huellita si no tiene',
   await expect(sinFoto.locator('svg')).toBeVisible();
   await expect(sinFoto.locator('img')).toHaveCount(0);
 });
+
+test('la política del carrito usa los días que configuró la veterinaria', async ({ page }) => {
+  await simularSesion(page, CLIENTE);
+  await page.route('**/api/tienda/carrito', (route) => responderJson(route, {
+    ...CARRITO, minutos_para_pagar: 20, dias_habiles_para_retirar: 7, retirar_hasta_si_compra_hoy: '2026-11-27',
+  }));
+  await page.goto('/tienda/carrito.html');
+  await expect(page.locator('#minutos')).toHaveText('20 minutos');
+  await expect(page.locator('#politica')).toContainText('Tenés 7 días hábiles');
+  await expect(page.locator('#retirar-hasta')).toHaveText('viernes 27/11');
+});

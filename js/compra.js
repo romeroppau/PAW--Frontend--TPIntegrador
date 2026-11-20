@@ -17,7 +17,7 @@
 import { api } from './api.js';
 import { exigirRol } from './auth.js';
 import { confirmar, el } from './ui.js';
-import { PAGO_RECHAZADO, POLITICA, TEXTO_ESTADO, diaConNombre, fechaArgentina, fechaHora, irAPagar, precio, textoDeError } from './tienda.js';
+import { PAGO_RECHAZADO, TEXTO_ESTADO, politica, diaConNombre, fechaArgentina, fechaHora, irAPagar, precio, textoDeError } from './tienda.js';
 
 // Cuándo vence, en la hora de esta computadora: ahora + lo que dice el servidor que falta.
 // Si la API no mandara segundos_para_pagar, se usa pagar_antes_de.
@@ -40,7 +40,8 @@ const $bloquePolitica = document.getElementById('bloque-politica');
 const $pagar = document.getElementById('pagar');
 const $resultadoPago = document.getElementById('resultado-pago');
 
-document.getElementById('politica').textContent = POLITICA;
+const $politica = document.getElementById('politica');
+$politica.textContent = politica();
 
 const parametros = new URLSearchParams(location.search);
 const numero = parametros.get('numero') ?? '';
@@ -116,6 +117,8 @@ function dibujar(compra) {
     return fila;
   }));
   document.getElementById('total').textContent = precio(compra.total);
+  // La política con los días de plazo que tuvo ESTA compra (la veterinaria puede cambiarlos para las nuevas).
+  if (Number.isInteger(compra.dias_habiles_para_retirar)) $politica.textContent = politica(compra.dias_habiles_para_retirar);
 
   // Lo que corresponde a cada estado.
   detenerReloj();

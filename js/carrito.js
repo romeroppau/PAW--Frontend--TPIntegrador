@@ -12,7 +12,7 @@
 import { api } from './api.js';
 import { exigirRol } from './auth.js';
 import { el } from './ui.js';
-import { POLITICA, avisarCarrito, diaConNombre, irAPagar, precio, textoDeError, unidades } from './tienda.js';
+import { avisarCarrito, diaConNombre, irAPagar, precio, textoDeError, unidades, politica } from './tienda.js';
 
 const $estado = document.getElementById('estado');
 const $error = document.getElementById('error');
@@ -27,7 +27,8 @@ const $acepto = document.getElementById('acepto');
 const $motivo = document.getElementById('motivo-bloqueo');
 const $irAPagar = document.getElementById('ir-a-pagar');
 
-document.getElementById('politica').textContent = POLITICA;
+const $politica = document.getElementById('politica');
+$politica.textContent = politica();
 
 // Lo que impide pagar ahora (un producto que ya no está a la venta o sin stock suficiente), o ''.
 let bloqueo = '';
@@ -60,6 +61,7 @@ function dibujar(carrito) {
   // Los plazos los manda el servidor: los minutos para pagar y, si compra hoy, el último día para retirar.
   if (Number.isInteger(carrito.minutos_para_pagar)) $minutos.textContent = `${carrito.minutos_para_pagar} minutos`;
   if (carrito.retirar_hasta_si_compra_hoy) $retirarHasta.textContent = diaConNombre(carrito.retirar_hasta_si_compra_hoy);
+  if (Number.isInteger(carrito.dias_habiles_para_retirar)) $politica.textContent = politica(carrito.dias_habiles_para_retirar);
 
   const noALaVenta = items.filter((item) => !item.a_la_venta);
   const sinStock = items.filter((item) => item.a_la_venta && item.cantidad > item.stock);
