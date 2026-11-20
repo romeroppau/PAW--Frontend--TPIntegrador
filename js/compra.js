@@ -17,7 +17,7 @@
 import { api } from './api.js';
 import { exigirRol } from './auth.js';
 import { confirmar, el } from './ui.js';
-import { PAGO_RECHAZADO, TEXTO_ESTADO, politica, diaConNombre, fechaArgentina, fechaHora, irAPagar, precio, textoDeError } from './tienda.js';
+import { PAGO_RECHAZADO, TEXTO_ESTADO, politica, reintegroAhora, reintegroConFechas, textoDelReintegro, diaConNombre, fechaArgentina, fechaHora, irAPagar, precio, textoDeError } from './tienda.js';
 
 // Cuándo vence, en la hora de esta computadora: ahora + lo que dice el servidor que falta.
 // Si la API no mandara segundos_para_pagar, se usa pagar_antes_de.
@@ -48,6 +48,7 @@ const numero = parametros.get('numero') ?? '';
 // Lo que agregó Mercado Pago (o el pago simulado) a la dirección al volver.
 const pagoId = parametros.get('payment_id') ?? '';
 const estadoPago = parametros.get('status') ?? parametros.get('collection_status') ?? '';
+let compraActual = null; // la última compra dibujada (para el "¿Cancelás?" con el monto)
 let reloj = null;          // el setInterval de la cuenta regresiva
 let reintentos = 0;        // si el reloj de la compu va adelantado, se vuelve a preguntar unas veces
 
@@ -118,7 +119,12 @@ function dibujar(compra) {
   }));
   document.getElementById('total').textContent = precio(compra.total);
   // La política con los días de plazo que tuvo ESTA compra (la veterinaria puede cambiarlos para las nuevas).
-  if (Number.isInteger(compra.dias_habiles_para_retirar)) $politica.textContent = politica(compra.dias_habiles_para_retirar);
+  if (Number.isInteger(compra.dias_habiles_para_retirar)) $politica.textContent = politica(compra.dias_habiles_para_retirar, compra.politica_reintegro);
+  compraActual = compra;
+  // Pagada: cuánto se devuelve si la cancela, con la fecha límite del reintegro mayor.
+  if (compra.estado === 'PAGADA' && compra.politica_reintegro) {
+    document.getElementById('ayuda-cancelar').textContent = reintegroConFechas(compra.politica_reintegro);
+  }
 
   // Lo que corresponde a cada estado.
   detenerReloj();
@@ -130,7 +136,7 @@ function dibujar(compra) {
       + (compra.retirar_hasta ? `Ya podés retirarla en el local, hasta el ${diaConNombre(compra.retirar_hasta)} inclusive.` : ''),
     ENTREGADA: compra.entregada_en ? `La retiraste el ${fechaHora(compra.entregada_en)}.` : 'Ya la retiraste.',
     CANCELADA: {
-      COMPRADOR: 'Cancelaste esta compra.',
+      COMPRADOR: 'Cancelaste esta compra.' + textoReintegro(compra.reintegro),
       SIN_PAGO: 'Esta compra se canceló porque no se pagó a tiempo.',
       VENCIDA: 'Esta compra se canceló porque venció el plazo de retiro. El importe no se reintegra.',
     }[compra.motivo_cancelacion] ?? 'Esta compra está cancelada.',
@@ -207,13 +213,28 @@ $pagar.addEventListener('click', async () => {
 });
 
 // ---------- Cancelar ----------
-// Antes de pagar (arrepentimiento) o ya pagada, mientras está para retirar: el importe no se reintegra.
+// Antes de pagar (arrepentimiento) o ya pagada, mientras está para retirar: se devuelve una parte
+// (más si cancela con anticipación). El monto exacto lo decide el servidor al cancelar.
 
 $cancelar.addEventListener('click', () => cancelar($cancelar,
   `¿Cancelás la compra ${numero}? Los productos vuelven a estar disponibles.`, 'Cancelar compra'));
 
-$cancelarPedido.addEventListener('click', () => cancelar($cancelarPedido,
-  `¿Cancelás el pedido ${numero}? Los productos vuelven a la tienda y el importe no se reintegra.`, 'Cancelar pedido'));
+$cancelarPedido.addEventListener('click', () => {
+  const reintegro = compraActual?.politica_reintegro ? reintegroAhora(compraActual.politica_reintegro) : null;
+  const devolucion = reintegro && reintegro.monto > 0
+    ? `te devolvemos ${precio(reintegro.monto)} (el ${reintegro.porcentaje} % de lo que pagaste)`
+    : 'el importe no se reintegra';
+  cancelar($cancelarPedido, `¿Cancelás el pedido ${numero}? Los productos vuelven a la tienda y ${devolucion}.`, 'Cancelar pedido');
+});
+
+// Lo que se le devuelve al comprador que canceló una compra pagada (vacío si no hay reintegro).
+function textoReintegro(reintegro) {
+  const monto = textoDelReintegro(reintegro);
+  if (!monto) return '';
+  return reintegro.estado === 'PENDIENTE'
+    ? ` Te vamos a devolver ${monto} de lo que pagaste: lo estamos procesando con Mercado Pago.`
+    : ` Te devolvimos ${monto} de lo que pagaste a tu medio de pago; puede tardar unos días en verse.`;
+}
 
 async function cancelar(boton, pregunta, aceptar) {
   const seguro = await confirmar(pregunta, { aceptar, peligro: true });

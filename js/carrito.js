@@ -61,7 +61,7 @@ function dibujar(carrito) {
   // Los plazos los manda el servidor: los minutos para pagar y, si compra hoy, el último día para retirar.
   if (Number.isInteger(carrito.minutos_para_pagar)) $minutos.textContent = `${carrito.minutos_para_pagar} minutos`;
   if (carrito.retirar_hasta_si_compra_hoy) $retirarHasta.textContent = diaConNombre(carrito.retirar_hasta_si_compra_hoy);
-  if (Number.isInteger(carrito.dias_habiles_para_retirar)) $politica.textContent = politica(carrito.dias_habiles_para_retirar);
+  if (Number.isInteger(carrito.dias_habiles_para_retirar)) $politica.textContent = politica(carrito.dias_habiles_para_retirar, carrito.politica_reintegro);
 
   const noALaVenta = items.filter((item) => !item.a_la_venta);
   const sinStock = items.filter((item) => item.a_la_venta && item.cantidad > item.stock);

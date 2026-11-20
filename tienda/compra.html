@@ -46,10 +46,10 @@
         <p id="enlace-factura" hidden><a id="ver-factura" class="boton boton-borde" href="/tienda/factura.html">Ver factura</a></p>
 
         <!-- Pagada (lista para retirar): el comprador la puede cancelar hasta que la retire o venza el
-             plazo. El importe no se reintegra. -->
+             plazo. Se le devuelve una parte: más si cancela con anticipación (compra.js arma el texto). -->
         <section id="pagada" class="bloque" hidden aria-label="Cancelar el pedido">
           <button id="cancelar-pedido" class="boton boton-borde" type="button">Cancelar pedido</button>
-          <p class="ayuda">Si lo cancelás, los productos vuelven a la tienda y el importe no se reintegra.</p>
+          <p class="ayuda" id="ayuda-cancelar">Si lo cancelás, los productos vuelven a la tienda.</p>
         </section>
 
         <div class="tabla-scroll">
