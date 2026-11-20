@@ -5,6 +5,13 @@ import { el } from './ui.js';
 const INTERVALO_MS = 60000;
 let boton, contador, panel, lista, timer;
 
+// "2026-11-20 16:36:00" (hora de Argentina) -> "20/11/2026 16:36": día/mes/año, como en todo el sitio.
+function fechaHora(texto) {
+  const [dia, hora = ''] = String(texto ?? '').split(' ');
+  const [a, m, d] = dia.split('-');
+  return d ? `${d}/${m}/${a} ${hora.slice(0, 5)}`.trim() : String(texto ?? '');
+}
+
 function pintar(datos) {
   const n = datos.no_leidas;
   contador.textContent = n > 99 ? '99+' : String(n);
@@ -18,7 +25,7 @@ function pintar(datos) {
   }
   for (const aviso of datos.datos) {
     const li = el('li', '', { class: aviso.leida ? 'campana-item' : 'campana-item campana-item-nueva' });
-    li.append(el('p', aviso.mensaje), el('small', aviso.fecha.slice(0, 16)));   // texto, nunca HTML
+    li.append(el('p', aviso.mensaje), el('small', fechaHora(aviso.fecha)));   // texto, nunca HTML
     if (!aviso.leida) {
       const b = el('button', 'Marcar como leída', { type: 'button', class: 'boton boton-borde' });
       b.addEventListener('click', () => marcarLeida(aviso.id));
