@@ -10,8 +10,10 @@
   <link rel="stylesheet" href="/css/base.css">
   <link rel="stylesheet" href="/css/tienda.css">
 </head>
-<!-- Las compras del comprador (cliente o rescatista), de la más nueva a la más vieja.
-     Lo maneja js/compras.js con GET /api/tienda/compras (repo Inventario, docs/api/contrato-tienda.md). -->
+<!-- Las compras del comprador (cliente o rescatista), de la más nueva a la más vieja: por defecto las
+     de los últimos 30 días, con un filtro Desde / Hasta, de a 20 ("Ver más"). Las pagadas tienen
+     "Ver factura". Lo maneja js/compras.js con GET /api/tienda/compras?desde=&hasta=&pagina=
+     (repo Inventario, docs/api/contrato-tienda.md). -->
 <body data-rol="CLIENTE,RESCATISTA">
   <a class="saltar" href="#contenido">Saltar al contenido</a>
   <div id="encabezado-sitio"></div>
@@ -20,20 +22,35 @@
     <div class="contenedor">
       <h1>Mis compras</h1>
       <p>Los pedidos se retiran en el local de HuellaVet.</p>
+
+      <form id="filtro" class="filtro-fechas" novalidate>
+        <div class="campo">
+          <label for="desde">Desde</label>
+          <input id="desde" name="desde" type="date">
+        </div>
+        <div class="campo">
+          <label for="hasta">Hasta</label>
+          <input id="hasta" name="hasta" type="date">
+        </div>
+        <button class="boton" type="submit">Filtrar</button>
+        <button class="boton boton-borde" type="button" id="ultimos-30">Últimos 30 días</button>
+      </form>
+
       <p class="estado" id="estado" role="status">Cargando tus compras…</p>
 
       <div id="vacio" hidden>
-        <p>Todavía no hiciste compras.</p>
+        <p id="texto-vacio">No hiciste compras en los últimos 30 días.</p>
         <p><a class="boton" href="/catalogo/catalogo.html">Ver productos</a></p>
       </div>
 
       <div class="tabla-scroll" id="tabla" hidden>
         <table>
           <caption class="solo-lectores">Tus compras</caption>
-          <thead><tr><th scope="col">Compra</th><th scope="col">Fecha</th><th scope="col">Total</th><th scope="col">Estado</th><th scope="col">Para tener en cuenta</th></tr></thead>
+          <thead><tr><th scope="col">Compra</th><th scope="col">Fecha</th><th scope="col">Total</th><th scope="col">Estado</th><th scope="col">Para tener en cuenta</th><th scope="col">Factura</th></tr></thead>
           <tbody id="filas"></tbody>
         </table>
       </div>
+      <p><button class="boton boton-borde" type="button" id="ver-mas" hidden>Ver más</button></p>
     </div>
   </main>
   <div id="pie-sitio"></div>
