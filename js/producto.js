@@ -1,7 +1,7 @@
 import { api } from './api.js';
 import { textoCategoria, textoEspecie } from './etiquetas.js';
 import { sesion } from './auth.js';
-import { agregarAlCarrito, irALogin } from './tienda.js';
+import { agregarAlCarrito, bloquePrecio, irALogin } from './tienda.js';
 
 const $estado = document.getElementById('estado-detalle');
 const $error = document.getElementById('error-detalle');
@@ -22,14 +22,6 @@ const $aviso = document.getElementById('aviso-carrito');
 let productoActual = null;
 
 const id = new URLSearchParams(window.location.search).get('id');
-
-function formatearPrecio(valor) {
-  const numero = Number(valor);
-  if (!Number.isFinite(numero)) return valor == null ? 'Precio a consultar' : `$${valor}`;
-  return new Intl.NumberFormat('es-AR', {
-    style: 'currency', currency: 'ARS', maximumFractionDigits: 2
-  }).format(numero);
-}
 
 function mostrarError(mensaje) {
   $estado.textContent = '';
@@ -56,7 +48,9 @@ async function cargarDetalle() {
     $categoria.textContent = producto.categoria ? textoCategoria(producto.categoria) : 'Producto';
     $nombre.textContent = producto.nombre ?? 'Producto';
     $especie.textContent = producto.especie ? `Especie: ${textoEspecie(producto.especie)}` : '';
-    $precio.textContent = formatearPrecio(producto.precio);
+    // Con promoción: el precio de siempre tachado, el rebajado y hasta cuándo (tienda.js).
+    $precio.replaceChildren(...bloquePrecio(producto).childNodes);
+    $precio.classList.toggle('precio-con-promo', Boolean(producto.promocion));
     $descripcion.textContent = producto.descripcion ?? 'No hay una descripción disponible para este producto.';
 
     // Se admiten URLs o data URLs de imagen. Si el API devuelve otra representación,

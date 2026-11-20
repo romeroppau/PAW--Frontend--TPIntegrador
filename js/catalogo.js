@@ -1,7 +1,7 @@
 import { api, debounce } from './api.js';
 import { textoCategoria } from './etiquetas.js';
 import { sesion } from './auth.js';
-import { agregarAlCarrito, irALogin } from './tienda.js';
+import { agregarAlCarrito, bloquePrecio, irALogin } from './tienda.js';
 
 const $buscar = document.getElementById('buscar');
 const $categoria = document.getElementById('categoria');
@@ -10,6 +10,8 @@ const $lista = document.getElementById('lista');
 const $estado = document.getElementById('estado');
 const $cargarMas = document.getElementById('cargar-mas');
 const $aviso = document.getElementById('aviso-carrito');
+const $promociones = document.getElementById('promociones');
+const $listaPromociones = document.getElementById('lista-promociones');
 
 // Quién inició sesión. Los productos se cargan sin esperarlo; la veterinaria no compra, así que
 // cuando se sabe que es ella, los botones "Agregar" se ocultan (clase en el <body>, ver catalogo.css).
@@ -75,7 +77,7 @@ async function cargar(pagina = 1, agregar = false) {
 
 function crearTarjeta(producto) {
   const li = document.createElement('li');
-  li.className = 'tarjeta-producto';
+  li.className = producto.promocion ? 'tarjeta-producto tarjeta-en-promo' : 'tarjeta-producto';
 
   const categoria = document.createElement('p');
   categoria.className = 'etiqueta';
@@ -85,9 +87,8 @@ function crearTarjeta(producto) {
   nombre.className = 'nombre-producto';
   nombre.textContent = producto.nombre ?? 'Producto sin nombre';
 
-  const precio = document.createElement('p');
-  precio.className = 'precio';
-  precio.textContent = producto.precio == null ? 'Precio a consultar' : formatearPrecio(producto.precio);
+  // Con promoción: el precio de siempre tachado, el rebajado y hasta cuándo (tienda.js).
+  const precio = bloquePrecio(producto);
 
   const enlace = document.createElement('a');
   enlace.className = 'boton boton-borde enlace-detalle';
@@ -159,12 +160,16 @@ function mostrarAviso({ ok, texto }) {
   $aviso.classList.toggle('aviso-error', !ok);
 }
 
-function formatearPrecio(valor) {
-  const numero = Number(valor);
-  if (!Number.isFinite(numero)) return `$${valor}`;
-  return new Intl.NumberFormat('es-AR', {
-    style: 'currency', currency: 'ARS', maximumFractionDigits: 2
-  }).format(numero);
+// La sección "Promociones" (arriba del catálogo): los productos que la veterinaria publicitó desde
+// sus reportes. Si no hay ninguno, o la API no responde, la sección no se muestra.
+async function cargarPromociones() {
+  try {
+    const { datos = [] } = await api('/api/tienda/promociones');
+    $listaPromociones.replaceChildren(...datos.map(crearTarjeta));
+    $promociones.hidden = datos.length === 0;
+  } catch {
+    $promociones.hidden = true;
+  }
 }
 
 $buscar.addEventListener('input', debounce(() => cargar(1), 300));
@@ -172,4 +177,5 @@ $categoria.addEventListener('change', () => cargar(1));
 $especie.addEventListener('change', () => cargar(1));
 $cargarMas.addEventListener('click', () => cargar(paginaActual + 1, true));
 
+cargarPromociones();
 cargar(1);

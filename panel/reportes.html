@@ -45,7 +45,9 @@
 
         <section class="bloque tarjeta" aria-labelledby="t-liquidar">
           <h2 id="t-liquidar">Qué liquidar</h2>
+          <p>Con <strong>Publicitar</strong> el producto pasa a la sección de promociones de la tienda con el descuento que elijas.</p>
           <p class="estado" id="vacio-liquidar" hidden>No hay productos por vencer con stock.</p>
+          <p class="aviso-ok" id="aviso-promociones" role="status" hidden></p>
           <div class="tabla-scroll">
             <table>
               <caption class="solo-lectores">Productos por vencer con su descuento sugerido</caption>
@@ -53,13 +55,58 @@
                 <tr>
                   <th scope="col">Producto</th><th scope="col">Vence</th><th scope="col">Días restantes</th>
                   <th scope="col">Stock</th><th scope="col">Precio</th><th scope="col">Descuento</th>
-                  <th scope="col">Precio sugerido</th>
+                  <th scope="col">Precio sugerido</th><th scope="col">Promoción</th>
                 </tr>
               </thead>
               <tbody id="filas-liquidar"></tbody>
             </table>
           </div>
         </section>
+
+        <!-- Promociones vigentes (GET /api/inventario/promociones de Inventario): se terminan desde acá. -->
+        <section class="bloque tarjeta" aria-labelledby="t-promociones">
+          <h2 id="t-promociones">Promociones publicadas</h2>
+          <p class="estado" id="vacio-promociones">No hay promociones vigentes.</p>
+          <div class="tabla-scroll" id="tabla-promociones" hidden>
+            <table>
+              <caption class="solo-lectores">Promociones vigentes en la tienda</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Producto</th><th scope="col">Descuento</th><th scope="col">Precio en la tienda</th>
+                  <th scope="col">Hasta</th><th scope="col">Stock</th><th scope="col">Publicada por</th>
+                  <th scope="col">Acción</th>
+                </tr>
+              </thead>
+              <tbody id="filas-promociones"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- "Publicitar": elegir el descuento y hasta cuándo dura (reportes.js lo abre con showModal). -->
+        <dialog class="dialogo dialogo-publicitar" id="dialogo-publicitar" aria-labelledby="titulo-publicitar">
+          <form id="form-publicitar" novalidate>
+            <h2 id="titulo-publicitar">Publicitar</h2>
+            <p id="publicitar-producto"></p>
+            <div class="campo">
+              <label for="publicitar-porcentaje">Descuento (%)</label>
+              <input id="publicitar-porcentaje" name="porcentaje" type="number" min="5" max="90" step="1" inputmode="numeric" required aria-describedby="ayuda-porcentaje error-porcentaje">
+              <p class="campo-ayuda" id="ayuda-porcentaje">Entre 5 y 90 por ciento.</p>
+              <span class="campo-error" id="error-porcentaje"></span>
+            </div>
+            <div class="campo">
+              <label for="publicitar-hasta">Hasta (inclusive)</label>
+              <input id="publicitar-hasta" name="hasta" type="date" required aria-describedby="ayuda-hasta error-hasta">
+              <p class="campo-ayuda" id="ayuda-hasta"></p>
+              <span class="campo-error" id="error-hasta"></span>
+            </div>
+            <p class="precio-previo" id="publicitar-precio" aria-live="polite"></p>
+            <p class="campo-error" id="error-general" role="alert" hidden></p>
+            <div class="dialogo-botones">
+              <button type="button" class="boton boton-borde" id="publicitar-cancelar">Cancelar</button>
+              <button type="submit" class="boton" id="publicitar-enviar">Publicitar</button>
+            </div>
+          </form>
+        </dialog>
       </div>
 
       <!-- Turnos atendidos -->

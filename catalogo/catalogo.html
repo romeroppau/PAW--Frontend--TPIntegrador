@@ -50,6 +50,13 @@
       </div>
     </section>
 
+    <!-- Promociones: la llena catalogo.js con GET /api/tienda/promociones; sin promociones no se muestra. -->
+    <section id="promociones" class="promociones-catalogo" aria-labelledby="titulo-promociones" hidden>
+      <h2 id="titulo-promociones">Promociones</h2>
+      <p>Precios rebajados por tiempo limitado, hasta agotar stock.</p>
+      <ul id="lista-promociones" class="lista-productos"></ul>
+    </section>
+
     <section class="resultados-catalogo" aria-label="Resultados del catálogo">
       <p id="estado" class="estado" role="status" aria-live="polite">Cargando productos…</p>
       <!-- Lo que pasó al tocar "Agregar" en una tarjeta (lo escribe catalogo.js). -->

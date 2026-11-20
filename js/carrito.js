@@ -91,7 +91,12 @@ function crearFila(item) {
   }
 
   const datos = el('div', '', { class: 'item-datos' });
-  datos.append(el('a', item.nombre, { href: enlace, class: 'item-nombre' }), el('span', `${precio(item.precio_unitario)} c/u`, { class: 'item-unitario' }));
+  const unitario = el('span', `${precio(item.precio_unitario)} c/u`, { class: 'item-unitario' });
+  // En promoción: "$ 4.160,00 c/u (antes $ 5.200,00, 20 % off)".
+  if (item.descuento) {
+    unitario.append(' ', el('span', `(antes ${precio(item.precio_sin_descuento)}, ${item.descuento} % off)`, { class: 'item-promo' }));
+  }
+  datos.append(el('a', item.nombre, { href: enlace, class: 'item-nombre' }), unitario);
   if (!item.a_la_venta) {
     datos.append(el('span', 'Ya no está a la venta: quitalo para seguir.', { class: 'nota-item nota-error' }));
   } else if (item.cantidad > item.stock) {
