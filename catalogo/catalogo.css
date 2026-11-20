@@ -99,6 +99,26 @@
   margin: 0;
 }
 
+/* Tarjeta de un producto en promoción: un borde naranja la distingue en la grilla. */
+.tarjeta-en-promo {
+  border-color: var(--naranja);
+}
+
+/* Sección "Promociones", arriba del catálogo (catalogo.js). */
+.promociones-catalogo {
+  margin-block: 1.5rem 2rem;
+}
+
+.promociones-catalogo h2 {
+  margin-bottom: .25rem;
+}
+
+/* auto-fill (no auto-fit): con una o dos promociones, las tarjetas tienen el mismo ancho que las
+   del catálogo en lugar de estirarse a toda la fila. */
+.promociones-catalogo .lista-productos {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 230px), 1fr));
+}
+
 .tarjeta-producto .nombre-producto {
   margin: 0;
   overflow-wrap: anywhere;

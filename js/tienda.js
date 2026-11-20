@@ -38,6 +38,46 @@ export function precio(valor) {
   return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(Number(valor));
 }
 
+/** "2026-12-10" -> "10/12" */
+const diaMes = (texto) => texto.slice(5, 10).split('-').reverse().join('/');
+
+/**
+ * El precio de un producto del catálogo, con su promoción si tiene (producto.promocion, ver
+ * contrato.md de Inventario): el precio de siempre tachado, el rebajado, el porcentaje y hasta cuándo.
+ * Devuelve un <p class="precio"> (más las clases que se pasen). Sin promoción, solo el precio.
+ */
+export function bloquePrecio(producto, clases = '') {
+  const p = document.createElement('p');
+  p.className = ('precio ' + clases).trim();
+  const promo = producto.promocion;
+  if (!promo) {
+    p.textContent = producto.precio == null ? 'Precio a consultar' : precio(producto.precio);
+    return p;
+  }
+  p.classList.add('precio-con-promo');
+  const antes = document.createElement('del');
+  antes.className = 'precio-anterior';
+  antes.textContent = precio(producto.precio);
+  const ahora = document.createElement('ins');
+  ahora.className = 'precio-promo';
+  ahora.textContent = precio(promo.precio);
+  const insignia = document.createElement('span');
+  insignia.className = 'insignia insignia-promo';
+  insignia.textContent = `${promo.porcentaje} % off`;
+  const hasta = document.createElement('span');
+  hasta.className = 'promo-hasta';
+  hasta.textContent = `Promoción hasta el ${diaMes(promo.hasta)}`;
+  // Para los lectores de pantalla, <del> e <ins> no siempre se anuncian: se aclara con texto.
+  const leerAntes = document.createElement('span');
+  leerAntes.className = 'solo-lectores';
+  leerAntes.textContent = 'Antes: ';
+  const leerAhora = document.createElement('span');
+  leerAhora.className = 'solo-lectores';
+  leerAhora.textContent = 'Ahora: ';
+  p.append(leerAntes, antes, ' ', leerAhora, ahora, ' ', insignia, hasta);
+  return p;
+}
+
 /** "2026-11-18 10:30:00" (hora de Argentina) -> Date. */
 export function fechaArgentina(texto) {
   return new Date(texto.replace(' ', 'T') + '-03:00');

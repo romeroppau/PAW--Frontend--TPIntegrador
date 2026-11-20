@@ -171,6 +171,14 @@ th { background: var(--menta); color: var(--pino-oscuro); }
 .producto-destacado h3 { margin: .25rem 0 0; }
 .etiqueta { font-weight: 700; color: var(--naranja-oscuro); margin: 0; }
 .precio { font-weight: 700; font-size: 1.15rem; margin: 0; }
+/* Precio en promoción (js/tienda.js, bloquePrecio): el de siempre tachado, el rebajado, el
+   porcentaje y hasta cuándo. El naranja oscuro cumple contraste AA sobre blanco. */
+.precio-con-promo { display: flex; flex-wrap: wrap; align-items: baseline; gap: .15rem .5rem; }
+.precio-anterior { font-weight: 400; font-size: .95rem; color: var(--tinta-suave); }
+.precio-promo { text-decoration: none; color: var(--naranja-oscuro); }
+.insignia.insignia-promo { background: #fde7d3; color: #7a3d07; font-size: .8rem; }
+.promo-hasta { flex-basis: 100%; font-size: .85rem; font-weight: 400; color: var(--tinta-suave); }
+.item-promo { color: var(--naranja-oscuro); white-space: nowrap; }
 
 @media (max-width: 800px) {
   .encabezado-fila {

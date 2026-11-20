@@ -1,16 +1,17 @@
 /**
  * portada.js — Productos destacados de la portada (index.html)
  *
- * Muestra los primeros productos disponibles del catálogo público. Si la API no responde o no hay
- * productos, la sección se oculta: la portada no tiene que mostrar tarjetas vacías.
+ * Muestra primero los productos en promoción (GET /api/tienda/promociones) y completa con los
+ * primeros disponibles del catálogo. Si la API no responde o no hay productos, la sección se
+ * oculta: la portada no tiene que mostrar tarjetas vacías.
  * Todo texto que viene de la API se inserta con el() (textContent).
  */
 import { api } from './api.js';
 import { el } from './ui.js';
 import { textoCategoria } from './etiquetas.js';
+import { bloquePrecio } from './tienda.js';
 
 const CANTIDAD = 3;
-const pesos = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' });
 const seccion = document.getElementById('seccion-destacados');
 
 function tarjeta(producto) {
@@ -18,7 +19,7 @@ function tarjeta(producto) {
   articulo.append(
     el('p', textoCategoria(producto.categoria), { class: 'etiqueta' }),
     el('h3', producto.nombre),
-    el('p', pesos.format(producto.precio), { class: 'precio' }),
+    bloquePrecio(producto),
     el('a', 'Ver detalle', {
       class: 'boton boton-borde',
       href: '/catalogo/producto.html?id=' + encodeURIComponent(producto.id),
@@ -29,8 +30,12 @@ function tarjeta(producto) {
 }
 
 try {
-  const { datos } = await api('/api/tienda/productos');
-  const disponibles = datos.filter((p) => p.disponible).slice(0, CANTIDAD);
+  const [promociones, catalogo] = await Promise.all([
+    api('/api/tienda/promociones').then((r) => r.datos ?? []).catch(() => []),
+    api('/api/tienda/productos').then((r) => r.datos ?? []),
+  ]);
+  const enPromo = new Set(promociones.map((p) => p.id));
+  const disponibles = [...promociones, ...catalogo.filter((p) => p.disponible && !enPromo.has(p.id))].slice(0, CANTIDAD);
   document.getElementById('destacados').replaceChildren(...disponibles.map(tarjeta));
   seccion.hidden = disponibles.length === 0;
 } catch {

@@ -1,3 +1,10 @@
+/* "Publicitar" (Entrega 5): el cuadro para elegir el descuento y el aviso de que se publicó. */
+.dialogo-publicitar h2 { margin-bottom: .25rem; }
+.dialogo-publicitar .campo { margin-bottom: .9rem; }
+.precio-previo { font-weight: 700; }
+.aviso-ok { color: var(--ok); font-weight: 700; }
+.celda-promo { white-space: nowrap; }
+
 /* Pestañas del panel de reportes (Entrega 5, rol 4). Usan el color del texto de la página. */
 .pestanas {
   display: flex;

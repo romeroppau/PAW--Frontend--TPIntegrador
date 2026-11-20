@@ -4,14 +4,15 @@
  * Tres pestañas (sugerencias, turnos atendidos, stock y movimientos) y, dentro de stock, tres
  * sub-pestañas. Cada una pide sus datos la primera vez que se abre. La pestaña activa viaja en el
  * hash de la URL (#turnos-atendidos, #stock-insumos), así los enlaces de los paneles caen en la correcta.
- * Contrato: docs/api/contrato-reportes.md del repo Reportes.
+ * Contrato: docs/api/contrato-reportes.md del repo Reportes. "Publicitar" y las promociones usan la
+ * API de Inventario (docs/api/contrato-tienda.md, sección "Promociones").
  * La guardia de rol es solo comodidad de interfaz; la autorización real la hace el backend.
  * Todo texto que viene de la API se inserta con textContent (el() lo hace).
  */
 
 import { api } from './api.js';
 import { exigirRol } from './auth.js';
-import { el } from './ui.js';
+import { confirmar, el, limpiarErrores, mostrarErrores } from './ui.js';
 import { textoEstadoInsumo } from './etiquetas.js';
 
 await exigirRol('VETERINARIO');
@@ -172,9 +173,9 @@ async function cargarSugerencias() {
     $('texto-promocionar').textContent = sugerida?.sugerencia ?? 'Todavía no hay datos para sugerir.';
     $('filas-franjas').replaceChildren(...(promo.franjas ?? []).map((f) => filaFranja(f, sugerida)));
 
-    const items = datos.que_liquidar ?? [];
-    $('filas-liquidar').replaceChildren(...items.map(filaLiquidar));
-    $('vacio-liquidar').hidden = items.length > 0;
+    liquidar = datos.que_liquidar ?? [];
+    $('vacio-liquidar').hidden = liquidar.length > 0;
+    await cargarPromociones();
     estado.textContent = '';
   } catch {
     estado.textContent = 'No se pudieron cargar las sugerencias.';
@@ -189,8 +190,18 @@ function filaFranja(f, sugerida) {
   return tr;
 }
 
+// Una fila de "Qué liquidar". La última columna: la promoción vigente del producto, o "Publicitar".
 function filaLiquidar(p) {
   const tr = el('tr');
+  const promo = promociones.find((x) => x.producto_id === p.producto_id);
+  const celda = el('td', '', { class: 'celda-promo' });
+  if (promo) {
+    celda.append(el('span', `${promo.porcentaje} % hasta el ${fecha(promo.hasta).slice(0, 5)}`, { class: 'insignia insignia-promo' }));
+  } else {
+    const boton = el('button', 'Publicitar', { type: 'button', class: 'boton boton-chico', 'aria-label': `Publicitar ${p.nombre}` });
+    boton.addEventListener('click', () => abrirPublicitar(p, boton));
+    celda.append(boton);
+  }
   tr.append(
     el('td', p.nombre),
     el('td', fecha(p.fecha_vencimiento)),
@@ -198,10 +209,142 @@ function filaLiquidar(p) {
     el('td', p.stock),
     el('td', dinero(p.precio)),
     el('td', p.descuento_sugerido + ' %'),
-    el('td', dinero(p.precio_sugerido))
+    el('td', dinero(p.precio_sugerido)),
+    celda
   );
   return tr;
 }
+
+/* ------------------------------------------------------------------ */
+/* Promociones: "Publicitar" y las publicadas (API de Inventario)       */
+/* ------------------------------------------------------------------ */
+
+let liquidar = [];       // las sugerencias de "Qué liquidar"
+let promociones = [];    // las promociones vigentes
+
+// Pide las promociones vigentes y vuelve a pintar "Qué liquidar" (para saber qué ya se publicitó)
+// y "Promociones publicadas". Si Inventario no responde, las sugerencias se ven igual.
+async function cargarPromociones() {
+  try {
+    ({ datos: promociones = [] } = await api('/api/inventario/promociones'));
+  } catch {
+    promociones = [];
+  }
+  $('filas-liquidar').replaceChildren(...liquidar.map(filaLiquidar));
+  $('filas-promociones').replaceChildren(...promociones.map(filaPromocion));
+  $('vacio-promociones').hidden = promociones.length > 0;
+  $('tabla-promociones').hidden = promociones.length === 0;
+}
+
+function filaPromocion(promo) {
+  const tr = el('tr');
+  const nombre = el('td', promo.nombre);
+  if (!promo.a_la_venta) nombre.append(' ', el('span', '(no está a la venta)', { class: 'marca-baja' }));
+  const terminar = el('button', 'Terminar', { type: 'button', class: 'boton boton-borde boton-chico', 'aria-label': `Terminar la promoción de ${promo.nombre}` });
+  terminar.addEventListener('click', () => terminarPromocion(promo, terminar));
+  const accion = el('td');
+  accion.append(terminar);
+  tr.append(
+    nombre,
+    el('td', promo.porcentaje + ' %'),
+    el('td', `${dinero(promo.precio_promocion)} (antes ${dinero(promo.precio)})`),
+    el('td', fecha(promo.hasta)),
+    el('td', promo.stock),
+    el('td', promo.creada_por ?? '—'),
+    accion
+  );
+  return tr;
+}
+
+async function terminarPromocion(promo, boton) {
+  const si = await confirmar(`¿Terminar la promoción de "${promo.nombre}"? Deja de verse en la tienda y vuelve al precio de siempre.`, { aceptar: 'Terminar la promoción', peligro: true });
+  if (!si) return;
+  boton.disabled = true;
+  try {
+    await api(`/api/inventario/promociones/${promo.id}`, { metodo: 'DELETE' });
+    avisar(`Se terminó la promoción de "${promo.nombre}".`);
+  } catch (e) {
+    // 404: ya había terminado (otra pestaña, o pasó su fecha). Igual se actualiza la lista.
+    if (e?.estado !== 404) avisar('No se pudo terminar la promoción. Probá de nuevo.');
+  }
+  await cargarPromociones();
+}
+
+const avisoPromo = $('aviso-promociones');
+function avisar(texto) {
+  avisoPromo.textContent = texto;
+  avisoPromo.hidden = false;
+}
+
+const dialogo = $('dialogo-publicitar');
+const formPublicitar = $('form-publicitar');
+let publicitando = null;   // { producto, boton } de la fila que abrió el cuadro
+
+// Hasta cuándo puede durar: el vencimiento del producto o, si es más lejos, 90 días desde hoy.
+function hastaMaximo(p) {
+  const maximo = (() => { const d = new Date(); d.setDate(d.getDate() + 90); return aISO(d); })();
+  return p.fecha_vencimiento && p.fecha_vencimiento < maximo ? p.fecha_vencimiento : maximo;
+}
+
+function abrirPublicitar(p, boton) {
+  publicitando = { producto: p, boton };
+  limpiarErrores(formPublicitar);
+  $('publicitar-producto').textContent = `${p.nombre}: ${dinero(p.precio)}, quedan ${p.stock}. Vence el ${fecha(p.fecha_vencimiento)}.`;
+  const hasta = formPublicitar.elements.hasta;
+  hasta.min = aISO(new Date());
+  hasta.max = hastaMaximo(p);
+  hasta.value = hasta.max;
+  $('ayuda-hasta').textContent = `Por defecto, hasta el día que vence. Como mucho el ${fecha(hasta.max)}.`;
+  formPublicitar.elements.porcentaje.value = String(p.descuento_sugerido ?? 15);
+  previsualizar();
+  dialogo.showModal();
+  formPublicitar.elements.porcentaje.focus();
+}
+
+// "Precio en la tienda: $ 4.550,00" mientras se elige el porcentaje (la cuenta final la hace Inventario).
+function previsualizar() {
+  const porcentaje = Number(formPublicitar.elements.porcentaje.value);
+  const valido = Number.isInteger(porcentaje) && porcentaje >= 5 && porcentaje <= 90;
+  $('publicitar-precio').textContent = valido && publicitando
+    ? `Precio en la tienda: ${dinero(Math.round(publicitando.producto.precio * (100 - porcentaje)) / 100)}`
+    : '';
+}
+
+formPublicitar.elements.porcentaje.addEventListener('input', previsualizar);
+$('publicitar-cancelar').addEventListener('click', () => dialogo.close());
+dialogo.addEventListener('close', () => { publicitando?.boton.focus(); });
+
+formPublicitar.addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  limpiarErrores(formPublicitar);
+  const { producto } = publicitando;
+  const porcentaje = formPublicitar.elements.porcentaje.value.trim();
+  const cuerpo = {
+    producto_id: producto.producto_id,
+    porcentaje: /^\d+$/.test(porcentaje) ? Number(porcentaje) : porcentaje,
+    hasta: formPublicitar.elements.hasta.value,
+  };
+  const enviar = $('publicitar-enviar');
+  enviar.disabled = true;
+  try {
+    const promo = await api('/api/inventario/promociones', { metodo: 'POST', cuerpo });
+    dialogo.close();
+    avisar(`Listo: "${producto.nombre}" ya está en las promociones de la tienda, con ${promo.porcentaje} % hasta el ${fecha(promo.hasta)}.`);
+    await cargarPromociones();
+  } catch (e) {
+    if (e?.estado === 400) {
+      mostrarErrores(formPublicitar, e.datos?.campos ?? {}, 'Revisá los datos marcados.');
+      formPublicitar.querySelector('[aria-invalid="true"]')?.focus();
+    } else if (e?.estado === 409 || e?.estado === 404) {
+      mostrarErrores(formPublicitar, {}, e.datos?.error ?? 'No se pudo publicitar.');
+      await cargarPromociones();
+    } else {
+      mostrarErrores(formPublicitar, {}, 'No se pudo publicitar. Probá de nuevo.');
+    }
+  } finally {
+    enviar.disabled = false;
+  }
+});
 
 /* ------------------------------------------------------------------ */
 /* Turnos atendidos                                                     */
