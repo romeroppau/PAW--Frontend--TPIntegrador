@@ -77,15 +77,19 @@ function activarPestanas(lista, alCambiar) {
 /* ------------------------------------------------------------------ */
 
 // Devuelve una función que recibe la lista completa y la dibuja desde el principio.
+// "Mostrar menos" (se crea acá, al lado de "Mostrar más") vuelve a las primeras 25 filas.
 function listaPaginada(tbody, botonMas, contador, crearFila) {
   let items = [];
   let visibles = PAGINA;
+  const botonMenos = el('button', 'Mostrar menos', { type: 'button', class: 'boton boton-borde', hidden: '' });
+  botonMas.after(' ', botonMenos);
 
   function pintar() {
     tbody.replaceChildren(...items.slice(0, visibles).map(crearFila));
     const resto = items.length - visibles;
     botonMas.hidden = resto <= 0;
     botonMas.textContent = `Mostrar ${Math.min(PAGINA, Math.max(resto, 0))} más`;
+    botonMenos.hidden = visibles <= PAGINA;
     contador.textContent = items.length
       ? `Mostrando ${Math.min(visibles, items.length)} de ${items.length}`
       : 'No hay resultados.';
@@ -94,6 +98,13 @@ function listaPaginada(tbody, botonMas, contador, crearFila) {
   botonMas.addEventListener('click', () => {
     visibles += PAGINA;
     pintar();
+  });
+
+  botonMenos.addEventListener('click', () => {
+    visibles = PAGINA;
+    pintar();
+    // La tabla se achica: se vuelve al principio de la lista para no quedar mirando el pie de página.
+    contador.scrollIntoView({ block: 'nearest' });
   });
 
   return (nuevos) => {

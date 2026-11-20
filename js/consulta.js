@@ -354,8 +354,18 @@ function mostrarFactura(f) {
 
 // Chequeo de adopción (Entrega 5, rol 3): ya atendido, lo que sigue es completar la adopción, que la
 // veterinaria decide en el panel de adopciones (no se completa sola: el chequeo puede salir mal).
-function enlaceAdopcion() {
+// Solo si la adopción de este chequeo sigue en curso: completada o cancelada, no queda nada por hacer.
+async function enlaceAdopcion() {
   if (consulta.motivo !== 'CHEQUEO_ADOPCION' || document.getElementById('ir-adopcion')) return;
+  let enCurso = false;
+  try {
+    // Sin estado, la API devuelve las que no terminaron (hasta 100: alcanza de sobra).
+    const { adopciones } = await api('/api/adopciones?por_pagina=100');
+    enCurso = adopciones.some((a) => a.turno_chequeo?.id === consulta.turno_id);
+  } catch {
+    return; // sin el botón, la veterinaria igual llega desde el panel de adopciones
+  }
+  if (!enCurso || document.getElementById('ir-adopcion')) return;
   const p = el('p', '', { id: 'ir-adopcion' });
   p.append(el('a', 'Ir a completar la adopción', { href: '/panel/adopciones.html#en-curso', class: 'boton' }));
   document.getElementById('factura').after(p);
