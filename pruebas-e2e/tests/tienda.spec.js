@@ -477,3 +477,13 @@ test('un cliente no entra a las ventas de la veterinaria', async ({ page }) => {
   await page.goto('/panel/ventas.html');
   await expect(page).toHaveURL(/\/login\/login\.html/);
 });
+
+test('el panel del rescatista tiene acceso a la tienda (también compra)', async ({ page }) => {
+  await simularSesion(page, RESCATISTA);
+  await page.route('**/api/tienda/carrito', (route) => responderJson(route, VACIO));
+  await page.goto('/paneles/panel-rescatista.html');
+  const tienda = page.locator('#tienda');
+  await expect(tienda.getByRole('link', { name: 'Ver catálogo de productos' })).toHaveAttribute('href', '/catalogo/catalogo.html');
+  await expect(tienda.getByRole('link', { name: 'Mi carrito' })).toHaveAttribute('href', '/tienda/carrito.html');
+  await expect(tienda.getByRole('link', { name: 'Mis compras' })).toHaveAttribute('href', '/tienda/compras.html');
+});
