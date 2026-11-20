@@ -354,6 +354,15 @@ const formTurnos = $('filtro-turnos');
 
 function filaTurno(t) {
   const tr = el('tr');
+  // El número de factura lleva a la factura (la vista v_turnos_atendidos trae consulta_id).
+  const factura = el('td');
+  if (t.factura_numero && t.consulta_id) {
+    factura.append(el('a', t.factura_numero, {
+      href: '/cliente/factura.html?consulta=' + t.consulta_id, 'aria-label': `Ver la factura ${t.factura_numero}`
+    }));
+  } else {
+    factura.textContent = t.factura_numero ?? '—';
+  }
   tr.append(
     el('td', fecha(t.fecha)),
     el('td', t.mascota_nombre),
@@ -361,7 +370,7 @@ function filaTurno(t) {
     el('td', t.diagnostico || '—'),
     el('td', t.cantidad_insumos),
     el('td', t.cantidad_productos),
-    el('td', t.factura_numero),
+    factura,
     el('td', dinero(t.total))
   );
   return tr;
