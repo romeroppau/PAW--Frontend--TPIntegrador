@@ -49,12 +49,21 @@ function fila(turno, conConsulta) {
   );
   if (conConsulta) {
     const celda = el('td');
-    // Un turno atendido tiene su consulta en el historial clínico de la mascota.
+    // Un turno atendido tiene su consulta en el historial clínico de la mascota y su factura
+    // (se genera al finalizar la consulta: GET /api/pacientes/consultas/{id}/factura).
     if (turno.estado === 'ATENDIDO') {
-      celda.append(el('a', 'Ver en el historial', {
+      const enlaces = el('div', '', { class: 'acciones' });
+      enlaces.append(el('a', 'Ver en el historial', {
         href: '/cliente/historial.html?mascota=' + turno.mascota.id,
         'aria-label': `Ver la consulta de ${turno.mascota.nombre} en su historial clínico`
       }));
+      if (turno.consulta_id) {
+        enlaces.append(el('a', 'Ver factura', {
+          href: '/cliente/factura.html?consulta=' + turno.consulta_id,
+          'aria-label': `Ver la factura del turno de ${turno.mascota.nombre} del ${textoFecha(turno.fecha)}`
+        }));
+      }
+      celda.append(enlaces);
     }
     tr.append(celda);
   }

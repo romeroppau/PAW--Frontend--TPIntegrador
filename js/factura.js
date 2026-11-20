@@ -65,10 +65,37 @@ function mostrar(f) {
   poner('t-productos', dinero(f.subtotal_productos));
   poner('t-total', dinero(f.total));
 
-  // "Volver" lleva al historial de la mascota (lo ven los dos roles).
-  if (f.mascota?.id) document.getElementById('volver').href = '/cliente/historial.html?mascota=' + f.mascota.id;
+  // "Volver" lleva a la pantalla de donde se vino (la agenda, Mis turnos o Reportes) o, si se llegó
+  // de otro lado, al historial de la mascota (lo ven los dos roles).
+  const volver = document.getElementById('volver');
+  const anterior = paginaAnterior();
+  if (anterior) {
+    volver.href = anterior.href;
+    volver.textContent = '← Volver a ' + anterior.nombre;
+  } else if (f.mascota?.id) {
+    volver.href = '/cliente/historial.html?mascota=' + f.mascota.id;
+  }
 
   document.getElementById('factura').hidden = false;
+}
+
+// Las pantallas que enlazan a la factura (además del historial). Se usa el referrer, que en el
+// mismo sitio trae la dirección completa (Referrer-Policy: strict-origin-when-cross-origin).
+const ORIGENES = [
+  ['/panel/agenda.html', 'la agenda'],
+  ['/cliente/turnos.html', 'mis turnos'],
+  ['/panel/reportes.html', 'reportes'],
+];
+
+function paginaAnterior() {
+  try {
+    const url = new URL(document.referrer);
+    if (url.origin !== location.origin) return null;
+    const origen = ORIGENES.find(([ruta]) => url.pathname === ruta);
+    return origen ? { href: url.pathname + url.search + url.hash, nombre: origen[1] } : null;
+  } catch {
+    return null;
+  }
 }
 
 function fila(concepto, cantidad, unitario) {
