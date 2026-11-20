@@ -556,3 +556,22 @@ test('una consulta común no ofrece completar ninguna adopción', async ({ page 
   await expect(page.locator('#factura')).toContainText('C-000101');
   await expect(page.getByRole('link', { name: 'Ir a completar la adopción' })).toHaveCount(0);
 });
+
+test('la consulta de un chequeo cuya adopción ya terminó no ofrece completarla', async ({ page }) => {
+  // Se llega, por ejemplo, desde "Ver la consulta del chequeo" en el detalle de una adopción finalizada.
+  const datos = { enCurso: [] };
+  await simularPanelVet(page, datos);
+  await page.route('**/api/pacientes/consultas/7', (route) => responderJson(route, {
+    id: 7, turno_id: 120, mascota_id: 901, motivo: 'CHEQUEO_ADOPCION', estado: 'FINALIZADA', diagnostico: 'Sana',
+    observaciones: null, valor_base: '0.00', finalizada_en: '2026-11-17 10:45:00', total: '0.00', insumos: [], productos: [],
+  }));
+  await page.route('**/api/pacientes/consultas/7/factura', (route) => responderJson(route, { factura: { numero: 'C-000120', estado: 'PENDIENTE_PAGO' } }));
+  await page.route('**/api/inventario/insumos', (route) => responderJson(route, { datos: [] }));
+  await page.route('**/api/inventario/productos', (route) => responderJson(route, { datos: [] }));
+
+  await page.goto('/panel/consulta.html?id=7');
+  await expect(page.locator('#factura')).toContainText('C-000120');
+  // Se preguntó por las adopciones en curso y ninguna tiene este chequeo.
+  await expect.poll(() => datos.pedidos.length).toBeGreaterThan(0);
+  await expect(page.getByRole('link', { name: 'Ir a completar la adopción' })).toHaveCount(0);
+});
