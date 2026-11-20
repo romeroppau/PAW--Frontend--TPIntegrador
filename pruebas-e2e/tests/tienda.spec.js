@@ -310,6 +310,21 @@ test('el pago simulado aprueba y vuelve a la compra', async ({ page }) => {
   expect(cuerpo).toEqual({ numero: 'V-000105', resultado: 'aprobado' });
 });
 
+test('en el último minuto ya no se puede empezar a pagar', async ({ page }) => {
+  await page.clock.install({ time: new Date('2026-11-18T11:59:00-03:00') });
+  await page.clock.pauseAt(new Date('2026-11-18T12:00:00-03:00'));
+  await simularSesion(page, CLIENTE);
+  await page.route('**/api/tienda/carrito', (route) => responderJson(route, VACIO));
+  await page.route('**/api/tienda/compras/V-000105', (route) => responderJson(route, { ...PENDIENTE, segundos_para_pagar: 90 }));
+  await page.goto('/tienda/compra.html?numero=V-000105');
+
+  const pagar = page.getByRole('button', { name: 'Pagar con Mercado Pago' });
+  await expect(pagar).toBeEnabled();
+  await page.clock.runFor(31_000);   // quedan 59 segundos
+  await expect(pagar).toBeDisabled();
+  await expect(page.locator('#resultado-pago')).toHaveText('Ya no queda tiempo para pagar esta compra.');
+});
+
 test('la cuenta regresiva parte de lo que dice el servidor, aunque el reloj de la computadora esté mal', async ({ page }) => {
   // La computadora cree que son las 12:00, pero el servidor dice que faltan 10 minutos.
   await page.clock.install({ time: new Date('2026-11-18T11:59:00-03:00') });
