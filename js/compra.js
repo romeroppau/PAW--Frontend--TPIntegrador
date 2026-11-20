@@ -138,6 +138,9 @@ function dibujar(compra) {
   $aviso.textContent = avisos[compra.estado] ?? '';
   $aviso.hidden = $aviso.textContent === '';
 
+  document.getElementById('enlace-factura').hidden = !compra.tiene_factura;
+  document.getElementById('ver-factura').href = '/tienda/factura.html?numero=' + encodeURIComponent(compra.numero);
+
   if (compra.estado === 'PENDIENTE_PAGO' && (compra.pagar_antes_de || Number.isInteger(compra.segundos_para_pagar))) {
     iniciarReloj(limiteParaPagar(compra));
   }

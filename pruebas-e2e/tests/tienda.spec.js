@@ -396,14 +396,16 @@ test('una compra pagada se puede cancelar: avisa que el importe no se reintegra'
   expect(cancelada).toBe(true);
 });
 
-test('mis compras: cada una con su estado y lo que hay que hacer', async ({ page }) => {
+test('mis compras: cada una con su estado, lo que hay que hacer y la factura de las pagadas', async ({ page }) => {
   await simularSesion(page, CLIENTE);
   await page.route('**/api/tienda/carrito', (route) => responderJson(route, VACIO));
-  await page.route('**/api/tienda/compras', (route) => responderJson(route, { datos: [
-    { numero: 'V-000105', estado: 'PENDIENTE_PAGO', fecha: '2026-11-18 10:30:00', total: 4500, pagar_antes_de: '2026-11-18 10:45:00', retirar_hasta: '2026-11-25' },
-    { numero: 'V-000101', estado: 'PAGADA', fecha: '2026-11-17 12:00:00', total: 31999.8, pagar_antes_de: null, retirar_hasta: '2026-11-24' },
-    { numero: 'V-000103', estado: 'CANCELADA', fecha: '2026-11-06 09:00:00', total: 7800, pagar_antes_de: null, retirar_hasta: null, motivo_cancelacion: 'VENCIDA' },
-  ] }));
+  await page.route('**/api/tienda/compras?*', (route) => responderJson(route, {
+    pagina: 1, por_pagina: 20, hay_mas: false, desde: '2026-10-22', hasta: '2026-11-20', datos: [
+      { numero: 'V-000105', estado: 'PENDIENTE_PAGO', fecha: '2026-11-18 10:30:00', total: 4500, pagar_antes_de: '2026-11-18 10:45:00', retirar_hasta: '2026-11-25', tiene_factura: false },
+      { numero: 'V-000101', estado: 'PAGADA', fecha: '2026-11-17 12:00:00', total: 31999.8, pagar_antes_de: null, retirar_hasta: '2026-11-24', tiene_factura: true },
+      { numero: 'V-000103', estado: 'CANCELADA', fecha: '2026-11-06 09:00:00', total: 7800, pagar_antes_de: null, retirar_hasta: null, motivo_cancelacion: 'VENCIDA', tiene_factura: true },
+    ],
+  }));
   await page.goto('/tienda/compras.html');
 
   const filas = page.locator('#filas > tr');
@@ -413,32 +415,137 @@ test('mis compras: cada una con su estado y lo que hay que hacer', async ({ page
   await expect(filas.nth(1)).toContainText('Retirala hasta el martes 24/11');
   await expect(filas.nth(2)).toContainText('Cancelada');
   await expect(filas.nth(2)).toContainText('Venció el plazo de retiro');
-  await expect(page.getByRole('link', { name: 'V-000101' })).toHaveAttribute('href', '/tienda/compra.html?numero=V-000101');
+  await expect(page.getByRole('link', { name: 'V-000101', exact: true })).toHaveAttribute('href', '/tienda/compra.html?numero=V-000101');
+
+  // Solo las que se pagaron tienen factura (también la que se pagó y después se canceló).
+  await expect(filas.nth(0).getByRole('link', { name: /factura/ })).toHaveCount(0);
+  await expect(page.getByRole('link', { name: 'Ver la factura de la compra V-000101' })).toHaveAttribute('href', '/tienda/factura.html?numero=V-000101');
+  await expect(page.getByRole('link', { name: 'Ver la factura de la compra V-000103' })).toBeVisible();
+
+  // El filtro muestra las fechas que usó el servidor (los últimos 30 días); no hay más páginas.
+  await expect(page.getByLabel('Desde')).toHaveValue('2026-10-22');
+  await expect(page.getByLabel('Hasta')).toHaveValue('2026-11-20');
+  await expect(page.getByRole('button', { name: 'Ver más' })).toBeHidden();
+});
+
+test('mis compras: filtro por fechas y "Ver más"', async ({ page }) => {
+  await simularSesion(page, CLIENTE);
+  await page.route('**/api/tienda/carrito', (route) => responderJson(route, VACIO));
+  const consultas = [];
+  const compra = (n) => ({ numero: `V-0001${String(n).padStart(2, '0')}`, estado: 'ENTREGADA', fecha: '2026-11-10 10:00:00', total: 1000, pagar_antes_de: null, retirar_hasta: null, tiene_factura: true });
+  await page.route('**/api/tienda/compras?*', (route) => {
+    const q = new URL(route.request().url()).searchParams;
+    consultas.push(q.toString());
+    if (q.get('desde') === '2020-01-01') return responderJson(route, { pagina: 1, por_pagina: 20, hay_mas: false, desde: '2020-01-01', hasta: '2020-01-31', datos: [] });
+    const pagina = Number(q.get('pagina'));
+    return responderJson(route, {
+      pagina, por_pagina: 20, hay_mas: pagina === 1, desde: '2026-10-22', hasta: '2026-11-20',
+      datos: pagina === 1 ? Array.from({ length: 20 }, (_, i) => compra(i)) : [compra(20), compra(21)],
+    });
+  });
+  await page.goto('/tienda/compras.html');
+
+  const filas = page.locator('#filas > tr');
+  await expect(filas).toHaveCount(20);
+  await page.getByRole('button', { name: 'Ver más' }).click();
+  await expect(filas).toHaveCount(22);
+  await expect(page.getByRole('button', { name: 'Ver más' })).toBeHidden();
+  expect(consultas).toEqual(['pagina=1', 'pagina=2']);
+
+  // Desde después de Hasta: no se pide nada y se avisa.
+  await page.getByLabel('Desde').fill('2026-11-30');
+  await page.getByLabel('Hasta').fill('2026-11-01');
+  await page.getByRole('button', { name: 'Filtrar' }).click();
+  await expect(page.locator('#estado')).toHaveText('La fecha "Desde" tiene que ser anterior o igual a "Hasta".');
+  expect(consultas).toHaveLength(2);
+
+  await page.getByLabel('Desde').fill('2020-01-01');
+  await page.getByLabel('Hasta').fill('2020-01-31');
+  await page.getByRole('button', { name: 'Filtrar' }).click();
+  await expect(page.locator('#texto-vacio')).toHaveText('No hay compras entre el 01/01/2020 y el 31/01/2020.');
+  await expect(page.locator('#tabla')).toBeHidden();
+  expect(consultas[2]).toBe('pagina=1&desde=2020-01-01&hasta=2020-01-31');
+
+  await page.getByRole('button', { name: 'Últimos 30 días' }).click();
+  await expect(filas).toHaveCount(20);
+  expect(consultas[3]).toBe('pagina=1');
+});
+
+// ---------- Factura de una compra ----------
+
+const FACTURA = {
+  numero: 'V-000101', estado: 'PAGADA', fecha: '2026-11-17 12:00:00', total: 31999.8, retirar_hasta: '2026-11-24',
+  motivo_cancelacion: null, tiene_factura: true, comprador: { nombre: 'Cliente de Prueba', email: 'c@prueba.huellavet' },
+  pago: { medio: 'Mercado Pago', operacion: '123456789', fecha: '2026-11-17 12:03:00' },
+  entregada_en: null, entregada_por: null, cancelada_en: null,
+  items: [{ producto_id: 101, nombre: 'Alimento cachorro 3 kg', cantidad: 2, precio_unitario: 15999.9, subtotal: 31999.8 }],
+};
+
+test('factura de una compra pagada: el pedido para mostrar al retirar, el pago y los productos', async ({ page }) => {
+  await simularSesion(page, CLIENTE);
+  await page.route('**/api/tienda/carrito', (route) => responderJson(route, VACIO));
+  await page.route('**/api/tienda/compras/V-000101/factura', (route) => responderJson(route, FACTURA));
+  await page.goto('/tienda/factura.html?numero=V-000101');
+
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Factura V-000101');
+  await expect(page.locator('#estado-factura')).toHaveText('Pagada · para retirar');
+  await expect(page.locator('#para-retirar')).toContainText('Pedido V-000101 · Mostralo al retirar');
+  await expect(page.locator('#comprador')).toHaveText('Cliente de Prueba');
+  await expect(page.locator('#medio-pago')).toHaveText('Mercado Pago · operación N° 123456789');
+  await expect(page.locator('#dato-estado')).toContainText('Retirar hasta');
+  await expect(page.locator('#dato-estado')).toContainText('martes 24/11 inclusive');
+  await expect(page.locator('#filas')).toContainText('Alimento cachorro 3 kg');
+  await expect(page.locator('#total')).toContainText('31.999,80');
+  await expect(page.getByRole('button', { name: 'Imprimir' })).toBeVisible();
+  await expect(page.getByRole('link', { name: '← Volver a la compra' })).toHaveAttribute('href', '/tienda/compra.html?numero=V-000101');
+});
+
+test('factura: una compra pagada y cancelada se ve cancelada; la vet vuelve a Ventas', async ({ page }) => {
+  await simularSesion(page, VET);
+  await page.route('**/api/tienda/compras/V-000103/factura', (route) => responderJson(route, {
+    ...FACTURA, numero: 'V-000103', estado: 'CANCELADA', retirar_hasta: null, motivo_cancelacion: 'VENCIDA', cancelada_en: '2026-11-26 09:00:00',
+  }));
+  await page.goto('/tienda/factura.html?numero=V-000103');
+
+  await expect(page.locator('#estado-factura')).toHaveText('Cancelada');
+  await expect(page.locator('#para-retirar')).toBeHidden();
+  await expect(page.locator('#dato-estado')).toContainText('26/11/2026 09:00 · Venció el plazo de retiro');
+  await expect(page.getByRole('link', { name: '← Ventas de la tienda' })).toHaveAttribute('href', '/panel/ventas.html');
+});
+
+test('factura: una compra sin pagar no tiene factura', async ({ page }) => {
+  await simularSesion(page, CLIENTE);
+  await page.route('**/api/tienda/carrito', (route) => responderJson(route, VACIO));
+  await page.route('**/api/tienda/compras/V-000105/factura', (route) => responderJson(route, { error: 'Factura no encontrada' }, 404));
+  await page.goto('/tienda/factura.html?numero=V-000105');
+
+  await expect(page.locator('#estado')).toHaveText('Esta compra no tiene factura: solo las compras pagadas tienen factura.');
+  await expect(page.locator('#factura')).toBeHidden();
 });
 
 // ---------- Ventas de la veterinaria ----------
 
 const PARA_RETIRAR = [{
-  numero: 'V-000101', estado: 'PAGADA', fecha: '2026-11-17 12:00:00', total: 31999.8, pagar_antes_de: null,
+  numero: 'V-000101', estado: 'PAGADA', fecha: '2026-11-17 12:00:00', total: 31999.8, pagar_antes_de: null, tiene_factura: true,
   retirar_hasta: '2026-11-24', comprador: 'Cliente de Prueba', items: [{ nombre: 'Alimento cachorro 3 kg', cantidad: 2 }],
 }];
 const ENTREGADOS = [{
-  numero: 'V-000102', estado: 'ENTREGADA', fecha: '2026-11-08 12:00:00', total: 5200, pagar_antes_de: null, retirar_hasta: null,
+  numero: 'V-000102', estado: 'ENTREGADA', fecha: '2026-11-08 12:00:00', total: 5200, pagar_antes_de: null, retirar_hasta: null, tiene_factura: true,
   comprador: 'Rescatista Aprobada', entregada_en: '2026-11-11 12:40:00', entregada_por: 'Veterinaria de Prueba',
   items: [{ nombre: 'Collar ajustable', cantidad: 1 }],
 }];
+const pagina = (datos, extra = {}) => ({ pagina: 1, por_pagina: 20, hay_mas: false, desde: null, hasta: null, datos, ...extra });
 
-test('ventas: pestañas, buscador y "Entregado" con confirmación', async ({ page }) => {
+test('ventas: para retirar arranca con el buscador y sin la lista; vencen hoy y "Entregado"', async ({ page }) => {
   await simularSesion(page, VET);
   const consultas = [];
   let entregada = false;
+  await page.route('**/api/inventario/compras/resumen', (route) => responderJson(route, entregada ? { para_retirar: 2, vencen_hoy: 0 } : { para_retirar: 3, vencen_hoy: 1 }));
   await page.route('**/api/inventario/compras?*', (route) => {
     const q = new URL(route.request().url()).searchParams;
     consultas.push(q.toString());
-    if (q.get('estado') === 'ENTREGADA') return responderJson(route, { datos: ENTREGADOS });
-    if (q.get('estado') === 'CANCELADA') return responderJson(route, { datos: [{ ...ENTREGADOS[0], numero: 'V-000099', estado: 'CANCELADA', motivo_cancelacion: 'COMPRADOR' }] });
-    if (q.get('buscar') === 'nadie') return responderJson(route, { datos: [] });
-    return responderJson(route, { datos: entregada ? [] : PARA_RETIRAR });
+    if (q.get('buscar') === 'nadie') return responderJson(route, pagina([]));
+    return responderJson(route, pagina(entregada ? [] : PARA_RETIRAR));
   });
   await page.route('**/api/tienda/compras/V-000101/entregada', (route) => {
     entregada = true;
@@ -446,23 +553,39 @@ test('ventas: pestañas, buscador y "Entregado" con confirmación', async ({ pag
   });
   await page.goto('/panel/ventas.html');
 
+  // Al entrar: el buscador listo para escribir, cuántos vencen hoy y "Ver todos", sin pedir la lista.
   await expect(page.getByRole('tab', { name: 'Para retirar' })).toHaveAttribute('aria-selected', 'true');
+  await expect(page.getByLabel('Buscar por número de pedido o comprador')).toBeFocused();
+  await expect(page.locator('#vencen-hoy')).toContainText('Hoy es el último día para retirar 1 pedido.');
+  await expect(page.getByRole('button', { name: 'Ver todos los pedidos para retirar (3)' })).toBeVisible();
+  await expect(page.locator('#tabla')).toBeHidden();
+  expect(consultas).toHaveLength(0);
+
+  // "Ver cuáles": los que vencen hoy.
+  await page.getByRole('button', { name: 'Ver cuáles' }).click();
+  await expect(page.getByRole('button', { name: 'Ver cuáles' })).toHaveAttribute('aria-pressed', 'true');
+  expect(consultas).toContain('estado=PAGADA&pagina=1&vence=hoy');
   await expect(page.locator('thead')).toContainText('Fecha límite de retiro');
-  await expect(page.getByRole('button', { name: 'Marcar el pedido V-000101 como entregado' })).toHaveText('Marcar como entregado');
   const fila = page.locator('#filas > tr').first();
   await expect(fila).toContainText('V-000101');
   await expect(fila).toContainText('Cliente de Prueba');
   await expect(fila).toContainText('Alimento cachorro 3 kg × 2');
   await expect(fila).toContainText('martes 24/11');
+  await expect(fila.getByRole('link', { name: 'Ver la factura del pedido V-000101' })).toHaveAttribute('href', '/tienda/factura.html?numero=V-000101');
 
-  // Buscador: busca dentro de la pestaña.
+  // "Ver todos".
+  await page.getByRole('button', { name: /Ver todos los pedidos/ }).click();
+  await expect.poll(() => consultas.at(-1)).toBe('estado=PAGADA&pagina=1');
+
+  // Buscador: busca entre todos los de la pestaña (sin el resumen).
   await page.getByLabel('Buscar por número de pedido o comprador').fill('nadie');
   await expect(page.locator('#estado')).toHaveText('No encontramos pedidos con "nadie" en esta pestaña.');
-  expect(consultas).toContain('estado=PAGADA&buscar=nadie');
+  await expect(page.locator('#resumen-retirar')).toBeHidden();
+  expect(consultas).toContain('estado=PAGADA&pagina=1&buscar=nadie');
   await page.getByLabel('Buscar por número de pedido o comprador').fill('');
   await expect(page.locator('#filas > tr')).toHaveCount(1);
 
-  // Entregado: primero se arrepiente, después confirma.
+  // Entregado: primero se arrepiente, después confirma; el resumen se actualiza.
   await page.getByRole('button', { name: 'Marcar el pedido V-000101 como entregado' }).click();
   await expect(page.getByRole('dialog')).toContainText('¿Confirmás que Cliente de Prueba retiró el pedido V-000101?');
   await page.getByRole('dialog').getByRole('button', { name: 'Volver' }).click();
@@ -474,17 +597,54 @@ test('ventas: pestañas, buscador y "Entregado" con confirmación', async ({ pag
   await expect(fila).toContainText('V-000101');
   await expect(fila.locator('.estado-entregada')).toHaveText('Entregado');
   await expect(fila.getByRole('button')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Ver todos los pedidos para retirar (2)' })).toBeVisible();
+  await expect(page.locator('#ninguno-hoy')).toHaveText('Hoy no vence ningún pedido.');
+});
 
-  // Pestaña Entregados: cuándo y quién.
+test('ventas: entregados y cancelados de los últimos 30 días, con filtro por fechas y "Ver más"', async ({ page }) => {
+  await simularSesion(page, VET);
+  const consultas = [];
+  await page.route('**/api/inventario/compras/resumen', (route) => responderJson(route, { para_retirar: 0, vencen_hoy: 0 }));
+  await page.route('**/api/inventario/compras?*', (route) => {
+    const q = new URL(route.request().url()).searchParams;
+    consultas.push(q.toString());
+    const fechas = { desde: q.get('desde') ?? '2026-10-22', hasta: q.get('hasta') ?? '2026-11-20' };
+    if (q.get('estado') === 'CANCELADA') {
+      return responderJson(route, pagina([{ ...ENTREGADOS[0], numero: 'V-000099', estado: 'CANCELADA', motivo_cancelacion: 'COMPRADOR' }], fechas));
+    }
+    if (q.get('desde') === '2020-01-01') return responderJson(route, pagina([], fechas));
+    if (q.get('pagina') === '2') return responderJson(route, pagina([{ ...ENTREGADOS[0], numero: 'V-000098' }], { ...fechas, pagina: 2 }));
+    return responderJson(route, pagina(ENTREGADOS, { ...fechas, hay_mas: true }));
+  });
+  await page.goto('/panel/ventas.html');
+
+  // Sin pedidos para retirar.
+  await expect(page.locator('#ninguno-hoy')).toHaveText('No hay pedidos para retirar.');
+  await expect(page.getByRole('button', { name: /Ver todos los pedidos/ })).toBeHidden();
+
+  // Entregados: cuándo y quién, con las fechas del filtro y "Ver más".
   await page.getByRole('tab', { name: 'Entregados' }).click();
+  await expect(page.locator('#resumen-retirar')).toBeHidden();
   await expect(page.locator('thead')).toContainText('Entregado');
   await expect(page.locator('#filas')).toContainText('11/11/2026 12:40, por Veterinaria de Prueba');
   await expect(page.locator('#filas button')).toHaveCount(0);
+  await expect(page.getByLabel('Desde')).toHaveValue('2026-10-22');
+  await expect(page.getByLabel('Hasta')).toHaveValue('2026-11-20');
+  await page.getByRole('button', { name: 'Ver más' }).click();
+  await expect(page.locator('#filas > tr')).toHaveCount(2);
+  await expect(page.getByRole('button', { name: 'Ver más' })).toBeHidden();
 
-  // Pestaña Cancelados: con el motivo.
+  await page.getByLabel('Desde').fill('2020-01-01');
+  await page.getByLabel('Hasta').fill('2020-01-31');
+  await page.getByRole('button', { name: 'Filtrar' }).click();
+  await expect(page.locator('#estado')).toHaveText('No hay pedidos entregados entre el 01/01/2020 y el 31/01/2020.');
+  expect(consultas).toContain('estado=ENTREGADA&pagina=1&desde=2020-01-01&hasta=2020-01-31');
+
+  // Cancelados: con el motivo; al cambiar de pestaña vuelve a los últimos 30 días.
   await page.getByRole('tab', { name: 'Cancelados' }).click();
   await expect(page.locator('thead')).toContainText('Motivo');
   await expect(page.locator('#filas')).toContainText('La canceló el comprador');
+  expect(consultas.at(-1)).toBe('estado=CANCELADA&pagina=1');
 });
 
 test('un cliente no entra a las ventas de la veterinaria', async ({ page }) => {
