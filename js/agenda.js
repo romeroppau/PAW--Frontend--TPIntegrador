@@ -166,6 +166,12 @@ function acciones(turno, tr) {
     td.append(el('a', texto, {
       href: '/panel/consulta.html?id=' + turno.consulta_id, 'aria-label': `${texto} de ${nombre}`
     }));
+    // Atendido = consulta finalizada, que ya tiene su factura.
+    if (turno.estado === 'ATENDIDO') {
+      td.append(el('a', 'Ver factura', {
+        href: '/cliente/factura.html?consulta=' + turno.consulta_id, 'aria-label': `Ver la factura de ${nombre} (${turno.hora})`
+      }));
+    }
   }
 
   // Lugar para el error de esta fila (role="alert": el lector de pantalla lo anuncia).
