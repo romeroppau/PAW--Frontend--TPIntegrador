@@ -64,7 +64,10 @@
 }
 
 /* Foto de la tarjeta (o la huellita si el producto no tiene). */
+/* El cuadrado lo define aspect-ratio; la foto va encima, ocupándolo entero (position: absolute), así
+   su alto propio no agranda el cuadrado y object-fit: contain la muestra completa, sin cortarla. */
 .foto-producto {
+  position: relative;
   display: grid;
   place-items: center;
   align-self: stretch;
@@ -77,6 +80,8 @@
 }
 
 .foto-producto img {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: contain;
