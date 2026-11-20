@@ -63,6 +63,32 @@
   box-shadow: 0 3px 12px rgb(18 48 43 / 5%);
 }
 
+/* Foto de la tarjeta (o la huellita si el producto no tiene). */
+.foto-producto {
+  display: grid;
+  place-items: center;
+  align-self: stretch;
+  aspect-ratio: 1;
+  margin: -.35rem -.35rem .2rem;
+  border-radius: 12px;
+  background: var(--menta);
+  color: var(--pino);
+  overflow: hidden;
+}
+
+.foto-producto img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: var(--blanco);
+}
+
+.foto-producto svg {
+  width: 30%;
+  height: 30%;
+  opacity: .45;
+}
+
 .tarjeta-producto .etiqueta,
 .tarjeta-producto .precio {
   margin: 0;

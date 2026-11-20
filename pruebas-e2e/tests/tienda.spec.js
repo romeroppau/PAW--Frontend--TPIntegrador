@@ -487,3 +487,21 @@ test('el panel del rescatista tiene acceso a la tienda (también compra)', async
   await expect(tienda.getByRole('link', { name: 'Mi carrito' })).toHaveAttribute('href', '/tienda/carrito.html');
   await expect(tienda.getByRole('link', { name: 'Mis compras' })).toHaveAttribute('href', '/tienda/compras.html');
 });
+
+test('el catálogo muestra la foto de cada producto, o la huellita si no tiene', async ({ page }) => {
+  await simularSesion(page, null);
+  await simularCatalogo(page);
+  // Gana la última ruta registrada: primero la general (sin foto) y después la del 101.
+  await page.route('**/api/tienda/productos/*/imagen', (route) => responderJson(route, { error: 'Imagen no encontrada' }, 404));
+  await page.route('**/api/tienda/productos/101/imagen', (route) => route.fulfill({
+    status: 200, contentType: 'image/png',
+    body: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==', 'base64'),
+  }));
+  await page.goto('/catalogo/catalogo.html');
+
+  const conFoto = page.locator('#lista > li').filter({ hasText: 'Alimento cachorro 3 kg' }).locator('.foto-producto');
+  await expect(conFoto.locator('img')).toHaveAttribute('src', '/api/tienda/productos/101/imagen');
+  const sinFoto = page.locator('#lista > li').filter({ hasText: 'Collar reflectivo' }).locator('.foto-producto');
+  await expect(sinFoto.locator('svg')).toBeVisible();
+  await expect(sinFoto.locator('img')).toHaveCount(0);
+});
