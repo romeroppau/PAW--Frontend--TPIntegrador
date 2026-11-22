@@ -161,21 +161,39 @@ function mostrarAviso({ ok, texto }) {
 }
 
 // La sección "Promociones" (arriba del catálogo): los productos que la veterinaria publicitó desde
-// sus reportes. Si no hay ninguno, o la API no responde, la sección no se muestra.
+// sus reportes. Si no hay ninguno, o la API no responde, la sección no se muestra; salvo que se haya
+// llegado con #promociones (el enlace del panel del cliente): ahí se muestra y dice que no hay, y la
+// página baja hasta la sección.
 async function cargarPromociones() {
+  const pedidas = location.hash === '#promociones';
+  let datos = [];
+  let error = false;
   try {
-    const { datos = [] } = await api('/api/tienda/promociones');
-    $listaPromociones.replaceChildren(...datos.map(crearTarjeta));
-    $promociones.hidden = datos.length === 0;
+    ({ datos = [] } = await api('/api/tienda/promociones'));
   } catch {
-    $promociones.hidden = true;
+    error = true;
   }
+
+  $listaPromociones.replaceChildren(...datos.map(crearTarjeta));
+  const $sin = document.getElementById('sin-promociones');
+  $sin.textContent = error ? 'No pudimos cargar las promociones. Probá de nuevo en un momento.' : 'No hay promociones por el momento.';
+  $sin.hidden = datos.length > 0;
+  document.getElementById('descripcion-promociones').hidden = datos.length === 0;
+  $promociones.hidden = datos.length === 0 && !pedidas;
+  if (pedidas && !$promociones.hidden) $promociones.scrollIntoView();
 }
 
 $buscar.addEventListener('input', debounce(() => cargar(1), 300));
 $categoria.addEventListener('change', () => cargar(1));
 $especie.addEventListener('change', () => cargar(1));
 $cargarMas.addEventListener('click', () => cargar(paginaActual + 1, true));
+
+// Se puede entrar con una categoría ya elegida (los enlaces del panel del cliente):
+// catalogo.html?categoria=ALIMENTO. Un valor que no está en la lista se ignora.
+const categoriaDelEnlace = new URLSearchParams(location.search).get('categoria');
+if ([...$categoria.options].some((opcion) => opcion.value && opcion.value === categoriaDelEnlace)) {
+  $categoria.value = categoriaDelEnlace;
+}
 
 cargarPromociones();
 cargar(1);
