@@ -74,6 +74,12 @@ test('el panel del cliente enlaza "Ver factura"', async ({ page }) => {
   await expect(page.getByRole('link', { name: 'Ver factura' })).toHaveAttribute('href', '/cliente/historial.html');
 });
 
+test('en el panel del cliente, "Mis compras" de la tarjeta Mi cuenta es un enlace', async ({ page }) => {
+  await simularSesion(page, CLIENTE);
+  await page.goto('/paneles/panel-cliente.html');
+  await expect(page.locator('#cuenta').getByRole('link', { name: 'Mis compras' })).toHaveAttribute('href', '/tienda/compras.html');
+});
+
 test('insumos: se marca "Ya pedido" con stock bajo y se reactiva uno dado de baja', async ({ page }) => {
   await simularSesion(page, VET);
   let listados = 0;
