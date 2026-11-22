@@ -177,5 +177,12 @@ $categoria.addEventListener('change', () => cargar(1));
 $especie.addEventListener('change', () => cargar(1));
 $cargarMas.addEventListener('click', () => cargar(paginaActual + 1, true));
 
+// Se puede entrar con una categoría ya elegida (los enlaces del panel del cliente):
+// catalogo.html?categoria=ALIMENTO. Un valor que no está en la lista se ignora.
+const categoriaDelEnlace = new URLSearchParams(location.search).get('categoria');
+if ([...$categoria.options].some((opcion) => opcion.value && opcion.value === categoriaDelEnlace)) {
+  $categoria.value = categoriaDelEnlace;
+}
+
 cargarPromociones();
 cargar(1);
