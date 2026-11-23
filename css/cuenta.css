@@ -45,3 +45,15 @@
 .acciones-tabla a + a {
   margin-left: 1rem;
 }
+
+/* El botón "Mostrar" de las contraseñas: chico y a la izquierda, como en el login y el registro. */
+.mostrar-password {
+  justify-self: start;
+  padding: .3rem .9rem;
+  font-size: .9rem;
+}
+
+/* Un mensaje de estado vacío no deja un hueco. */
+.estado:empty {
+  display: none;
+}
