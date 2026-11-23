@@ -15,6 +15,7 @@ import { api } from './api.js';                              // fetch común (co
 import { exigirRol } from './auth.js';                       // guardia compartida
 import { confirmar, el, limpiarErrores, mostrarErrores } from './ui.js'; // utilidades de interfaz
 import { textoEstadoInsumo } from './etiquetas.js';          // "DISPONIBLE" -> "Disponible"
+import { filtrarPorNombre } from './buscar-lista.js';         // buscador por nombre del listado
 
 // Espera a confirmar que es veterinario (y a tener el token CSRF). Si no, redirige al login
 // y el resto del archivo no corre.
@@ -48,8 +49,12 @@ async function listado() {
   estado.textContent = 'Cargando…';
   try {
     const { datos } = await api(base);                       // GET /api/inventario/insumos
-    filas.replaceChildren(...datos.map(fila));
-    estado.textContent = datos.length ? '' : 'No hay insumos cargados.';
+    // El buscador filtra por nombre lo que ya se trajo.
+    filtrarPorNombre(document.getElementById('buscar'), datos, (visibles, texto) => {
+      filas.replaceChildren(...visibles.map(fila));
+      estado.textContent = datos.length === 0 ? 'No hay insumos cargados.'
+        : visibles.length === 0 ? `Ningún insumo se llama "${texto}".` : '';
+    });
   } catch {
     estado.textContent = 'No se pudo cargar el listado.';
   }

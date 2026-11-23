@@ -27,6 +27,11 @@
         </div>
       </div>
       <p>Los insumos con 10 unidades o menos se marcan con stock bajo. Cuando ya lo pediste al proveedor, marcalo "Ya pedido": queda así hasta que cargues el stock.</p>
+      <!-- Filtra la lista mientras se escribe, sin pedir de nuevo a la API (js/buscar-lista.js). -->
+      <div class="campo campo-buscar">
+        <label for="buscar">Buscar un insumo por nombre</label>
+        <input id="buscar" type="search" autocomplete="off" placeholder="Ej.: jeringa">
+      </div>
       <p class="estado" id="estado" role="status"></p>
       <div class="tabla-scroll">
         <table>

@@ -17,7 +17,7 @@ import { exigirRol } from './auth.js';
 import { el } from './ui.js';
 import { textoEstadoTurno, textoMotivoTurno } from './etiquetas.js';
 import { activarPestanas } from './pestanas.js';
-import { pintarTurnosConDescuento, textoPrecio } from './precio-turno.js';
+import { textoPrecio } from './precio-turno.js';
 
 await exigirRol('CLIENTE');
 
@@ -173,5 +173,3 @@ async function cargar() {
 }
 
 cargar();
-// Las franjas con descuento, para que el cliente sepa cuándo conviene pedir turno.
-pintarTurnosConDescuento(document.getElementById('promo-turnos'), document.getElementById('lista-promo-turnos'));

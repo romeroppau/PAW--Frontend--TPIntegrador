@@ -20,6 +20,11 @@
         <h1>Productos</h1>
         <a class="boton" href="/panel/producto-form.html">Nuevo producto</a>
       </div>
+      <!-- Filtra la lista mientras se escribe, sin pedir de nuevo a la API (js/buscar-lista.js). -->
+      <div class="campo campo-buscar">
+        <label for="buscar">Buscar un producto por nombre</label>
+        <input id="buscar" type="search" autocomplete="off" placeholder="Ej.: alimento cachorro">
+      </div>
       <p class="estado" id="estado" role="status"></p>
       <div class="tabla-scroll">
         <table>

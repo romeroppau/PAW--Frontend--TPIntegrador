@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Días y horarios con descuento en la consulta de HuellaVet.">
+  <title>Turnos con descuento | HuellaVet</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Nunito+Sans:wght@400;600;700&display=swap">
+  <link rel="stylesheet" href="/css/base.css">
+</head>
+<!-- Turnos con descuento (Entrega 5): las franjas que la veterinaria promocionó desde Reportes
+     (GET /api/pacientes/promociones-turnos). Se llega desde el menú Turnos → "Ver descuentos".
+     Mantener data-rol y los scripts menu.js, guardia-panel.js y auth.js: el <main> queda oculto
+     hasta que guardia-panel.js confirma el rol. -->
+<body data-rol="CLIENTE">
+  <a class="saltar" href="#contenido">Saltar al contenido</a>
+  <div id="encabezado-sitio"></div>
+  <script src="/js/layout.js"></script>
+  <main id="contenido" class="seccion" hidden>
+    <div class="contenedor">
+      <p><a href="/paneles/panel-cliente.html">&larr; Volver a mi panel</a></p>
+      <h1>Turnos con descuento</h1>
+      <p>En estos días y horarios la consulta tiene descuento. El precio queda fijo al pedir el turno:
+        aunque después termine la promoción, se mantiene. Pedí tu turno por
+        <a href="https://wa.me/5491139010486?text=Hola%2C%20quiero%20un%20turno%20con%20descuento" target="_blank" rel="noopener noreferrer">WhatsApp</a>.</p>
+      <p class="estado" id="estado" role="status">Cargando…</p>
+      <!-- Lo llena js/descuentos-turnos.js. -->
+      <section class="promo-turnos" id="promo-turnos" aria-label="Días y horarios con descuento" hidden>
+        <ul class="lista-promo-turnos" id="lista-promo-turnos"></ul>
+      </section>
+      <p><a href="/cliente/turnos.html">Ver mis turnos</a></p>
+    </div>
+  </main>
+  <div id="pie-sitio"></div>
+
+  <script type="module" src="/js/menu.js"></script>
+  <script type="module" src="/js/guardia-panel.js"></script>
+  <script type="module" src="/js/auth.js"></script>
+  <script type="module" src="/js/descuentos-turnos.js"></script>
+</body>
+</html>

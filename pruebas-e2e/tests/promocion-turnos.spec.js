@@ -153,7 +153,7 @@ test('la factura dice el descuento de la franja', async ({ page }) => {
 
 // ---------- Clientes ----------
 
-test('Mis turnos muestra los turnos con descuento y el precio de cada turno que viene', async ({ page }) => {
+test('Mis turnos muestra el precio de cada turno que viene (los descuentos están en "Ver descuentos")', async ({ page }) => {
   await simularSesion(page, CLIENTE);
   await page.route('**/api/pacientes/promociones-turnos', (route) => responderJson(route, { precio_consulta: 15000, datos: [PROMO_MARTES] }));
   await page.route('**/api/pacientes/turnos', (route) => responderJson(route, { turnos: [{
@@ -163,22 +163,35 @@ test('Mis turnos muestra los turnos con descuento y el precio de cada turno que 
   }] }));
   await page.goto('/cliente/turnos.html');
 
-  const promos = page.locator('#promo-turnos');
-  await expect(promos).toBeVisible();
-  await expect(promos).toContainText('Martes a la tarde');
-  await expect(promos).toContainText('20 % off');
   await expect(page.locator('tr[data-id="60"]')).toContainText('$ 12.000,00 (20 % off, antes $ 15.000,00)');
+  await expect(page.locator('#promo-turnos')).toHaveCount(0);
 });
 
-test('la portada muestra los turnos con descuento, y nada si no hay', async ({ page }) => {
-  await simularSesion(page, null);
+test('"Ver descuentos" del menú Turnos lleva a los turnos con descuento', async ({ page }) => {
+  await simularSesion(page, CLIENTE);
   let datos = [PROMO_MARTES];
   await page.route('**/api/pacientes/promociones-turnos', (route) => responderJson(route, { precio_consulta: 15000, datos }));
-  await page.goto('/index.html');
-  await expect(page.locator('#promo-turnos')).toBeVisible();
+  await page.route('**/api/pacientes/turnos', (route) => responderJson(route, { turnos: [] }));
+  await page.goto('/cliente/turnos.html');
+
+  await expect(page.locator('a[href="/cliente/descuentos.html"]').first()).toHaveText('Ver descuentos');
+  await page.goto('/cliente/descuentos.html');
+  await expect(page.getByRole('heading', { name: 'Turnos con descuento' })).toBeVisible();
   await expect(page.locator('#lista-promo-turnos')).toContainText('Martes a la tarde $ 12.000,00');
+  await expect(page.locator('#lista-promo-turnos')).toContainText('20 % off');
 
   datos = [];
   await page.reload();
-  await expect(page.locator('#promo-turnos')).toBeHidden();
+  await expect(page.locator('#estado')).toHaveText('Por ahora no hay días ni horarios con descuento.');
 });
+
+test('el panel del cliente también muestra "¡No te lo pierdas!" con los turnos en descuento', async ({ page }) => {
+  await simularSesion(page, CLIENTE);
+  await page.route('**/api/tienda/promociones', (route) => responderJson(route, { datos: [] }));
+  await page.route('**/api/pacientes/promociones-turnos', (route) => responderJson(route, { precio_consulta: 15000, datos: [PROMO_MARTES] }));
+  await page.goto('/paneles/panel-cliente.html');
+
+  await expect(page.getByRole('heading', { name: 'Turnos en descuento' })).toBeVisible();
+  await expect(page.locator('#lista-promo-turnos')).toContainText('Martes a la tarde');
+});
+

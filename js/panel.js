@@ -19,6 +19,7 @@ import { api } from './api.js';                                  // fetch común
 import { exigirRol } from './auth.js';                          // guardia de acceso compartida (ver auth.js)
 import { confirmar, el, limpiarErrores, mostrarErrores } from './ui.js';    // utilidades de interfaz
 import { textoCategoria } from './etiquetas.js';                // texto de cada código de categoría
+import { filtrarPorNombre } from './buscar-lista.js';           // buscador por nombre del listado
 
 /* ------------------------------------------------------------------ */
 /* Guardia de acceso                                                   */
@@ -69,8 +70,12 @@ async function listado() {
   estado.textContent = 'Cargando…';
   try {
     const productos = lista(await api(base));       // GET /api/inventario/productos
-    filas.replaceChildren(...productos.map(fila));  // una fila por producto; reemplaza el contenido anterior
-    estado.textContent = productos.length ? '' : 'No hay productos cargados.';
+    // El buscador filtra por nombre lo que ya se trajo (la lista incluye los dados de baja).
+    filtrarPorNombre(document.getElementById('buscar'), productos, (visibles, texto) => {
+      filas.replaceChildren(...visibles.map(fila));  // una fila por producto; reemplaza el contenido anterior
+      estado.textContent = productos.length === 0 ? 'No hay productos cargados.'
+        : visibles.length === 0 ? `Ningún producto se llama "${texto}".` : '';
+    });
   } catch {
     estado.textContent = 'No se pudo cargar el listado.';
   }
