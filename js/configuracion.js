@@ -55,7 +55,9 @@ const TIPO_DE_TEXTO = { TELEFONO: 'tel', EMAIL: 'email', URL: 'url' };
 
 function entrada(p, id) {
   if (p.tipo === 'HORA') {
-    return el('input', '', { id, name: p.clave, type: 'time', min: p.minimo, max: p.maximo, required: '' });
+    const input = el('input', '', { id, name: p.clave, type: 'time', min: p.minimo, max: p.maximo });
+    input.required = p.defecto !== '';   // el segundo horario se puede dejar vacío (de corrido)
+    return input;
   }
   if (p.tipo === 'TEXTO') {
     const input = el('input', '', { id, name: p.clave, type: TIPO_DE_TEXTO[p.formato] ?? 'text', maxlength: String(p.maximo) });

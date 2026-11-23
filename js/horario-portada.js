@@ -2,10 +2,9 @@
  * horario-portada.js — El horario de atención de la portada (index.html, "¿Dónde nos encontramos?").
  *
  * Son las horas que configura la veterinaria (GET /api/pacientes/horario, público), las mismas que
- * usan los turnos y "Contactanos" de los paneles. Si no se pueden leer, quedan las del HTML.
+ * usan los turnos y "Contactanos" de los paneles: una franja o dos (horario cortado). Si no se pueden
+ * leer, queda lo del HTML.
  */
-import { horarioDeAtencion } from './horario.js';
+import { horarioDeAtencion, textoHorario } from './horario.js';
 
-const { apertura, cierre } = await horarioDeAtencion();
-document.getElementById('hora-apertura').textContent = apertura;
-document.getElementById('hora-cierre').textContent = cierre;
+document.getElementById('horario-texto').textContent = textoHorario(await horarioDeAtencion());
