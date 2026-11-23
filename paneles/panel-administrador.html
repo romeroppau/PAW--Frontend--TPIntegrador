@@ -7,6 +7,7 @@
   <meta name="description" content="Panel de administración de HuellaVet.">
   <title>Panel de administrador | HuellaVet</title>
   <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/barra-rol.css">
   <link rel="stylesheet" href="/css/paneles.css">
 </head>
 
@@ -15,129 +16,10 @@
   <header class="panel-cabecera">
     <div class="contenedor"><a class="panel-marca" href="/index.html">HuellaVet</a>
       <p class="panel-usuario">Panel de administrador</p>
-      <!-- js/auth.js lo rellena con el nombre del usuario y el botón "Salir" -->
+      <!-- js/auth.js cambia esta cabecera por la del rol, con su barra de menús (js/barra-rol.js) -->
       <div class="sesion" id="sesion"></div>
     </div>
   </header>
-  <nav class="panel-nav" aria-label="Navegación del administrador">
-    <!-- Cada sección es un <details>: se despliega con clic, Enter o Espacio (js/panel-menu.js
-         solo cierra el abierto al hacer clic afuera o con Escape). -->
-    <ul class="contenedor panel-menu">
-      <li>
-        <details class="panel-desplegable" id="agenda" name="panel-menu">
-          <summary>Agenda</summary>
-          <div class="panel-desplegable-caja">
-            <p class="panel-desplegable-desc">Turnos y consultas del día.</p>
-            <ul class="panel-opciones">
-              <li><a href="/panel/agenda.html">Registrar turno</a></li>
-              <li><a href="/panel/agenda.html">Turnos del día</a></li>
-              <li><a href="/panel/agenda.html">Atender consulta</a></li>
-            </ul>
-          </div>
-        </details>
-      </li>
-      <li>
-        <details class="panel-desplegable" id="pacientes" name="panel-menu">
-          <summary>Mis pacientes</summary>
-          <div class="panel-desplegable-caja">
-            <p class="panel-desplegable-desc">Clientes, mascotas y su historia clínica.</p>
-            <ul class="panel-opciones">
-              <li><a href="/panel/clientes.html">Clientes</a></li>
-              <li><a href="/cliente/mascotas.html">Ficha de mascotas</a></li>
-              <li><a href="/cliente/historial.html">Historial clínico</a></li>
-              <li><a href="/cliente/calendario.html">Calendario sanitario</a></li>
-            </ul>
-          </div>
-        </details>
-      </li>
-      <li>
-        <details class="panel-desplegable" id="productos" name="panel-menu">
-          <summary>Tienda</summary>
-          <div class="panel-desplegable-caja">
-            <p class="panel-desplegable-desc">Productos, stock y pedidos de la tienda.</p>
-            <ul class="panel-opciones">
-              <li><a href="/panel/productos.html">Administrar productos</a></li>
-              <li><a href="/panel/productos.html">Cargar stock</a></li>
-              <li><a href="/panel/ventas.html">Pedidos para retirar</a></li>
-            </ul>
-          </div>
-        </details>
-      </li>
-      <li>
-        <details class="panel-desplegable" id="insumos" name="panel-menu">
-          <summary>Insumos</summary>
-          <div class="panel-desplegable-caja">
-            <p class="panel-desplegable-desc">Lo que se usa en las consultas.</p>
-            <ul class="panel-opciones">
-              <li><a href="/panel/insumos.html">Administrar insumos</a></li>
-              <li><a href="/panel/insumos.html">Cargar stock</a></li>
-              <li><a href="/panel/insumo-movimientos.html">Movimientos</a></li>
-            </ul>
-          </div>
-        </details>
-      </li>
-      <li>
-        <details class="panel-desplegable" id="reportes" name="panel-menu">
-          <summary>Reportes</summary>
-          <div class="panel-desplegable-caja">
-            <p class="panel-desplegable-desc">Sugerencias, turnos atendidos y stock.</p>
-            <ul class="panel-opciones">
-              <li><a href="/panel/reportes.html">Sugerencias: qué promocionar y qué liquidar</a></li>
-              <li><a href="/panel/reportes.html#turnos-atendidos">Turnos atendidos</a></li>
-              <li><a href="/panel/reportes.html#stock">Stock / movimientos de inventario</a></li>
-            </ul>
-          </div>
-        </details>
-      </li>
-      <li>
-        <details class="panel-desplegable" id="rescatistas" name="panel-menu">
-          <summary>Rescatistas</summary>
-          <div class="panel-desplegable-caja">
-            <p class="panel-desplegable-desc">Cuentas de rescatistas por aprobar.</p>
-            <ul class="panel-opciones">
-              <li><a href="/panel/adopciones.html#rescatistas">Solicitudes pendientes</a></li>
-            </ul>
-          </div>
-        </details>
-      </li>
-      <li>
-        <details class="panel-desplegable" id="adopcion" name="panel-menu">
-          <summary>Adopción</summary>
-          <div class="panel-desplegable-caja">
-            <p class="panel-desplegable-desc">Publicaciones y adopciones en curso.</p>
-            <ul class="panel-opciones">
-              <li><a href="/panel/adopciones.html#moderacion">Moderar publicaciones</a></li>
-              <li><a href="/panel/adopciones.html#en-curso">Adopciones en curso</a></li>
-              <li><a href="/panel/adopciones.html#en-curso">Completar adopción</a></li>
-              <li><a href="/panel/adopciones.html#finalizadas">Adopciones finalizadas</a></li>
-            </ul>
-          </div>
-        </details>
-      </li>
-      <li>
-        <details class="panel-desplegable" id="notificaciones" name="panel-menu">
-          <summary>Notificaciones</summary>
-          <div class="panel-desplegable-caja">
-            <p class="panel-desplegable-desc">Alertas y novedades administrativas.</p>
-            <ul class="panel-opciones">
-              <li><a href="/cuenta/notificaciones.html">Ver mis notificaciones</a></li>
-            </ul>
-          </div>
-        </details>
-      </li>
-      <li>
-        <details class="panel-desplegable" id="configuracion" name="panel-menu">
-          <summary>Configuración</summary>
-          <div class="panel-desplegable-caja">
-            <p class="panel-desplegable-desc">Cómo funciona la veterinaria.</p>
-            <ul class="panel-opciones">
-              <li><a href="/panel/configuracion.html">Horario de atención, avisos y stock bajo</a></li>
-            </ul>
-          </div>
-        </details>
-      </li>
-    </ul>
-  </nav>
   <!-- hidden: se muestra recién cuando guardia-panel.js confirma el rol -->
   <main class="panel-principal" hidden>
     <section class="panel-intro">
@@ -156,7 +38,6 @@
 
   <script type="module" src="/js/guardia-panel.js"></script>
   <script type="module" src="/js/auth.js"></script>
-  <script type="module" src="/js/panel-menu.js"></script>
 </body>
 
 </html>

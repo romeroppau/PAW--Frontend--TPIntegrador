@@ -723,9 +723,9 @@ test('el panel del rescatista tiene acceso a la tienda (también compra)', async
   await page.route('**/api/tienda/carrito', (route) => responderJson(route, VACIO));
   await page.goto('/paneles/panel-rescatista.html');
   await abrirSeccion(page, 'tienda');
-  const tienda = page.locator('#tienda');
+  const tienda = page.locator('#menu-tienda');
   await expect(tienda.getByRole('link', { name: 'Ver catálogo de productos' })).toHaveAttribute('href', '/catalogo/catalogo.html');
-  await expect(tienda.getByRole('link', { name: 'Mi carrito' })).toHaveAttribute('href', '/tienda/carrito.html');
+  await expect(page.locator('#enlace-carrito')).toHaveAttribute('href', '/tienda/carrito.html');
   await expect(tienda.getByRole('link', { name: 'Mis compras' })).toHaveAttribute('href', '/tienda/compras.html');
 });
 

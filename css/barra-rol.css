@@ -1,0 +1,288 @@
+/* Barra de "Mi panel" (js/barra-rol.js): la cabecera y el menú desplegable de cada rol.
+   La usan los paneles y, con sesión, todas las pantallas del sitio. Reutiliza las variables de base.css. */
+
+/* Mientras se confirma la sesión, el menú público no se muestra a quien ya entró (layout.js + auth.js). */
+.barra-pendiente .encabezado #navegacion {
+  visibility: hidden;
+}
+
+/* ---------- Cabecera ---------- */
+
+.panel-cabecera {
+  background: var(--blanco);
+  border-bottom: 1px solid var(--borde);
+}
+
+.panel-cabecera .contenedor {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-block: 1rem;
+}
+
+.panel-marca {
+  color: var(--pino-oscuro);
+  font-family: var(--fuente-titulo);
+  font-size: 1.65rem;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.panel-usuario {
+  margin: 0 0 0 auto;
+  color: var(--tinta-suave);
+  text-align: right;
+  font-size: .95rem;
+  text-decoration: none;
+}
+
+.panel-usuario:hover {
+  color: var(--pino-oscuro);
+  text-decoration: underline;
+}
+
+.panel-cabecera .sesion {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+}
+
+/* ---------- Barra con menús desplegables ---------- */
+
+.panel-nav {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--blanco);
+  border-bottom: 1px solid var(--borde);
+  box-shadow: 0 2px 10px rgb(18 48 43 / 4%);
+}
+
+.panel-menu {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .25rem;
+  margin-block: 0;
+  padding: .4rem 0;
+  list-style: none;
+}
+
+.panel-desplegable {
+  position: relative;
+}
+
+/* El título de cada sección (y el enlace suelto "Contactanos") */
+.panel-desplegable > summary,
+.panel-menu-enlace {
+  display: inline-flex;
+  align-items: center;
+  gap: .45rem;
+  min-height: 42px;
+  padding: .55rem .85rem;
+  border-radius: 9px;
+  color: var(--tinta);
+  font-size: .94rem;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+  transition: background-color .15s, color .15s;
+}
+
+.panel-desplegable > summary::-webkit-details-marker {
+  display: none;
+}
+
+/* Flechita que gira al abrir */
+.panel-desplegable > summary::after {
+  content: "";
+  width: .42rem;
+  height: .42rem;
+  margin-top: -.2rem;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(45deg);
+  opacity: .6;
+  transition: transform .15s, margin .15s;
+}
+
+.panel-desplegable[open] > summary::after {
+  margin-top: .2rem;
+  transform: rotate(-135deg);
+  opacity: 1;
+}
+
+.panel-desplegable > summary:hover,
+.panel-desplegable > summary:focus-visible,
+.panel-menu-enlace:hover,
+.panel-menu-enlace:focus-visible {
+  background: var(--menta);
+  color: var(--pino-oscuro);
+}
+
+.panel-desplegable[open] > summary {
+  background: var(--pino);
+  color: var(--blanco);
+}
+
+/* La caja que se despliega */
+.panel-desplegable-caja {
+  position: absolute;
+  top: calc(100% + .45rem);
+  left: 0;
+  z-index: 30;
+  width: max-content;
+  min-width: 260px;
+  max-width: min(340px, calc(100vw - 2rem));
+  padding: .5rem;
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  background: var(--blanco);
+  box-shadow: 0 14px 34px rgb(18 48 43 / 16%);
+  animation: panel-aparecer .14s ease-out;
+}
+
+/* Las dos últimas secciones abren hacia la izquierda para no salirse de la pantalla. */
+.panel-menu > li:nth-last-child(-n + 2) .panel-desplegable-caja {
+  right: 0;
+  left: auto;
+}
+
+@keyframes panel-aparecer {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: none; }
+}
+
+.panel-desplegable-desc {
+  margin: .35rem .65rem .45rem;
+  color: var(--tinta-suave);
+  font-size: .85rem;
+}
+
+.panel-desplegable .panel-opciones {
+  display: grid;
+  gap: .1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.panel-desplegable .panel-opciones li {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+}
+
+.panel-desplegable .panel-opciones a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 0;
+  padding: .6rem .7rem;
+  border-radius: 9px;
+  color: var(--pino-oscuro);
+  font-size: .94rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.panel-desplegable .panel-opciones a::after {
+  content: "→";
+  color: var(--pino);
+  opacity: 0;
+  transform: translateX(-4px);
+  transition: opacity .15s, transform .15s;
+}
+
+.panel-desplegable .panel-opciones a:hover,
+.panel-desplegable .panel-opciones a:focus-visible {
+  background: var(--fondo);
+  text-decoration: none;
+}
+
+.panel-desplegable .panel-opciones a:hover::after,
+.panel-desplegable .panel-opciones a:focus-visible::after {
+  opacity: 1;
+  transform: none;
+}
+
+/* ---------- Celular ---------- */
+
+@media (max-width: 700px) {
+  /* La caja ocupa todo el ancho, debajo de la barra. */
+  .panel-desplegable {
+    position: static;
+  }
+
+  .panel-desplegable-caja,
+  .panel-menu > li:nth-last-child(-n + 2) .panel-desplegable-caja {
+    right: 0;
+    left: 0;
+    width: auto;
+    max-width: none;
+    top: calc(100% + .2rem);
+  }
+}
+
+@media (max-width: 600px) {
+  /* En celular la barra ocupa varias filas: no queda fija para no tapar el contenido. */
+  .panel-nav {
+    position: relative;
+  }
+
+  /* Una sola fila: el logo (lleva a Mi panel) y, a la derecha, campana, nombre y "Salir". */
+  .panel-cabecera .contenedor {
+    gap: .5rem;
+    padding-block: .75rem;
+  }
+
+  .panel-usuario {
+    display: none;
+  }
+
+  .panel-cabecera .sesion {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: .5rem;
+    margin-left: auto;
+  }
+
+  .panel-cabecera .sesion .boton {
+    padding: .4rem .85rem;
+    font-size: .9rem;
+  }
+
+  .panel-cabecera .sesion-nombre {
+    max-width: 9rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .panel-menu {
+    width: 100%;
+    padding-inline: .5rem;
+    gap: .1rem;
+  }
+
+  .panel-desplegable > summary,
+  .panel-menu-enlace {
+    padding-inline: .7rem;
+    font-size: .9rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panel-desplegable-caja { animation: none; }
+  .panel-desplegable > summary::after,
+  .panel-desplegable .panel-opciones a::after { transition: none; }
+}

@@ -128,7 +128,7 @@ test('desde su panel, el cliente llega a las adopciones y a sus postulaciones; H
   await page.goto('/paneles/panel-cliente.html');
   await expect(page.getByText('Huellitas')).toHaveCount(0);
   await abrirSeccion(page, 'adopcion');
-  await page.locator('#adopcion').getByRole('link', { name: 'Mis postulaciones' }).click();
+  await page.locator('#menu-adopcion').getByRole('link', { name: 'Mis postulaciones' }).click();
   await expect(page).toHaveURL(/\/adopciones\/adopciones\.html#seccion-mias$/);
   await expect(page.locator('#filas-mias tr')).toContainText(['Pipa']);
   await expect(page.locator('#seccion-mias')).toBeInViewport();

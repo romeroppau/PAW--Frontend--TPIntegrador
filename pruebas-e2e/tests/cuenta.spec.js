@@ -110,7 +110,7 @@ test('el nombre de arriba lleva a "Mis datos", y "Datos personales" de los panel
   await page.goto('/paneles/panel-cliente.html');
   await expect(page.locator('a.sesion-nombre').first()).toHaveAttribute('href', '/cuenta/mis-datos.html');
   await abrirSeccion(page, 'cuenta');
-  await expect(page.locator('#cuenta').getByRole('link', { name: 'Datos personales' })).toHaveAttribute('href', '/cuenta/mis-datos.html');
+  await expect(page.locator('#menu-cuenta').getByRole('link', { name: 'Datos personales' })).toHaveAttribute('href', '/cuenta/mis-datos.html');
 });
 
 test('el panel del rescatista enlaza "Datos personales"', async ({ page }) => {
@@ -128,7 +128,7 @@ test('clientes: el panel lo enlaza; lista con email y teléfono, buscador y "Ver
   await simularSesion(page, VET);
   await page.goto('/paneles/panel-administrador.html');
   await abrirSeccion(page, 'pacientes');
-  await expect(page.locator('#pacientes').getByRole('link', { name: 'Clientes' })).toHaveAttribute('href', '/panel/clientes.html');
+  await expect(page.locator('#menu-pacientes').getByRole('link', { name: 'Clientes' })).toHaveAttribute('href', '/panel/clientes.html');
 
   const consultas = [];
   await page.route('**/api/clientes?*', (route) => {
