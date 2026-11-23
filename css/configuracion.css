@@ -14,6 +14,8 @@
 .parametro .boton-chico { justify-self: start; }
 .valor-parametro { display: flex; align-items: center; gap: .6rem; }
 .valor-parametro input { max-width: 9rem; }
+/* Los datos de la veterinaria (dirección, enlaces a las redes) son más largos. */
+.parametro-texto .valor-parametro input { max-width: none; width: 100%; }
 .unidad { color: var(--tinta-suave); font-weight: 600; }
 .cambiado { margin: 0; font-size: .9rem; color: var(--naranja-oscuro); font-weight: 600; }
 

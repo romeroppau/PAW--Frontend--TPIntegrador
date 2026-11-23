@@ -1,7 +1,8 @@
 /**
  * configuracion.js — Configuración de la veterinaria (panel/configuracion.html), rol 3, Entrega 5
  *
- * Arma un grupo por cada "grupo" de la API (Turnos, Avisos a los clientes, Stock y vencimientos) con
+ * Arma un grupo por cada "grupo" de la API (Turnos, Avisos a los clientes, Stock y vencimientos, Tienda
+ * y Datos de la veterinaria: dirección, teléfono, WhatsApp, email y redes, que son de tipo TEXTO) con
  * un campo por parámetro: su rango, su unidad, el valor por defecto y quién lo cambió por última vez.
  * Al guardar manda solo los que cambiaron (PUT /api/configuracion); se guardan todos o ninguno, y
  * los errores vuelven por campo. "Usar el valor por defecto" pone el de siempre en el campo (se
@@ -24,7 +25,34 @@ let parametros = [];
 
 // "2026-11-20 10:15:00" → "20/11/2026"
 const fecha = (texto) => texto.slice(0, 10).split('-').reverse().join('/');
-const textoValor = (p, valor) => (p.unidad ? `${valor} ${p.unidad}` : String(valor));
+const textoValor = (p, valor) => {
+  if (valor === '') return 'vacío';
+  return p.unidad ? `${valor} ${p.unidad}` : String(valor);
+};
+
+// Los datos de contacto (TEXTO): el teclado y la validación del navegador según el formato.
+const TIPO_DE_TEXTO = { TELEFONO: 'tel', EMAIL: 'email', URL: 'url' };
+
+function entrada(p, id) {
+  if (p.tipo === 'HORA') {
+    return el('input', '', { id, name: p.clave, type: 'time', min: p.minimo, max: p.maximo, required: '' });
+  }
+  if (p.tipo === 'TEXTO') {
+    const input = el('input', '', { id, name: p.clave, type: TIPO_DE_TEXTO[p.formato] ?? 'text', maxlength: String(p.maximo) });
+    if (p.minimo > 0) input.required = true;
+    if (p.formato === 'TELEFONO') input.autocomplete = 'tel';
+    return input;
+  }
+  return el('input', '', { id, name: p.clave, type: 'number', min: String(p.minimo), max: String(p.maximo), step: '1', inputmode: 'numeric', required: '' });
+}
+
+// "Entre 1 y 30 días. Por defecto: 7 días." (los TEXTO no tienen rango: solo el valor por defecto).
+function textoAyuda(p) {
+  if (p.tipo === 'TEXTO') {
+    return p.defecto === '' ? p.ayuda : `${p.ayuda} Por defecto: ${p.defecto}.`;
+  }
+  return `${p.ayuda} Entre ${p.minimo} y ${textoValor(p, p.maximo)}. Por defecto: ${textoValor(p, p.defecto)}.`;
+}
 
 // El valor del campo, con el tipo que espera la API (número o "HH:MM").
 function valorDelCampo(p) {
@@ -46,15 +74,14 @@ function campo(p) {
 
   const etiqueta = el('label', p.nombre, { for: id });
   const fila = el('div', '', { class: 'valor-parametro' });
-  const input = p.tipo === 'HORA'
-    ? el('input', '', { id, name: p.clave, type: 'time', min: p.minimo, max: p.maximo, required: '' })
-    : el('input', '', { id, name: p.clave, type: 'number', min: String(p.minimo), max: String(p.maximo), step: '1', inputmode: 'numeric', required: '' });
+  const input = entrada(p, id);
+  if (p.tipo === 'TEXTO') caja.classList.add('parametro-texto');
   input.value = String(p.valor);
   input.setAttribute('aria-describedby', `ayuda-${p.clave} error-${p.clave}`);
   fila.append(input);
   if (p.unidad) fila.append(el('span', p.unidad, { class: 'unidad' }));
 
-  const ayuda = el('p', `${p.ayuda} Entre ${p.minimo} y ${textoValor(p, p.maximo)}. Por defecto: ${textoValor(p, p.defecto)}.`, {
+  const ayuda = el('p', textoAyuda(p), {
     class: 'campo-ayuda', id: 'ayuda-' + p.clave
   });
 
