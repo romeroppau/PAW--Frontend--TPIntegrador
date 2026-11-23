@@ -11,6 +11,7 @@ import { exigirRol } from './auth.js';
 import { el } from './ui.js';
 import { textoEspecieMascota } from './etiquetas.js';
 import { enlaceTelefono } from './personas.js';
+import { enlaceMascota } from './mascota-datos.js';
 
 const $estado = document.getElementById('estado');
 const id = Number(new URLSearchParams(location.search).get('id'));
@@ -62,6 +63,8 @@ function filaMascota(mascota) {
     el('a', 'Historial', { href: '/cliente/historial.html?mascota=' + mascota.id, 'aria-label': 'Historial clínico de ' + mascota.nombre }),
     el('a', 'Calendario', { href: '/cliente/calendario.html?mascota=' + mascota.id, 'aria-label': 'Calendario sanitario de ' + mascota.nombre }),
   );
-  tr.append(el('th', mascota.nombre, { scope: 'row' }), el('td', textoEspecieMascota(mascota.especie)), acciones);
+  const nombre = el('th', '', { scope: 'row' });
+  nombre.append(enlaceMascota(mascota));
+  tr.append(nombre, el('td', textoEspecieMascota(mascota.especie)), acciones);
   return tr;
 }

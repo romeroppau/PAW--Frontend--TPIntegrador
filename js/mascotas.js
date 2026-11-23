@@ -14,6 +14,7 @@ import { exigirRol } from './auth.js';
 import { confirmar, el, limpiarErrores, mostrarErrores } from './ui.js';
 import { textoEspecieMascota } from './etiquetas.js';
 import { enlaceDuenio } from './personas.js';
+import { edad, enlaceMascota } from './mascota-datos.js';
 
 const usuario = await exigirRol(['CLIENTE', 'VETERINARIO', 'RESCATISTA']);
 // El rescatista (Entrega 5) maneja sus mascotas igual que un cliente, pero sin calendario ni historial.
@@ -78,16 +79,6 @@ async function cargar() {
 }
 
 // 36 meses → "3 años"; 14 → "1 año y 2 meses"; 2 → "2 meses".
-function edad(meses) {
-  if (meses === null || meses === undefined) return '—';
-  if (meses < 1) return 'Menos de 1 mes';
-  const anios = Math.floor(meses / 12);
-  const resto = meses % 12;
-  const textoMeses = resto === 1 ? '1 mes' : `${resto} meses`;
-  if (anios === 0) return textoMeses;
-  const textoAnios = anios === 1 ? '1 año' : `${anios} años`;
-  return resto === 0 ? textoAnios : `${textoAnios} y ${textoMeses}`;
-}
 
 function fila(mascota) {
   const tr = el('tr', '', { 'data-id': mascota.id });
@@ -97,7 +88,8 @@ function fila(mascota) {
     nombre.classList.add('con-foto');
     nombre.append(el('img', '', { src: urlFoto(mascota), alt: 'Foto de ' + mascota.nombre, class: 'miniatura', width: '48', height: '48', loading: 'lazy' }));
   }
-  nombre.append(el('strong', mascota.nombre));
+  // El nombre lleva a la ficha de la mascota (datos, dueño, vacunas y accesos).
+  nombre.append(enlaceMascota(mascota, el('strong', mascota.nombre)));
   if (mascota.raza) nombre.append(el('span', mascota.raza, { class: 'ayuda' }));
   tr.append(nombre);
 
