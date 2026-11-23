@@ -10,6 +10,7 @@
  * quién puede ver o modificar qué lo decide el backend en cada endpoint.
  */
 import { el } from './ui.js';
+import { aplicarContacto } from './contacto.js';
 
 // el() de ui.js con hijos: crea el elemento y le agrega los nodos que se le pasan.
 function h(tag, texto = '', atributos = {}, hijos = []) {
@@ -18,6 +19,7 @@ function h(tag, texto = '', atributos = {}, hijos = []) {
   return nodo;
 }
 
+// El número es el que cargó la veterinaria en Configuración: lo cambia aplicarContacto() al dibujar la barra.
 const WA_TURNO = 'https://wa.me/5491139010486?text=Hola%2C%20quiero%20solicitar%20un%20turno';
 
 /**
@@ -56,7 +58,7 @@ export const MENUS = {
       ['notificaciones', 'Notificaciones', 'Alertas y novedades administrativas.', [
         ['Ver mis notificaciones', '/cuenta/notificaciones.html']]],
       ['configuracion', 'Configuración', 'Cómo funciona la veterinaria.', [
-        ['Horario de atención, avisos y stock bajo', '/panel/configuracion.html']]],
+        ['Turnos, avisos, stock, tienda y datos de la veterinaria', '/panel/configuracion.html']]],
       ['resenas', 'Reseñas', 'Lo que opinan los clientes; desde ahí las respondés.', [
         ['Ver reseñas', '/resenas/resenas.html']]],
     ],
@@ -123,7 +125,12 @@ export function inicioDe(rol) {
 }
 
 function enlaceExterno(texto, destino) {
-  return el('a', texto, { href: destino, target: '_blank', rel: 'noopener noreferrer' });
+  const enlace = el('a', texto, { href: destino, target: '_blank', rel: 'noopener noreferrer' });
+  if (destino.startsWith('https://wa.me/')) {
+    enlace.dataset.contactoEnlace = 'whatsapp';
+    enlace.dataset.whatsappTexto = new URL(destino).searchParams.get('text') ?? '';
+  }
+  return enlace;
 }
 
 function seccion([id, titulo, descripcion, enlaces]) {
@@ -185,6 +192,7 @@ export function dibujarBarra(usuario) {
   for (const enlace of document.querySelectorAll('a[data-volver-panel]')) enlace.href = menu.inicio;
 
   activarDesplegables();
+  aplicarContacto(barra);
   return true;
 }
 

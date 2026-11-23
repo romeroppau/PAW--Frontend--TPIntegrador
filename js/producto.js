@@ -1,4 +1,5 @@
 import { api } from './api.js';
+import { datosDeContacto, enlaceWhatsApp } from './contacto.js';
 import { textoCategoria, textoEspecie } from './etiquetas.js';
 import { sesion } from './auth.js';
 import { agregarAlCarrito, bloquePrecio, irALogin } from './tienda.js';
@@ -76,6 +77,8 @@ async function cargarDetalle() {
 
     const mensaje = `Hola, quiero consultar por ${producto.nombre ?? 'un producto'} de HuellaVet.`;
     $whatsapp.href = 'https://wa.me/5491139010486?text=' + encodeURIComponent(mensaje);
+    // Con el número que cargó la veterinaria en Configuración (si no responde, queda el de siempre).
+    datosDeContacto().then((datos) => { if (datos) $whatsapp.href = enlaceWhatsApp(datos, mensaje); });
     productoActual = producto;
     prepararCompra(producto);
     $estado.textContent = '';
