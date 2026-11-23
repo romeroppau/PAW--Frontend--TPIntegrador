@@ -80,6 +80,18 @@ test('en el panel del cliente, "Mis compras" de la tarjeta Mi cuenta es un enlac
   await expect(page.locator('#cuenta').getByRole('link', { name: 'Mis compras' })).toHaveAttribute('href', '/tienda/compras.html');
 });
 
+test('Contactanos del panel del cliente: datos, el horario que configuró la veterinaria, WhatsApp y mapa', async ({ page }) => {
+  await simularSesion(page, CLIENTE);
+  await page.route('**/api/pacientes/horario', (route) => responderJson(route, { apertura: '09:30', cierre: '18:00' }));
+  await page.goto('/paneles/panel-cliente.html');
+  const contacto = page.locator('#contacto');
+  await expect(contacto).toContainText('Av. San Martín 1450, Luján');
+  await expect(contacto.getByRole('link', { name: '+54 9 11 3901-0486' })).toHaveAttribute('href', 'tel:+5491139010486');
+  await expect(page.locator('#horario-atencion')).toHaveText('De 09:30 a 18:00');
+  await expect(contacto.getByRole('link', { name: 'Escribinos por WhatsApp' })).toHaveAttribute('href', /^https:\/\/wa\.me\/5491139010486/);
+  await expect(contacto.locator('iframe')).toHaveAttribute('title', 'Mapa: HuellaVet, Av. San Martín 1450, Luján');
+});
+
 test('en el panel del cliente, el Shop lleva a promociones, a cada categoría y al catálogo, con el mismo formato', async ({ page }) => {
   await simularSesion(page, CLIENTE);
   await page.goto('/paneles/panel-cliente.html');
