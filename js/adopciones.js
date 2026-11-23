@@ -121,6 +121,26 @@ form.addEventListener('submit', async (ev) => {
 
 /* ---------- Mis postulaciones (cliente) ---------- */
 
+// "2026-11-26" → "jue 26/11" (al mediodía UTC, para que la zona horaria no corra el día).
+const DIAS = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
+function diaCorto(f) {
+  const [, mes, dia] = f.split('-');
+  return `${DIAS[new Date(f + 'T12:00:00Z').getUTCDay()]} ${dia}/${mes}`;
+}
+
+// En qué paso está la postulación: para la elegida, el de la adopción y el turno del chequeo.
+function seguimiento(p) {
+  if (p.estado === 'PENDIENTE') return 'La rescatista todavía está eligiendo.';
+  if (p.estado !== 'ELEGIDA') return '';
+  const { estado: estadoAdopcion, turno_chequeo: turno } = p.adopcion;
+  if (estadoAdopcion === 'FINALIZADA') return '¡Adopción completa! Ya está en Mis mascotas.';
+  if (estadoAdopcion === 'CANCELADA') return 'La adopción se canceló.';
+  if (turno?.estado === 'PROGRAMADO' || turno?.estado === 'EN_ATENCION') return `Turno de chequeo: ${diaCorto(turno.fecha)} a las ${turno.hora}.`;
+  if (turno?.estado === 'ATENDIDO') return 'Chequeo hecho: falta que la veterinaria cierre la adopción.';
+  if (turno) return 'El turno del chequeo se canceló: te vamos a dar otro.';
+  return 'Esperando el turno del chequeo: te avisamos cuando esté.';
+}
+
 async function cargarMias() {
   const estadoMias = document.getElementById('estado-mias');
   try {
@@ -129,7 +149,7 @@ async function cargarMias() {
       const tr = el('tr');
       const celdaEstado = el('td');
       celdaEstado.append(insignia(p.estado));
-      tr.append(el('td', p.publicacion.mascota.nombre), el('td', fecha(p.fecha)), celdaEstado);
+      tr.append(el('td', p.publicacion.mascota.nombre), el('td', fecha(p.fecha)), celdaEstado, el('td', seguimiento(p)));
       return tr;
     }));
     document.getElementById('tabla-mias').hidden = postulaciones.length === 0;
@@ -142,6 +162,7 @@ async function cargarMias() {
 const cargas = [cargar()];
 if (esCliente) {
   document.getElementById('seccion-mias').hidden = false;
+  document.getElementById('ir-mias').hidden = false;
   cargas.push(cargarMias());
 }
 

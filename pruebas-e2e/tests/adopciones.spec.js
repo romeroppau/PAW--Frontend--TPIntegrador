@@ -104,6 +104,26 @@ test('el cliente se postula: los errores van a cada campo y, al corregir, ve su 
   expect(await page.evaluate(() => window.sinRecargar)).toBe(true);
 });
 
+test('mis postulaciones: un botón arriba baja a la lista, y la elegida dice en qué paso está', async ({ page }) => {
+  await simularSesion(page, CLIENTE);
+  await page.route(/\/api\/adopciones\/publicaciones(\?.*)?$/, (route) => responderJson(route, { publicaciones: [publicacion(1, 'Pipa')] }));
+  await page.route('**/api/adopciones/mis-postulaciones', (route) => responderJson(route, { postulaciones: [
+    postulacion(7, 'Cliente Dos', { estado: 'ELEGIDA', adopcion: { id: 1, estado: 'CHEQUEO_PENDIENTE', turno_chequeo: { fecha: '2026-11-26', hora: '10:00', estado: 'PROGRAMADO' } } }),
+    postulacion(8, 'Cliente Dos', { estado: 'ELEGIDA', adopcion: { id: 2, estado: 'ADOPTANTE_ELEGIDO', turno_chequeo: null } }),
+    postulacion(9, 'Cliente Dos'),
+  ] }));
+
+  await page.goto('/adopciones/adopciones.html');
+  await page.getByRole('link', { name: 'Ver mis postulaciones' }).click();
+  await expect(page).toHaveURL(/#seccion-mias$/);
+  await expect(page.locator('#seccion-mias')).toBeInViewport();
+
+  const filas = page.locator('#filas-mias > tr');
+  await expect(filas.nth(0)).toContainText('Turno de chequeo: jue 26/11 a las 10:00.');
+  await expect(filas.nth(1)).toContainText('Esperando el turno del chequeo');
+  await expect(filas.nth(2)).toContainText('La rescatista todavía está eligiendo.');
+});
+
 test('si ya se postuló, el aviso del servidor se ve en el formulario', async ({ page }) => {
   await simularSesion(page, CLIENTE);
   await page.route(/\/api\/adopciones\/publicaciones(\?.*)?$/, (route) => responderJson(route, { publicaciones: [publicacion(1, 'Pipa')] }));

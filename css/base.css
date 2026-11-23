@@ -328,3 +328,9 @@ form .boton + .boton { margin-left: .5rem; }
 /* Anterior / Siguiente de una lista paginada */
 .paginacion { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: .75rem; margin-top: 1rem; }
 .paginacion .estado { min-height: 0; }
+
+/* Filtros de Mis turnos (cliente/turnos.html): en una fila, y uno debajo del otro en celular. */
+.filtros-turnos { display: flex; flex-wrap: wrap; align-items: flex-end; gap: .75rem 1rem; margin: 1rem 0 1.25rem; }
+.filtros-turnos .campo { margin: 0; min-width: 11rem; }
+.filtros-turnos .boton { margin-bottom: .2rem; }
+@media (max-width: 600px) { .filtros-turnos .campo { flex: 1 1 100%; } }

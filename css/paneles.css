@@ -166,6 +166,23 @@ body {
   border-radius: var(--radio);
 }
 
+/* Panel del cliente: las secciones de la portada, como bloques del panel (con bordes redondeados
+   y sin el ancho completo de la portada). */
+.panel-portada {
+  margin-top: 1.5rem;
+  padding-block: clamp(1.5rem, 4vw, 2.5rem);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+}
+
+.panel-portada:not(.hero):not(.opiniones) {
+  background: var(--blanco);
+}
+
+.panel-portada > .contenedor {
+  width: min(100% - 2.5rem, 1040px);
+}
+
 /* ---------- Pie ---------- */
 
 .panel-pie {

@@ -8,6 +8,7 @@
   <title>Panel de cliente | HuellaVet</title>
   <link rel="stylesheet" href="/css/base.css">
   <link rel="stylesheet" href="/css/barra-rol.css">
+  <link rel="stylesheet" href="/css/portada.css">
   <link rel="stylesheet" href="/css/paneles.css">
 </head>
 
@@ -31,6 +32,68 @@
         <p class="panel-pista"><span aria-hidden="true">↑</span> Elegí una sección en el menú de arriba para ver sus opciones.</p>
       </div>
       <div class="panel-intro-huella"><svg viewBox="0 0 64 64" aria-hidden="true" focusable="false"><g fill="currentColor"><ellipse cx="14" cy="27" rx="7" ry="9"/><ellipse cx="29" cy="15" rx="7" ry="10"/><ellipse cx="45" cy="15" rx="7" ry="10"/><ellipse cx="57" cy="29" rx="6" ry="9"/><path d="M32 31c-9 0-18 9-18 17 0 6 5 9 11 8 3-.6 5-1.5 7-1.5s4 .9 7 1.5c6 1 11-2 11-8 0-8-9-17-18-17z"/></g></svg></div>
+    </section>
+    <!-- Lo mismo que la portada (index.html): ubicación y turnos, servicios, opiniones y destacados.
+         Los datos los ponen los mismos scripts: horario-portada.js, resenas-portada.js y portada.js. -->
+    <section class="hero seccion panel-portada" aria-label="Turnos y ubicación">
+      <div class="contenedor">
+        <div class="hero-intro">
+          <p>Nosotros somos HuellaVet.</p>
+          <address>Av. San Martín 1450, Luján</address>
+        </div>
+        <div class="hero-turno">
+          <a class="boton boton-acento boton-grande" href="https://wa.me/5491139010486?text=Hola%2C%20quiero%20reservar%20un%20turno" target="_blank" rel="noopener noreferrer">Reservar turno</a>
+        </div>
+        <div class="hero-ubicacion">
+          <div>
+            <h2>¿Dónde nos encontramos?</h2>
+            <!-- Las horas son las que configura la veterinaria: las pone js/horario-portada.js
+                 (GET /api/pacientes/horario). Las de acá son las de siempre, por si no responde. -->
+            <p>Av. San Martín 1450, Luján. Atendemos de lunes a sábado de <span id="hora-apertura">08:00</span> a <span id="hora-cierre">20:00</span>, con turno previo que se coordina por WhatsApp.</p>
+          </div>
+          <img class="foto-fachada" src="/img/fachada.jpg" width="753" height="900"
+               alt="Fachada de la veterinaria HuellaVet: el cartel &quot;Huella Veterinaria&quot; y la vidriera, con gente paseando perros en la vereda">
+        </div>
+      </div>
+    </section>
+
+    <section class="seccion panel-portada" aria-labelledby="titulo-servicios">
+      <div class="contenedor">
+        <h2 id="titulo-servicios" class="titulo-seccion">Nuestros servicios</h2>
+        <div class="grilla">
+          <article class="tarjeta servicio">
+            <h3>Consulta clínica</h3>
+            <p>Atención y diagnóstico de tu mascota.</p>
+          </article>
+          <article class="tarjeta servicio">
+            <h3>Vacunación</h3>
+            <p>Plan de vacunas y recordatorios.</p>
+          </article>
+          <article class="tarjeta servicio">
+            <h3>Tienda para retirar</h3>
+            <p>Alimento, accesorios y medicamentos.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="opiniones seccion panel-portada" aria-labelledby="titulo-opiniones">
+      <div class="contenedor">
+        <h2 id="titulo-opiniones" class="titulo-seccion">¿Qué opinan nuestros clientes?</h2>
+        <!-- Las 3 reseñas más nuevas de 4 o 5 estrellas: las pone js/resenas-portada.js
+             (GET /api/resenas?minimo=4). -->
+        <div class="burbujas" id="burbujas"></div>
+        <p class="estado" id="estado-opiniones" role="status"></p>
+        <p class="ver-resenas"><a class="boton boton-borde" href="/resenas/resenas.html">Ver todas las reseñas</a></p>
+      </div>
+    </section>
+
+    <section class="seccion panel-portada" id="seccion-destacados" aria-labelledby="titulo-destacados" hidden>
+      <div class="contenedor">
+        <h2 id="titulo-destacados" class="titulo-seccion">¡No te lo pierdas!</h2>
+        <!-- Las promociones y los primeros productos disponibles del catálogo: los carga js/portada.js. -->
+        <div class="grilla" id="destacados"></div>
+      </div>
     </section>
     <!-- Contactanos: los datos de la veterinaria y el mapa. El horario es el que configura la
          veterinaria (GET /api/pacientes/horario, lo pone js/contacto-panel.js). -->
@@ -61,6 +124,9 @@
   <script type="module" src="/js/guardia-panel.js"></script>
   <script type="module" src="/js/auth.js"></script>
   <script type="module" src="/js/contacto-panel.js"></script>
+  <script type="module" src="/js/horario-portada.js"></script>
+  <script type="module" src="/js/resenas-portada.js"></script>
+  <script type="module" src="/js/portada.js"></script>
 </body>
 
 </html>

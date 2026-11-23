@@ -188,6 +188,21 @@ export function dibujarBarra(usuario) {
 }
 
 /**
+ * Que la caja no se salga de la pantalla: si sobra por la derecha, se corre hacia la izquierda
+ * (sin pasarse del borde izquierdo). En celular la caja ya ocupa todo el ancho y no se toca.
+ */
+function acomodar(desplegable) {
+  const caja = desplegable.querySelector('.panel-desplegable-caja');
+  caja.style.left = '';
+  if (getComputedStyle(desplegable).position === 'static') return;
+
+  const margen = 12;
+  const { left, right } = caja.getBoundingClientRect();
+  const sobra = right - (document.documentElement.clientWidth - margen);
+  if (sobra > 0) caja.style.left = `${-Math.min(sobra, left - margen)}px`;
+}
+
+/**
  * Comodidades de los desplegables (el navegador ya los abre y cierra con clic, Enter o Espacio):
  * se abre de a uno, un clic afuera o Escape lo cierra, y #seccion en la dirección (p. ej.
  * panel-cliente.html#tienda) abre esa sección.
@@ -196,7 +211,13 @@ function activarDesplegables() {
   const desplegables = [...document.querySelectorAll('.panel-desplegable')];
   const cerrarTodos = (excepto = null) => desplegables.forEach((d) => { if (d !== excepto) d.open = false; });
 
-  for (const d of desplegables) d.addEventListener('toggle', () => { if (d.open) cerrarTodos(d); });
+  for (const d of desplegables) {
+    d.addEventListener('toggle', () => {
+      if (!d.open) return;
+      cerrarTodos(d);
+      acomodar(d);
+    });
+  }
 
   document.addEventListener('click', (evento) => {
     if (!evento.target.closest('.panel-desplegable')) cerrarTodos();
