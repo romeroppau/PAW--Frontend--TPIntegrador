@@ -1,3 +1,7 @@
+// La campana (Entrega 5): muestra los avisos SIN LEER, los 10 más nuevos (lo decide la API). Al
+// marcarlos como leídos desaparecen de acá y quedan en "Mis notificaciones" (cuenta/notificaciones.html),
+// que se abre con "Ver todas". Si esa página marca avisos, avisa con el evento "notificaciones-cambiaron"
+// y la campana se actualiza enseguida.
 import { api } from './api.js';
 import { sesion } from './auth.js';
 import { el } from './ui.js';
@@ -20,7 +24,7 @@ function pintar(datos) {
 
   lista.replaceChildren();
   if (datos.datos.length === 0) {
-    lista.append(el('li', 'No tenés notificaciones.', { class: 'campana-vacio' }));
+    lista.append(el('li', 'No tenés notificaciones nuevas.', { class: 'campana-vacio' }));
     return;
   }
   for (const aviso of datos.datos) {
@@ -65,6 +69,7 @@ if (usuario && zona) {
     <div class="campana-panel" id="campana-panel" hidden>
       <h2 class="campana-titulo">Notificaciones</h2>
       <ul class="campana-lista"></ul>
+      <p class="campana-pie"><a href="/cuenta/notificaciones.html">Ver todas</a></p>
     </div>`;                              // HTML fijo, sin datos de usuarios
   zona.prepend(caja);
 
@@ -78,6 +83,8 @@ if (usuario && zona) {
     if (e.key === 'Escape' && !panel.hidden) { alternar(false); boton.focus(); }
   });
   document.addEventListener('click', (e) => { if (!caja.contains(e.target)) alternar(false); });
+
+  window.addEventListener('notificaciones-cambiaron', cargar);
 
   await cargar();
   timer = setInterval(cargar, INTERVALO_MS);
