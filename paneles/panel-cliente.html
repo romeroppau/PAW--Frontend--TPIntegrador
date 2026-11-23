@@ -91,8 +91,17 @@
     <section class="seccion panel-portada" id="seccion-destacados" aria-labelledby="titulo-destacados" hidden>
       <div class="contenedor">
         <h2 id="titulo-destacados" class="titulo-seccion">¡No te lo pierdas!</h2>
-        <!-- Las promociones y los primeros productos disponibles del catálogo: los carga js/portada.js. -->
-        <div class="grilla" id="destacados"></div>
+        <!-- Los dos bloques los llena js/portada.js; uno sin datos no se muestra. -->
+        <div class="bloque-descuentos" id="productos-descuento" hidden>
+          <h3 class="subtitulo-seccion">Productos en descuento</h3>
+          <div class="grilla" id="destacados"></div>
+          <p id="ver-promociones" hidden><a href="/catalogo/catalogo.html#promociones">Ver todas las promociones de la tienda</a></p>
+        </div>
+        <div class="bloque-descuentos promo-turnos" id="promo-turnos" hidden>
+          <h3 class="subtitulo-seccion">Turnos en descuento</h3>
+          <p>La consulta tiene descuento en estos días y horarios. Pedí tu turno por WhatsApp.</p>
+          <ul class="lista-promo-turnos" id="lista-promo-turnos"></ul>
+        </div>
       </div>
     </section>
     <!-- Contactanos: los datos de la veterinaria y el mapa. El horario es el que configura la

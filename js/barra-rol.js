@@ -78,6 +78,7 @@ export const MENUS = {
         ['Calendario sanitario', '/cliente/calendario.html']]],
       ['turnos', 'Turnos', 'Tus turnos y cómo pedir uno.', [
         ['Mis turnos', '/cliente/turnos.html'],
+        ['Ver descuentos', '/cliente/descuentos.html'],
         ['Pedir turno por WhatsApp', WA_TURNO, true]]],
       ['tienda', 'Tienda', 'Productos para tu mascota.', [
         ['Promociones', '/catalogo/catalogo.html#promociones'],
