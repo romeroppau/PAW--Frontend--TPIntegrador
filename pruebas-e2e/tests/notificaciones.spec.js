@@ -1,5 +1,6 @@
 // Campana de notificaciones (js/notificaciones.js): la fecha de cada aviso va en día/mes/año.
 const { test, expect } = require('@playwright/test');
+const { responderJson, simularSesion, abrirSeccion } = require('./ayudas');
 const { responderJson, simularSesion } = require('./ayudas');
 
 test('la campana muestra la fecha de cada aviso como día/mes/año', async ({ page }) => {
@@ -96,5 +97,6 @@ test('mis notificaciones: lista con filtros; marcar una y marcar todas actualiza
 test('la tarjeta Notificaciones de los paneles lleva al historial', async ({ page }) => {
   await simularSesion(page, CLIENTE);
   await page.goto('/paneles/panel-cliente.html');
+  await abrirSeccion(page, 'notificaciones');
   await expect(page.locator('#notificaciones').getByRole('link', { name: 'Ver mis notificaciones' })).toHaveAttribute('href', '/cuenta/notificaciones.html');
 });
