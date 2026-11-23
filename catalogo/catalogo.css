@@ -41,9 +41,11 @@
   min-height: 1.5em;
 }
 
+/* auto-fill (no auto-fit): con pocos resultados (por ejemplo, al buscar "collar de nylon") las tarjetas
+   mantienen el ancho de siempre en lugar de estirarse a toda la fila con una foto enorme. */
 .lista-productos {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 230px), 1fr));
   gap: 1.25rem;
   list-style: none;
   margin: 0;
