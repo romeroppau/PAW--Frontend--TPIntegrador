@@ -27,7 +27,7 @@ const usuario = await exigirRol(['CLIENTE', 'RESCATISTA', 'VETERINARIO']);
 const $volver = document.getElementById('volver');
 if (usuario.rol === 'VETERINARIO') {
   $volver.href = '/panel/ventas.html';
-  $volver.textContent = '← Ventas de la tienda';
+  $volver.textContent = '← Volver a ventas';
 } else if (numero) {
   $volver.href = '/tienda/compra.html?numero=' + encodeURIComponent(numero);
   $volver.textContent = '← Volver a la compra';
