@@ -50,12 +50,13 @@ test('sin turnos lo dice en cada sección', async ({ page }) => {
 });
 
 test('los filtros por mascota y estado valen para las dos pestañas y se limpian', async ({ page }) => {
-  await simularSesion(page, CLIENTE);
+    // Michi con su propio id: el filtro agrupa por mascota (id), como con los datos reales.
+  const deMichi = (t) => ({ ...t, mascota: { id: 202, nombre: 'Michi', especie: 'GATO' } });
   await page.route('**/api/pacientes/turnos', (route) => responderJson(route, { turnos: [
     turno(1, dia(-10), 'ATENDIDO'),
-    turno(2, dia(-3), 'CANCELADO', 'Michi'),
+    deMichi(turno(2, dia(-3), 'CANCELADO')),
     turno(3, dia(2), 'PROGRAMADO'),
-    turno(4, dia(5), 'PROGRAMADO', 'Michi')
+    deMichi(turno(4, dia(5), 'PROGRAMADO'))
   ] }));
 
   await page.goto('/cliente/turnos.html');
