@@ -65,7 +65,9 @@
         <div class="hero-ubicacion">
           <div>
             <h2>¿Dónde nos encontramos?</h2>
-            <p>Av. San Martín 1450, Luján. Atendemos de lunes a sábado de 08:00 a 20:00, con turno previo que se coordina por WhatsApp.</p>
+            <!-- Las horas son las que configura la veterinaria: las pone js/horario-portada.js
+                 (GET /api/pacientes/horario). Las de acá son las de siempre, por si no responde. -->
+            <p>Av. San Martín 1450, Luján. Atendemos de lunes a sábado de <span id="hora-apertura">08:00</span> a <span id="hora-cierre">20:00</span>, con turno previo que se coordina por WhatsApp.</p>
           </div>
           <div class="imagen-provisoria fachada" role="img" aria-label="Foto de la fachada de la veterinaria">Fachada de la veterinaria</div>
         </div>
@@ -149,6 +151,7 @@
   <script type="module" src="/js/menu.js"></script>
   <script type="module" src="/js/auth.js"></script>
   <script type="module" src="/js/portada.js"></script>
+  <script type="module" src="/js/horario-portada.js"></script>
   <script type="module" src="/js/notificaciones.js"></script>
 </body>
 </html>

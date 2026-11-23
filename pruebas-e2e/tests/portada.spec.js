@@ -32,3 +32,10 @@ test('si el catálogo no responde, la sección de destacados no se muestra', asy
   await page.goto('/index.html');
   await expect(page.locator('#seccion-destacados')).toBeHidden();
 });
+
+test('la portada muestra el horario de atención que configuró la veterinaria', async ({ page }) => {
+  await simularSesion(page, null);
+  await page.route('**/api/pacientes/horario', (route) => responderJson(route, { apertura: '09:30', cierre: '18:00' }));
+  await page.goto('/index.html');
+  await expect(page.locator('.hero-ubicacion')).toContainText('Atendemos de lunes a sábado de 09:30 a 18:00');
+});
