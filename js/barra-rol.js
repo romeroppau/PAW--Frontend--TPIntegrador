@@ -57,6 +57,8 @@ export const MENUS = {
         ['Ver mis notificaciones', '/cuenta/notificaciones.html']]],
       ['configuracion', 'Configuración', 'Cómo funciona la veterinaria.', [
         ['Horario de atención, avisos y stock bajo', '/panel/configuracion.html']]],
+      ['resenas', 'Reseñas', 'Lo que opinan los clientes; desde ahí las respondés.', [
+        ['Ver reseñas', '/resenas/resenas.html']]],
     ],
   },
   CLIENTE: {
@@ -77,15 +79,18 @@ export const MENUS = {
         ['Pedir turno por WhatsApp', WA_TURNO, true]]],
       ['tienda', 'Tienda', 'Productos para tu mascota.', [
         ['Promociones', '/catalogo/catalogo.html#promociones'],
-        ['Medicamentos', '/catalogo/catalogo.html?categoria=MEDICAMENTO'],
-        ['Alimento balanceado', '/catalogo/catalogo.html?categoria=ALIMENTO'],
-        ['Accesorios', '/catalogo/catalogo.html?categoria=ACCESORIO'],
-        ['Ver catálogo de productos', '/catalogo/catalogo.html']]],
+        ['Ver catálogo de productos', '/catalogo/catalogo.html', false, [
+          ['Medicamentos', '/catalogo/catalogo.html?categoria=MEDICAMENTO'],
+          ['Alimento balanceado', '/catalogo/catalogo.html?categoria=ALIMENTO'],
+          ['Accesorios', '/catalogo/catalogo.html?categoria=ACCESORIO']]]]],
       ['adopcion', 'Adopción', 'Animales que buscan familia.', [
         ['Animales disponibles', '/adopciones/adopciones.html'],
         ['Mis postulaciones', '/adopciones/adopciones.html#seccion-mias']]],
       ['notificaciones', 'Notificaciones', 'Turnos, compras y actividad de la cuenta.', [
         ['Ver mis notificaciones', '/cuenta/notificaciones.html']]],
+      ['resenas', 'Reseñas', 'Contanos cómo te atendimos.', [
+        ['Escribir reseña', '/resenas/escribir.html'],
+        ['Ver reseñas', '/resenas/resenas.html']]],
     ],
   },
   RESCATISTA: {
@@ -104,6 +109,9 @@ export const MENUS = {
         ['Mis compras', '/tienda/compras.html']]],
       ['notificaciones', 'Notificaciones', 'Publicaciones, postulaciones y adopciones.', [
         ['Ver mis notificaciones', '/cuenta/notificaciones.html']]],
+      ['resenas', 'Reseñas', 'Contanos cómo te atendimos.', [
+        ['Escribir reseña', '/resenas/escribir.html'],
+        ['Ver reseñas', '/resenas/resenas.html']]],
     ],
   },
 };
@@ -119,8 +127,14 @@ function enlaceExterno(texto, destino) {
 
 function seccion([id, titulo, descripcion, enlaces]) {
   const opciones = el('ul', '', { class: 'panel-opciones' });
-  for (const [texto, destino, externo] of enlaces) {
-    opciones.append(h('li', '', {}, [externo ? enlaceExterno(texto, destino) : el('a', texto, { href: destino })]));
+  for (const [texto, destino, externo, subopciones] of enlaces) {
+    const item = h('li', '', {}, [externo ? enlaceExterno(texto, destino) : el('a', texto, { href: destino })]);
+    if (subopciones) {
+      const sub = el('ul', '', { class: 'panel-subopciones' });
+      for (const [t, d] of subopciones) sub.append(h('li', '', {}, [el('a', t, { href: d })]));
+      item.append(sub);
+    }
+    opciones.append(item);
   }
   const caja = h('div', '', { class: 'panel-desplegable-caja' }, [
     el('p', descripcion, { class: 'panel-desplegable-desc' }),

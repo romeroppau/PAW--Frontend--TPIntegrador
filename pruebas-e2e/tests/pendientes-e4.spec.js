@@ -99,8 +99,7 @@ test('en el panel del cliente, el Shop lleva a promociones, a cada categoría y 
   await page.goto('/paneles/panel-cliente.html');
   await abrirSeccion(page, 'tienda');
   const shop = page.locator('#menu-tienda');
-  await expect(shop.locator('.panel-opciones').getByRole('link')).toHaveText(['Promociones', 'Medicamentos', 'Alimento balanceado', 'Accesorios', 'Ver catálogo de productos']);
-  await expect(shop.getByRole('link', { name: 'Promociones' })).toHaveAttribute('href', '/catalogo/catalogo.html#promociones');
+  await expect(shop.locator('.panel-opciones').getByRole('link')).toHaveText(['Promociones', 'Ver catálogo de productos', 'Medicamentos', 'Alimento balanceado', 'Accesorios']);  await expect(shop.getByRole('link', { name: 'Promociones' })).toHaveAttribute('href', '/catalogo/catalogo.html#promociones');
   await expect(shop.getByRole('link', { name: 'Medicamentos' })).toHaveAttribute('href', '/catalogo/catalogo.html?categoria=MEDICAMENTO');
   await expect(shop.getByRole('link', { name: 'Alimento balanceado' })).toHaveAttribute('href', '/catalogo/catalogo.html?categoria=ALIMENTO');
   await expect(shop.getByRole('link', { name: 'Accesorios' })).toHaveAttribute('href', '/catalogo/catalogo.html?categoria=ACCESORIO');

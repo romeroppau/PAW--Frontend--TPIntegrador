@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Reseñas | HuellaVet</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Nunito+Sans:wght@400;600;700&display=swap">
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/resenas.css">
+</head>
+<!-- Reseñas (Entrega 5): las ve cualquiera, sin sesión. Arriba, el promedio de estrellas, el total
+     de opiniones y cuántas hay de cada cantidad de estrellas (como Google), y "Escribir una reseña".
+     Abajo, las reseñas de a 3 ("Ver más"), con el orden y el filtro por estrellas. Quien escribió una
+     la puede borrar; la veterinaria las responde (no las borra).
+     Lo maneja js/resenas.js con /api/resenas (repo Backend, docs/api/contrato-resenas.md). -->
+<body>
+  <a class="saltar" href="#contenido">Saltar al contenido</a>
+  <div id="encabezado-sitio"></div>
+  <script src="/js/layout.js"></script>
+  <main id="contenido" class="seccion">
+    <div class="contenedor contenedor-resenas">
+      <h1>Reseñas</h1>
+
+      <section class="resumen-resenas" aria-labelledby="titulo-resumen" id="resumen" hidden>
+        <h2 id="titulo-resumen" class="solo-lectores">Resumen de las opiniones</h2>
+        <div class="resumen-promedio">
+          <p class="promedio-numero" id="promedio">–</p>
+          <p class="estrellas" id="promedio-estrellas" role="img" aria-label=""></p>
+          <p class="resumen-total" id="total"></p>
+        </div>
+        <ul class="resumen-barras" id="barras"></ul>
+        <p class="resumen-accion" id="accion-escribir">
+          <a class="boton" href="/resenas/escribir.html">Escribir una reseña</a>
+        </p>
+      </section>
+
+      <form class="filtro-resenas" id="filtro" novalidate>
+        <div class="campo">
+          <label for="orden">Ordenar por</label>
+          <select id="orden" name="orden">
+            <option value="recientes">Más recientes</option>
+            <option value="mejores">Calificación más alta</option>
+            <option value="peores">Calificación más baja</option>
+          </select>
+        </div>
+        <div class="campo">
+          <label for="estrellas-filtro">Mostrar</label>
+          <select id="estrellas-filtro" name="estrellas">
+            <option value="">Todas</option>
+            <option value="5">5 estrellas</option>
+            <option value="4">4 estrellas</option>
+            <option value="3">3 estrellas</option>
+            <option value="2">2 estrellas</option>
+            <option value="1">1 estrella</option>
+          </select>
+        </div>
+      </form>
+
+      <p class="mensaje" id="aviso" role="status" hidden></p>
+      <p class="estado" id="estado" role="status">Cargando reseñas…</p>
+      <ul class="lista-resenas" id="lista"></ul>
+      <p><button class="boton boton-borde" type="button" id="ver-mas" hidden>Ver más</button></p>
+    </div>
+  </main>
+  <div id="pie-sitio"></div>
+
+  <script type="module" src="/js/menu.js"></script>
+  <script type="module" src="/js/auth.js"></script>
+  <script type="module" src="/js/notificaciones.js"></script>
+  <script type="module" src="/js/resenas.js"></script>
+</body>
+</html>
