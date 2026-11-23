@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ficha de la mascota | HuellaVet</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Nunito+Sans:wght@400;600;700&display=swap">
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/mascota.css">
+</head>
+<!-- Ficha de una mascota (Entrega 5): foto, datos, dueño, un vistazo a las vacunas y accesos al
+     historial clínico y al calendario sanitario. Se abre con ?id=101 desde el nombre de la mascota en
+     Ficha de mascotas, en la Agenda y en la ficha del cliente.
+     La ve la veterinaria (cualquiera) y el dueño (solo las suyas: si no, el backend responde 404).
+     El rescatista ve los datos de las suyas, pero no tiene calendario ni historial.
+     Lo maneja js/mascota-ficha.js con GET /api/pacientes/mascotas/{id} y
+     GET /api/pacientes/mascotas/{id}/calendario-sanitario (repo Pacientes). -->
+<body data-rol="CLIENTE,RESCATISTA,VETERINARIO">
+  <a class="saltar" href="#contenido">Saltar al contenido</a>
+  <div id="encabezado-sitio"></div>
+  <script src="/js/layout.js"></script>
+  <main id="contenido" class="seccion" hidden>
+    <div class="contenedor contenedor-ficha">
+      <p><a id="volver" href="/cliente/mascotas.html">&larr; Mis mascotas</a></p>
+      <p class="estado" id="estado" role="status">Cargando…</p>
+
+      <article id="ficha" hidden>
+        <header class="ficha-cabecera">
+          <div class="ficha-foto" id="foto"></div>
+          <div>
+            <h1 id="nombre">Mascota</h1>
+            <p class="ficha-subtitulo" id="especie-raza"></p>
+          </div>
+        </header>
+
+        <section class="tarjeta ficha-bloque" aria-labelledby="titulo-datos">
+          <h2 id="titulo-datos">Datos</h2>
+          <dl class="ficha-datos">
+            <div><dt>Fecha de nacimiento</dt><dd id="nacimiento"></dd></div>
+            <div><dt>Edad</dt><dd id="edad"></dd></div>
+            <div><dt>Peso</dt><dd id="peso"></dd></div>
+            <div id="dato-duenio" hidden><dt>Dueño</dt><dd id="duenio"></dd></div>
+          </dl>
+        </section>
+
+        <!-- Un vistazo, no el calendario: si está al día o qué tiene vencido, y lo próximo que le toca. -->
+        <section class="tarjeta ficha-bloque" aria-labelledby="titulo-vacunas" id="bloque-vacunas" hidden>
+          <h2 id="titulo-vacunas">Vacunas</h2>
+          <p id="estado-vacunas" class="mensaje"></p>
+          <p id="proxima-vacuna"></p>
+          <p><a id="ver-calendario" href="/cliente/calendario.html">Ver calendario completo</a></p>
+        </section>
+
+        <nav class="ficha-accesos" aria-label="Más sobre esta mascota">
+          <a class="boton boton-borde" id="ir-historial" href="/cliente/historial.html">Historial clínico</a>
+          <a class="boton boton-borde" id="ir-calendario" href="/cliente/calendario.html">Calendario sanitario</a>
+          <a class="boton boton-borde" id="ir-editar" href="/cliente/mascotas.html" hidden>Editar datos</a>
+        </nav>
+      </article>
+    </div>
+  </main>
+  <div id="pie-sitio"></div>
+
+  <script type="module" src="/js/menu.js"></script>
+  <script type="module" src="/js/guardia-panel.js"></script>
+  <script type="module" src="/js/auth.js"></script>
+  <script type="module" src="/js/mascota-ficha.js"></script>
+</body>
+</html>

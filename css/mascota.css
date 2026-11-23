@@ -1,0 +1,85 @@
+/* Ficha de la mascota (cliente/mascota.html). Lo de marca viene de base.css. */
+
+.contenedor-ficha {
+  max-width: 48rem;
+}
+
+.ficha-cabecera {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.ficha-cabecera h1 {
+  margin: 0;
+}
+
+.ficha-subtitulo {
+  margin: .25rem 0 0;
+  color: var(--tinta-suave);
+  font-weight: 600;
+}
+
+.ficha-foto img,
+.ficha-sin-foto {
+  display: grid;
+  place-items: center;
+  width: 160px;
+  height: 160px;
+  border-radius: var(--radio);
+  object-fit: cover;
+}
+
+.ficha-sin-foto {
+  background: var(--menta);
+  font-size: 3.5rem;
+}
+
+.ficha-bloque {
+  margin-bottom: 1rem;
+}
+
+.ficha-bloque h2 {
+  font-size: 1.3rem;
+}
+
+.ficha-bloque p {
+  margin: .5rem 0 0;
+}
+
+.ficha-datos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: .75rem 1.5rem;
+  margin: 0;
+}
+
+.ficha-datos dt {
+  font-weight: 700;
+  font-size: .9rem;
+  color: var(--tinta-suave);
+}
+
+.ficha-datos dd {
+  margin: .1rem 0 0;
+}
+
+.ficha-accesos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .75rem;
+  margin-top: 1.25rem;
+}
+
+/* Un enlace oculto (por rol) no ocupa lugar. */
+.ficha-accesos [hidden] {
+  display: none;
+}
+
+@media (max-width: 600px) {
+  .ficha-cabecera {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
