@@ -5,6 +5,9 @@
  * pestañas, con filtros por mascota, estado y motivo (valen para las dos) y la cantidad de cada una.
  * Los turnos se piden y se cambian por WhatsApp (los carga el veterinario): esta página solo los muestra.
  *
+ * Suma el turno del chequeo de una adopción en curso: el animal todavía es de la rescatista, así que
+ * ese turno no viene en GET /api/pacientes/turnos; sale de GET /api/adopciones/mis-postulaciones.
+ *
  * Contrato de la API: GET /api/pacientes/turnos en docs/api/contrato-mascotas-turnos.md (repo Pacientes).
  * Seguridad: el backend devuelve solo los turnos de las mascotas del cliente de la sesión.
  * Todo texto de la API se inserta con el() (textContent).
@@ -61,6 +64,11 @@ function fila(turno, conConsulta) {
   );
   if (conConsulta) {
     const celda = el('td');
+    // El chequeo de una adopción en curso: la consulta queda en el historial del animal cuando pasa a ser tuyo.
+    if (turno.adopcion) {
+      tr.append(celda);
+      return tr;
+    }
     // Un turno atendido tiene su consulta en el historial clínico de la mascota y su factura
     // (se genera al finalizar la consulta: GET /api/pacientes/consultas/{id}/factura).
     if (turno.estado === 'ATENDIDO') {
@@ -126,11 +134,33 @@ filtros.addEventListener('reset', () => setTimeout(mostrar));   // después de q
 
 activarPestanas(document.getElementById('pestanas-turnos'), () => {});
 
+// El turno del chequeo de cada adopción en curso, con la forma de un turno de la agenda. Cuando la
+// adopción se completa, el animal ya es del cliente y el turno viene con los demás: no se repite.
+async function chequeosDeAdopcion() {
+  try {
+    const { postulaciones } = await api('/api/adopciones/mis-postulaciones');
+    return postulaciones
+      .filter((p) => p.estado === 'ELEGIDA' && p.adopcion.turno_chequeo && p.adopcion.estado !== 'FINALIZADA')
+      .map((p) => ({
+        id: 'adopcion-' + p.adopcion.id,
+        fecha: p.adopcion.turno_chequeo.fecha,
+        hora: p.adopcion.turno_chequeo.hora,
+        motivo: 'CHEQUEO_ADOPCION',
+        estado: p.adopcion.turno_chequeo.estado,
+        mascota: { id: 'adopcion-' + p.publicacion.mascota.id, nombre: `${p.publicacion.mascota.nombre} (en adopción)` },
+        adopcion: true,
+      }));
+  } catch {
+    return [];   // si Adopciones no responde, se ven igual los demás turnos
+  }
+}
+
 async function cargar() {
   estado.textContent = 'Cargando…';
   try {
-    // La API los devuelve ordenados por fecha y hora, desde 30 días atrás.
-    ({ turnos: todos } = await api('/api/pacientes/turnos'));
+    // Los turnos de sus mascotas (desde 30 días atrás) y los chequeos de sus adopciones en curso.
+    const [{ turnos }, chequeos] = await Promise.all([api('/api/pacientes/turnos'), chequeosDeAdopcion()]);
+    todos = [...turnos, ...chequeos].sort((a, b) => (a.fecha + a.hora).localeCompare(b.fecha + b.hora));
     const mascotas = new Map(todos.map((t) => [String(t.mascota.id), t.mascota.nombre]));
     llenarOpciones(document.getElementById('filtro-mascota'), [...mascotas].sort((a, b) => a[1].localeCompare(b[1])));
     const motivos = new Set(todos.map((t) => t.motivo));

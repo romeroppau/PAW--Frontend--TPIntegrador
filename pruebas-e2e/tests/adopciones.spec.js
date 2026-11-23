@@ -471,7 +471,7 @@ test('la búsqueda de en curso filtra por nombre y avisa si no hay ninguna', asy
 
   await page.getByLabel('Buscar', { exact: true }).first().fill('nadie');
   await page.getByRole('button', { name: 'Buscar' }).click();
-  await expect(page.locator('#estado-curso')).toHaveText('Ninguna adopción en curso coincide con la búsqueda.');
+  await expect(page.locator('#estado-curso')).toHaveText('Ninguna adopción en curso coincide con los filtros.');
 });
 
 test('el detalle de una adopción finalizada muestra a las personas, el recorrido y las postulaciones', async ({ page }) => {

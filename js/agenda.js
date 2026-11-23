@@ -19,6 +19,7 @@ import { textoEstadoTurno, textoMotivoTurno, textoEspecieMascota } from './etiqu
 import { aplicarHorario, horarioDeAtencion } from './horario.js';
 import { enlaceDuenio } from './personas.js';
 import { precioPara, promocionesDeTurnos, textoPrecio } from './precio-turno.js';
+import { enlaceMascota } from './mascota-datos.js';
 
 await exigirRol('VETERINARIO');
 
@@ -121,7 +122,7 @@ function fila(turno) {
   const tr = el('tr', '', { 'data-id': turno.id });
 
   const mascota = el('td');
-  mascota.append(el('strong', turno.mascota.nombre), el('span', textoEspecieMascota(turno.mascota.especie), { class: 'ayuda' }));
+  mascota.append(enlaceMascota(turno.mascota, el('strong', turno.mascota.nombre)), el('span', textoEspecieMascota(turno.mascota.especie), { class: 'ayuda' }));
 
   const duenio = el('td');
   // El nombre del dueño lleva a su ficha (datos de contacto y sus mascotas).

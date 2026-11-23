@@ -2,12 +2,18 @@
 // marcarlos como leídos desaparecen de acá y quedan en "Mis notificaciones" (cuenta/notificaciones.html),
 // que se abre con "Ver todas". Si esa página marca avisos, avisa con el evento "notificaciones-cambiaron"
 // y la campana se actualiza enseguida.
+//
+// Se actualiza sola cada 10 segundos mientras la pestaña está a la vista (con la pestaña en segundo
+// plano no consulta), y además enseguida al abrir la campana y al volver a la pestaña. Cuando llega un
+// aviso nuevo, el número de la campana late un momento.
 import { api } from './api.js';
 import { sesion } from './auth.js';
 import { el } from './ui.js';
 
-const INTERVALO_MS = 60000;
+const INTERVALO_MS = 10000;
 let boton, contador, panel, lista, timer;
+let noLeidasAntes = null;   // para notar cuándo llega un aviso nuevo
+let consultando = false;    // para no pedir dos veces a la vez
 
 // "2026-11-20 16:36:00" (hora de Argentina) -> "20/11/2026 16:36": día/mes/año, como en todo el sitio.
 function fechaHora(texto) {
@@ -18,6 +24,8 @@ function fechaHora(texto) {
 
 function pintar(datos) {
   const n = datos.no_leidas;
+  if (noLeidasAntes !== null && n > noLeidasAntes) avisarNovedad();
+  noLeidasAntes = n;
   contador.textContent = n > 99 ? '99+' : String(n);
   contador.hidden = n === 0;
   boton.setAttribute('aria-label', n ? `Notificaciones, ${n} sin leer` : 'Notificaciones');
@@ -39,9 +47,32 @@ function pintar(datos) {
   }
 }
 
+// El número late (css/notificaciones.css, .campana-latido); se quita la clase para poder repetirlo.
+function avisarNovedad() {
+  contador.classList.remove('campana-latido');
+  void contador.offsetWidth;            // reinicia la animación
+  contador.classList.add('campana-latido');
+}
+
 async function cargar() {
+  if (consultando) return;
+  consultando = true;
   try { pintar(await api('/api/notificaciones')); }
-  catch (e) { if (e.estado === 401) { clearInterval(timer); document.querySelector('.campana')?.remove(); } }
+  catch (e) { if (e.estado === 401) { detener(); document.querySelector('.campana')?.remove(); } }
+  finally { consultando = false; }
+}
+
+function detener() {
+  clearInterval(timer);
+  timer = null;
+}
+
+// Consulta ya y después cada INTERVALO_MS, solo con la pestaña a la vista.
+function seguir() {
+  detener();
+  if (document.hidden) return;
+  cargar();
+  timer = setInterval(cargar, INTERVALO_MS);
 }
 
 async function marcarLeida(id) {
@@ -78,7 +109,11 @@ if (usuario && zona) {
   panel = caja.querySelector('.campana-panel');
   lista = caja.querySelector('.campana-lista');
 
-  boton.addEventListener('click', () => alternar(panel.hidden));
+  boton.addEventListener('click', () => {
+    const abrir = panel.hidden;
+    alternar(abrir);
+    if (abrir) cargar();                  // al abrirla, lo más nuevo
+  });
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && !panel.hidden) { alternar(false); boton.focus(); }
   });
@@ -86,6 +121,9 @@ if (usuario && zona) {
 
   window.addEventListener('notificaciones-cambiaron', cargar);
 
-  await cargar();
-  timer = setInterval(cargar, INTERVALO_MS);
+  // Al volver a la pestaña (o a la ventana) se pone al día enseguida.
+  document.addEventListener('visibilitychange', seguir);
+  window.addEventListener('focus', () => { if (!document.hidden) cargar(); });
+
+  seguir();
 }
