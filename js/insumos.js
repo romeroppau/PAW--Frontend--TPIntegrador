@@ -72,7 +72,9 @@ function fila(insumo) {
 
   // Cada acción lleva aria-label con el nombre, así el lector de pantalla distingue
   // "Editar Gasa" de "Editar Jeringa".
-  const acciones = el('td', '', { class: 'acciones' });
+  // La caja con display:flex va adentro de la celda: si la celda misma fuera flex, dejaría de ser
+  // celda de tabla y se saldría de la tabla.
+  const acciones = el('div', '', { class: 'acciones' });
   acciones.append(
     el('a', 'Editar', { href: '/panel/insumo-form.html?id=' + insumo.id, 'aria-label': 'Editar ' + insumo.nombre }),
     el('a', 'Movimientos', { href: '/panel/insumo-movimientos.html?id=' + insumo.id, 'aria-label': 'Movimientos de ' + insumo.nombre })
@@ -92,7 +94,9 @@ function fila(insumo) {
     acciones.append(botonReactivar(insumo, error), error);
   }
 
-  tr.append(acciones);
+  const celda = el('td');
+  celda.append(acciones);
+  tr.append(celda);
   return tr;
 }
 

@@ -46,7 +46,9 @@ export const MENUS = {
         ['Insumos y stock', '/panel/insumos.html'],
         ['Movimientos', '/panel/insumo-movimientos.html']]],
       ['reportes', 'Reportes', 'Sugerencias, turnos atendidos y stock.', [
-        ['Sugerencias: qué promocionar y qué liquidar', '/panel/reportes.html'],
+        ['Qué promocionar', '/panel/reportes.html#promocionar'],
+        ['Qué liquidar', '/panel/reportes.html#liquidar'],
+        ['Promociones publicadas', '/panel/reportes.html#promociones'],
         ['Turnos atendidos', '/panel/reportes.html#turnos-atendidos'],
         ['Stock / movimientos de inventario', '/panel/reportes.html#stock']]],
       ['rescatistas', 'Rescatistas', 'Cuentas de rescatistas por aprobar.', [

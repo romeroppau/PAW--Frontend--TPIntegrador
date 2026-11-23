@@ -100,7 +100,8 @@ function fila(p) {
 
   // Celda de acciones. Cada control lleva aria-label con el nombre del producto
   // para que un lector de pantalla distinga "Editar Collar" de "Editar Alimento".
-  const acc = el('td', '', { class: 'acciones' });
+  // La caja con display:flex va adentro de la celda (una celda flex se sale de la tabla).
+  const acc = el('div', '', { class: 'acciones' });
   acc.append(
     el('a', 'Editar', { href: '/panel/producto-form.html?id=' + p.id, 'aria-label': 'Editar ' + p.nombre }),
     el('a', 'Movimientos', { href: '/panel/movimientos.html?id=' + p.id, 'aria-label': 'Movimientos de ' + p.nombre })
@@ -161,7 +162,9 @@ function fila(p) {
     acc.append(baja);
   }
 
-  tr.append(acc);
+  const celda = el('td');
+  celda.append(acc);
+  tr.append(celda);
   return tr;
 }
 
