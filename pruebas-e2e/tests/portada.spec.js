@@ -32,3 +32,20 @@ test('si el catálogo no responde, la sección de destacados no se muestra', asy
   await page.goto('/index.html');
   await expect(page.locator('#seccion-destacados')).toBeHidden();
 });
+
+test('la portada muestra el horario de atención que configuró la veterinaria', async ({ page }) => {
+  await simularSesion(page, null);
+  await page.route('**/api/pacientes/horario', (route) => responderJson(route, { apertura: '09:30', cierre: '18:00' }));
+  await page.goto('/index.html');
+  await expect(page.locator('.hero-ubicacion')).toContainText('Atendemos de lunes a sábado de 09:30 a 18:00');
+});
+
+test('la portada muestra la foto de la fachada, con su texto alternativo', async ({ page }) => {
+  await simularSesion(page, null);
+  await page.goto('/index.html');
+  // En el celular la sección "¿Dónde nos encontramos?" está oculta: se revisa la imagen igual.
+  const foto = page.locator('img.foto-fachada');
+  await expect(foto).toHaveAttribute('src', '/img/fachada.jpg');
+  await expect(foto).toHaveAttribute('alt', /Fachada de la veterinaria HuellaVet/);
+  await expect(page.locator('.imagen-provisoria.fachada')).toHaveCount(0);
+});
