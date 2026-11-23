@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ficha del cliente | HuellaVet</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Nunito+Sans:wght@400;600;700&display=swap">
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/cuenta.css">
+</head>
+<!-- Ficha del cliente (veterinaria, Entrega 5): los datos de un dueño (cliente o rescatista) y sus
+     mascotas. Se abre con ?id=102 desde Clientes y desde el nombre del dueño en Mascotas y en la Agenda.
+     Solo lectura. Lo maneja js/cliente-ficha.js con GET /api/clientes/{id} (Backend) y
+     GET /api/pacientes/mascotas (Pacientes). -->
+<body data-rol="VETERINARIO">
+  <a class="saltar" href="#contenido">Saltar al contenido</a>
+  <div id="encabezado-sitio"></div>
+  <script src="/js/layout.js"></script>
+  <main id="contenido" class="seccion" hidden>
+    <div class="contenedor">
+      <p><a href="/panel/clientes.html">&larr; Clientes</a></p>
+      <p class="estado" id="estado" role="status">Cargando…</p>
+
+      <article id="ficha" hidden>
+        <h1 id="nombre">Cliente</h1>
+        <p id="tipo" class="etiqueta"></p>
+
+        <section class="tarjeta bloque-cuenta" aria-labelledby="titulo-contacto">
+          <h2 id="titulo-contacto">Contacto</h2>
+          <dl class="datos-persona">
+            <div><dt>Email</dt><dd id="email"></dd></div>
+            <div><dt>Teléfono</dt><dd id="telefono"></dd></div>
+            <div id="dato-organizacion" hidden><dt>Organización</dt><dd id="organizacion"></dd></div>
+          </dl>
+        </section>
+
+        <section class="bloque-cuenta" aria-labelledby="titulo-mascotas">
+          <h2 id="titulo-mascotas">Sus mascotas</h2>
+          <p class="estado" id="estado-mascotas" role="status">Cargando sus mascotas…</p>
+          <div class="tabla-scroll" id="tabla-mascotas" hidden>
+            <table>
+              <caption class="solo-lectores">Mascotas del cliente</caption>
+              <thead><tr><th scope="col">Nombre</th><th scope="col">Especie</th><th scope="col">Acciones</th></tr></thead>
+              <tbody id="filas-mascotas"></tbody>
+            </table>
+          </div>
+        </section>
+      </article>
+    </div>
+  </main>
+  <div id="pie-sitio"></div>
+
+  <script type="module" src="/js/menu.js"></script>
+  <script type="module" src="/js/guardia-panel.js"></script>
+  <script type="module" src="/js/auth.js"></script>
+  <script type="module" src="/js/cliente-ficha.js"></script>
+</body>
+</html>
