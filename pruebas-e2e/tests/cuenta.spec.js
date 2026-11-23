@@ -10,13 +10,13 @@ const cuentaDe = (u, extra = {}) => ({ id: u.id, nombre: u.nombre, email: u.emai
 
 // ---------- Mis datos ----------
 
-test('mis datos: el cliente ve sus datos (el email no se cambia) y guarda nombre y teléfono', async ({ page }) => {
+test('mis datos: el cliente ve sus datos (el email y el teléfono no se cambian con Guardar) y guarda el nombre', async ({ page }) => {
   await simularSesion(page, CLIENTE);
   let enviado = null;
   await page.route('**/api/cuenta', (route) => {
     if (route.request().method() === 'PUT') {
       enviado = route.request().postDataJSON();
-      return responderJson(route, cuentaDe(CLIENTE, { nombre: enviado.nombre, telefono: '2323666666' }));
+      return responderJson(route, cuentaDe(CLIENTE, { nombre: enviado.nombre }));
     }
     return responderJson(route, cuentaDe(CLIENTE));
   });
@@ -26,14 +26,16 @@ test('mis datos: el cliente ve sus datos (el email no se cambia) y guarda nombre
   await expect(page.getByLabel('Email')).not.toBeEditable();
   await expect(page.getByLabel('Nombre y apellido')).toHaveValue('Cliente de Prueba');
   await expect(page.getByLabel('Teléfono', { exact: true })).toHaveValue('2323555555');
+  // El teléfono se cambia aparte, verificando el número nuevo por WhatsApp.
+  await expect(page.getByLabel('Teléfono', { exact: true })).not.toBeEditable();
+  await expect(page.getByRole('button', { name: 'Cambiar número' })).toBeVisible();
   await expect(page.getByLabel('Organización (opcional)')).toBeHidden();
   await expect(page.getByRole('link', { name: '← Volver al panel' })).toHaveAttribute('href', '/paneles/panel-cliente.html');
 
   await page.getByLabel('Nombre y apellido').fill('Ana Pérez');
-  await page.getByLabel('Teléfono', { exact: true }).fill('2323 666666');
   await page.getByRole('button', { name: 'Guardar cambios' }).click();
   await expect(page.locator('#ok-datos')).toHaveText('Guardamos tus datos.');
-  expect(enviado).toEqual({ nombre: 'Ana Pérez', telefono: '2323 666666' });
+  expect(enviado).toEqual({ nombre: 'Ana Pérez' });
   // El nombre de arriba a la derecha se actualiza enseguida.
   await expect(page.locator('.sesion-nombre').first()).toHaveText('Ana Pérez');
 });
@@ -41,12 +43,12 @@ test('mis datos: el cliente ve sus datos (el email no se cambia) y guarda nombre
 test('mis datos: los errores del servidor se muestran en cada campo', async ({ page }) => {
   await simularSesion(page, CLIENTE);
   await page.route('**/api/cuenta', (route) => route.request().method() === 'PUT'
-    ? responderJson(route, { error: 'Datos inválidos', campos: { telefono: 'El teléfono es obligatorio' } }, 400)
+    ? responderJson(route, { error: 'Datos inválidos', campos: { nombre: 'El nombre es obligatorio' } }, 400)
     : responderJson(route, cuentaDe(CLIENTE)));
   await page.goto('/cuenta/mis-datos.html');
-  await page.getByLabel('Teléfono', { exact: true }).fill('');
+  await page.getByLabel('Nombre y apellido').fill('');
   await page.getByRole('button', { name: 'Guardar cambios' }).click();
-  await expect(page.locator('#error-telefono')).toHaveText('El teléfono es obligatorio');
+  await expect(page.locator('#error-nombre')).toHaveText('El nombre es obligatorio');
   await expect(page.locator('#ok-datos')).toBeHidden();
 });
 
@@ -73,6 +75,8 @@ test('mis datos: para la veterinaria el teléfono es opcional y vuelve a su pane
   await page.route('**/api/cuenta', (route) => responderJson(route, cuentaDe(VET, { telefono: null })));
   await page.goto('/cuenta/mis-datos.html');
   await expect(page.getByLabel('Teléfono (opcional)')).toHaveValue('');
+  // Sin teléfono, lo puede agregar (también verificándolo por WhatsApp).
+  await expect(page.getByRole('button', { name: 'Agregar número' })).toBeVisible();
   await expect(page.getByRole('link', { name: '← Volver al panel' })).toHaveAttribute('href', '/paneles/panel-administrador.html');
 });
 

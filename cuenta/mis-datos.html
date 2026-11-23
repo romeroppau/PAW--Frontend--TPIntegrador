@@ -41,12 +41,15 @@
             <span class="campo-error" id="error-nombre"></span>
           </div>
 
+          <!-- El teléfono no se cambia con "Guardar": se cambia verificando el número nuevo por WhatsApp
+               (sección "Cambiar tu WhatsApp", más abajo). -->
           <div class="campo">
-            <label for="telefono" id="etiqueta-telefono">Teléfono</label>
-            <input type="tel" id="telefono" name="telefono" autocomplete="tel" placeholder="ej.: 2323 555555" aria-describedby="ayuda-telefono error-telefono">
+            <label for="telefono-actual" id="etiqueta-telefono">Teléfono</label>
+            <input type="tel" id="telefono-actual" readonly aria-describedby="ayuda-telefono">
             <span class="campo-ayuda" id="ayuda-telefono">A este número te llegan los avisos por WhatsApp.</span>
-            <span class="campo-error" id="error-telefono"></span>
+            <button type="button" class="boton boton-borde boton-chico" id="cambiar-telefono" aria-controls="bloque-telefono" aria-expanded="false">Cambiar número</button>
           </div>
+          <p id="ok-telefono" class="mensaje mensaje-ok" role="status" hidden></p>
 
           <!-- Solo el rescatista. -->
           <div class="campo" id="campo-organizacion" hidden>
@@ -58,6 +61,34 @@
           <p id="error-general" class="mensaje mensaje-error" role="alert" hidden></p>
           <p id="ok-datos" class="mensaje mensaje-ok" role="status" hidden></p>
           <button type="submit" class="boton">Guardar cambios</button>
+        </form>
+      </section>
+
+      <!-- Cambiar (o agregar) el WhatsApp: código al número nuevo y confirmación. Hasta confirmar,
+           sigue el número anterior. js/mis-datos.js. -->
+      <section class="tarjeta bloque-cuenta" aria-labelledby="titulo-telefono" id="bloque-telefono" hidden>
+        <h2 id="titulo-telefono">Cambiar tu WhatsApp</h2>
+        <p>Te mandamos un código al número nuevo. Tu número cambia recién cuando escribís ese código; mientras tanto, los avisos siguen llegando al anterior.</p>
+        <form id="form-telefono" novalidate>
+          <div class="campo">
+            <label for="telefono">Celular nuevo con WhatsApp</label>
+            <input type="tel" id="telefono" name="telefono" autocomplete="tel" placeholder="ej.: 2323 555555" aria-describedby="error-telefono">
+            <span class="campo-error" id="error-telefono"></span>
+          </div>
+          <button type="button" class="boton boton-borde" id="enviar-codigo">Enviar código por WhatsApp</button>
+
+          <div class="campo" id="campo-codigo" hidden>
+            <label for="codigo">Código que te llegó por WhatsApp</label>
+            <input type="text" id="codigo" name="codigo" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="6 números" aria-describedby="ayuda-codigo error-codigo">
+            <span class="campo-ayuda" id="ayuda-codigo" role="status"></span>
+            <span class="campo-error" id="error-codigo"></span>
+          </div>
+
+          <p id="error-telefono-general" class="mensaje mensaje-error" role="alert" hidden></p>
+          <div class="acciones">
+            <button type="submit" class="boton" id="confirmar-telefono" hidden>Confirmar número</button>
+            <button type="button" class="boton boton-borde" id="cancelar-telefono">Cancelar</button>
+          </div>
         </form>
       </section>
 
