@@ -17,6 +17,7 @@ import { exigirRol } from './auth.js';
 import { confirmar, el, limpiarErrores, mostrarErrores } from './ui.js';
 import { textoEstadoTurno, textoMotivoTurno, textoEspecieMascota } from './etiquetas.js';
 import { aplicarHorario, horarioDeAtencion } from './horario.js';
+import { enlaceDuenio } from './personas.js';
 
 await exigirRol('VETERINARIO');
 
@@ -122,7 +123,8 @@ function fila(turno) {
   mascota.append(el('strong', turno.mascota.nombre), el('span', textoEspecieMascota(turno.mascota.especie), { class: 'ayuda' }));
 
   const duenio = el('td');
-  duenio.append(el('span', turno.duenio.nombre));
+  // El nombre del dueño lleva a su ficha (datos de contacto y sus mascotas).
+  duenio.append(enlaceDuenio(turno.duenio));
   if (turno.duenio.telefono) {
     duenio.append(el('a', turno.duenio.telefono, { class: 'ayuda', href: 'tel:' + turno.duenio.telefono }));
   }
