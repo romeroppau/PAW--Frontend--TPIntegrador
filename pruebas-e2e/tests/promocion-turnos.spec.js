@@ -74,12 +74,15 @@ test('"Qué promocionar": las 5 franjas con menos turnos se publicitan con el de
   expect(enviados[0]).toMatchObject({ dia_semana: 2, franja: 'TARDE', porcentaje: 20 });
   await expect(page.locator('#aviso-franjas')).toContainText('Listo: Martes a la tarde tiene 20 % de descuento en la consulta');
   await expect(page.getByRole('button', { name: 'Publicitar Martes a la tarde' })).toHaveCount(0);
+  // Las publicadas están en su propia pestaña, y desde ahí se terminan.
+  await page.getByRole('tab', { name: 'Promociones publicadas' }).click();
   await expect(page.locator('#filas-promo-turnos')).toContainText('$12.000,00 (antes $15.000,00)');
 
   await page.getByRole('button', { name: 'Terminar la promoción de Martes a la tarde' }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Terminar la promoción' }).click();
-  await expect(page.locator('#aviso-franjas')).toHaveText('Se terminó la promoción de Martes a la tarde.');
+  await expect(page.locator('#aviso-publicadas')).toHaveText('Se terminó la promoción de Martes a la tarde.');
   expect(terminadas).toEqual(['3']);
+  await page.getByRole('tab', { name: 'Qué promocionar' }).click();
   await expect(page.getByRole('button', { name: 'Publicitar Martes a la tarde' })).toBeVisible();
 });
 

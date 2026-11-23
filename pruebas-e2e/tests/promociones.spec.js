@@ -116,9 +116,10 @@ async function simularReportes(page, { responderPost } = {}) {
 
 test('"Publicitar" propone el descuento sugerido hasta el vencimiento y publica la promoción', async ({ page }) => {
   const { vence, pedidos, terminadas } = await simularReportes(page);
-  await page.goto('/panel/reportes.html');
+  await page.goto('/panel/reportes.html#promociones');
 
   await expect(page.locator('#vacio-promociones')).toBeVisible();
+  await page.getByRole('tab', { name: 'Qué liquidar' }).click();
   await page.getByRole('button', { name: 'Publicitar Pipeta antipulgas' }).click();
 
   const dialogo = page.getByRole('dialog', { name: 'Publicitar' });
@@ -137,15 +138,18 @@ test('"Publicitar" propone el descuento sugerido hasta el vencimiento y publica 
   // La fila de "Qué liquidar" ya no ofrece Publicitar, y la promoción aparece en la lista.
   await expect(page.getByRole('button', { name: 'Publicitar Pipeta antipulgas' })).toHaveCount(0);
   await expect(page.locator('#filas-liquidar')).toContainText(`30 % hasta el ${aTexto(vence).slice(0, 5)}`);
+  await page.getByRole('tab', { name: 'Promociones publicadas' }).click();
   await expect(page.locator('#filas-promociones tr')).toHaveCount(1);
   await expect(page.locator('#filas-promociones')).toContainText('$4.550,00 (antes $6.500,00)');
 
   // Terminar pide confirmación y la saca de la lista.
   await page.getByRole('button', { name: 'Terminar la promoción de Pipeta antipulgas' }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Terminar la promoción' }).click();
-  await expect(page.locator('#aviso-promociones')).toHaveText('Se terminó la promoción de "Pipeta antipulgas".');
+  // El aviso se ve en la pestaña abierta.
+  await expect(page.locator('#aviso-publicadas')).toHaveText('Se terminó la promoción de "Pipeta antipulgas".');
   expect(terminadas).toEqual(['3']);
   await expect(page.locator('#vacio-promociones')).toBeVisible();
+  await page.getByRole('tab', { name: 'Qué liquidar' }).click();
   await expect(page.getByRole('button', { name: 'Publicitar Pipeta antipulgas' })).toBeVisible();
 });
 
@@ -156,7 +160,7 @@ test('si Inventario rechaza el descuento, el error se ve en el campo y el cuadro
       campos: { hasta: 'El producto vence el 02/12/2026: la promoción no puede durar más que eso' },
     }, 400),
   });
-  await page.goto('/panel/reportes.html');
+  await page.goto('/panel/reportes.html#liquidar');
 
   await page.getByRole('button', { name: 'Publicitar Pipeta antipulgas' }).click();
   const dialogo = page.getByRole('dialog', { name: 'Publicitar' });
@@ -169,4 +173,24 @@ test('si Inventario rechaza el descuento, el error se ve en el campo y el cuadro
   await dialogo.getByRole('button', { name: 'Cancelar' }).click();
   await expect(dialogo).toBeHidden();
   await expect(page.getByRole('button', { name: 'Publicitar Pipeta antipulgas' })).toBeFocused();
+});
+
+test('las sugerencias son tres pestañas, con un solo pedido, y los enlaces viejos (#sugerencias) siguen andando', async ({ page }) => {
+  let pedidos = 0;
+  await simularReportes(page);
+  page.on('request', (r) => { if (r.url().endsWith('/api/reportes/sugerencias')) pedidos++; });
+  await page.goto('/panel/reportes.html#sugerencias');
+
+  await expect(page.getByRole('tablist', { name: 'Secciones de reportes' }).getByRole('tab'))
+    .toHaveText(['Qué promocionar', 'Qué liquidar', 'Promociones publicadas', 'Turnos atendidos', 'Stock y movimientos']);
+  await expect(page.getByRole('tab', { name: 'Qué promocionar' })).toHaveAttribute('aria-selected', 'true');
+  await expect(page.getByRole('heading', { name: 'Qué liquidar' })).toBeHidden();
+
+  await page.getByRole('tab', { name: 'Qué liquidar' }).click();
+  await expect(page).toHaveURL(/#liquidar$/);
+  await expect(page.getByRole('heading', { name: 'Qué liquidar' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Qué promocionar' })).toBeHidden();
+  await page.getByRole('tab', { name: 'Promociones publicadas' }).click();
+  await expect(page.getByRole('heading', { name: 'Promociones publicadas' })).toBeVisible();
+  expect(pedidos).toBe(1);
 });
