@@ -7,6 +7,7 @@
   <meta name="description" content="Panel de rescatista de HuellaVet.">
   <title>Panel de rescatista | HuellaVet</title>
   <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/barra-rol.css">
   <link rel="stylesheet" href="/css/paneles.css">
 </head>
 
@@ -15,89 +16,10 @@
   <header class="panel-cabecera">
     <div class="contenedor"><a class="panel-marca" href="/index.html">HuellaVet</a>
       <p class="panel-usuario">Panel de rescatista</p>
-      <!-- js/auth.js lo rellena con el nombre del usuario y el botón "Salir" -->
+      <!-- js/auth.js cambia esta cabecera por la del rol, con su barra de menús (js/barra-rol.js) -->
       <div class="sesion" id="sesion"></div>
     </div>
   </header>
-  <nav class="panel-nav" aria-label="Navegación del rescatista">
-    <!-- Cada sección es un <details>: se despliega con clic, Enter o Espacio (js/panel-menu.js
-         solo cierra el abierto al hacer clic afuera o con Escape). -->
-    <ul class="contenedor panel-menu">
-      <li>
-        <details class="panel-desplegable" id="cuenta" name="panel-menu">
-          <summary>Mi cuenta</summary>
-          <div class="panel-desplegable-caja">
-            <p class="panel-desplegable-desc">Tus datos de contacto.</p>
-            <ul class="panel-opciones">
-              <li><a href="/cuenta/mis-datos.html">Datos personales</a></li>
-            </ul>
-          </div>
-        </details>
-      </li>
-      <li>
-        <details class="panel-desplegable" id="publicaciones" name="panel-menu">
-          <summary>Mis publicaciones</summary>
-          <div class="panel-desplegable-caja">
-            <p class="panel-desplegable-desc">Los animales que publicaste.</p>
-            <ul class="panel-opciones">
-              <li><a href="/rescatista/publicaciones.html">Nueva publicación</a></li>
-              <li><a href="/rescatista/publicaciones.html">Ver mis publicaciones</a></li>
-              <li><a href="/cliente/mascotas.html">Mis mascotas</a></li>
-            </ul>
-          </div>
-        </details>
-      </li>
-      <li>
-        <details class="panel-desplegable" id="postulaciones" name="panel-menu">
-          <summary>Postulaciones</summary>
-          <div class="panel-desplegable-caja">
-            <p class="panel-desplegable-desc">Quiénes quieren adoptar.</p>
-            <ul class="panel-opciones">
-              <li><a href="/rescatista/publicaciones.html">Postulantes por animal</a></li>
-              <li><a href="/rescatista/publicaciones.html">Elegir adoptante</a></li>
-            </ul>
-          </div>
-        </details>
-      </li>
-      <li>
-        <details class="panel-desplegable" id="seguimiento" name="panel-menu">
-          <summary>Seguimiento de adopciones</summary>
-          <div class="panel-desplegable-caja">
-            <p class="panel-desplegable-desc">Chequeos y adopciones terminadas.</p>
-            <ul class="panel-opciones">
-              <li><a href="/rescatista/publicaciones.html">Chequeo pendiente</a></li>
-              <li><a href="/rescatista/publicaciones.html">Adopciones finalizadas</a></li>
-            </ul>
-          </div>
-        </details>
-      </li>
-      <li>
-        <details class="panel-desplegable" id="tienda" name="panel-menu">
-          <summary>Tienda</summary>
-          <div class="panel-desplegable-caja">
-            <p class="panel-desplegable-desc">También podés comprar en la tienda.</p>
-            <ul class="panel-opciones">
-              <li><a href="/catalogo/catalogo.html">Ver catálogo de productos</a></li>
-              <li><a href="/tienda/carrito.html">Mi carrito</a></li>
-              <li><a href="/tienda/compras.html">Mis compras</a></li>
-            </ul>
-          </div>
-        </details>
-      </li>
-      <li>
-        <details class="panel-desplegable" id="notificaciones" name="panel-menu">
-          <summary>Notificaciones</summary>
-          <div class="panel-desplegable-caja">
-            <p class="panel-desplegable-desc">Publicaciones, postulaciones y adopciones.</p>
-            <ul class="panel-opciones">
-              <li><a href="/cuenta/notificaciones.html">Ver mis notificaciones</a></li>
-            </ul>
-          </div>
-        </details>
-      </li>
-      <li><a class="panel-menu-enlace" href="#contacto">Contactanos</a></li>
-    </ul>
-  </nav>
   <!-- hidden: se muestra recién cuando guardia-panel.js confirma el rol -->
   <main class="panel-principal" hidden>
     <section class="panel-intro">
@@ -137,7 +59,6 @@
 
   <script type="module" src="/js/guardia-panel.js"></script>
   <script type="module" src="/js/auth.js"></script>
-  <script type="module" src="/js/panel-menu.js"></script>
   <script type="module" src="/js/contacto-panel.js"></script>
 </body>
 

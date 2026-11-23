@@ -22,7 +22,7 @@
 const paw = `<svg viewBox="0 0 64 64" aria-hidden="true" focusable="false"><g fill="#1d4b43"><ellipse cx="14" cy="27" rx="7" ry="9"/><ellipse cx="29" cy="15" rx="7" ry="10"/><ellipse cx="45" cy="15" rx="7" ry="10"/><ellipse cx="57" cy="29" rx="6" ry="9"/><path d="M32 31c-9 0-18 9-18 17 0 6 5 9 11 8 3-.6 5-1.5 7-1.5s4 .9 7 1.5c6 1 11-2 11-8 0-8-9-17-18-17z"/></g></svg>`;
 
 // Encabezado. Los ids (#menu-boton, #menu-cerrar, #navegacion, #menu, #sesion) los usan
-// menu.js (menú hamburguesa) y auth.js (nombre de usuario, "Salir" y enlace "Panel").
+// menu.js (menú hamburguesa) y auth.js (nombre de usuario y "Salir"; con sesión, la barra del panel).
 const encabezado = `<header class="encabezado"><div class="contenedor encabezado-fila">
   <a class="marca-logo" href="/index.html" aria-label="HuellaVet, ir al inicio">${paw}</a>
   <a class="marca-nombre" href="/index.html">HuellaVet</a>
@@ -35,6 +35,17 @@ const encabezado = `<header class="encabezado"><div class="contenedor encabezado
 
 // Pie simple de las páginas internas (el del home es más completo).
 const pie = `<footer class="pie"><div class="contenedor"><div><h2>HuellaVet</h2><p>Programación en Ambiente Web · TP Integrador 2026 · Grupo La 25</p></div></div></footer>`;
+
+// Con sesión, auth.js cambia este encabezado por la barra de "Mi panel" (js/barra-rol.js). Si ya se
+// sabe que hay sesión (auth.js guarda el rol al pintar), el menú público queda oculto mientras tanto,
+// para que no aparezca y desaparezca. La hoja de estilos de la barra se pide desde ya.
+try {
+  if (sessionStorage.getItem('huellavet-rol')) document.documentElement.classList.add('barra-pendiente');
+} catch { /* sin almacenamiento: no pasa nada */ }
+const estilosBarra = document.createElement('link');
+estilosBarra.rel = 'stylesheet';
+estilosBarra.href = '/css/barra-rol.css';
+document.head.append(estilosBarra);
 
 // Encabezado: se inyecta de inmediato (este script corre justo después de su marcador).
 // outerHTML reemplaza el <div> marcador completo por el contenido real.

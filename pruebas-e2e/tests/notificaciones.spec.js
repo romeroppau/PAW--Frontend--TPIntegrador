@@ -97,5 +97,5 @@ test('la tarjeta Notificaciones de los paneles lleva al historial', async ({ pag
   await simularSesion(page, CLIENTE);
   await page.goto('/paneles/panel-cliente.html');
   await abrirSeccion(page, 'notificaciones');
-  await expect(page.locator('#notificaciones').getByRole('link', { name: 'Ver mis notificaciones' })).toHaveAttribute('href', '/cuenta/notificaciones.html');
+  await expect(page.locator('#menu-notificaciones').getByRole('link', { name: 'Ver mis notificaciones' })).toHaveAttribute('href', '/cuenta/notificaciones.html');
 });

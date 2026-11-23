@@ -7,6 +7,7 @@
   <meta name="description" content="Panel de cliente de HuellaVet.">
   <title>Panel de cliente | HuellaVet</title>
   <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/barra-rol.css">
   <link rel="stylesheet" href="/css/paneles.css">
 </head>
 
@@ -16,107 +17,10 @@
     <div class="contenedor">
       <a class="panel-marca" href="/index.html">HuellaVet</a>
       <p class="panel-usuario">Panel de cliente · Bienvenido/a</p>
-      <!-- js/auth.js lo rellena con el nombre del usuario y el botón "Salir" -->
+      <!-- js/auth.js cambia esta cabecera por la del rol, con su barra de menús (js/barra-rol.js) -->
       <div class="sesion" id="sesion"></div>
     </div>
   </header>
-  <nav class="panel-nav" aria-label="Navegación del cliente">
-    <!-- Cada sección es un <details>: se despliega con clic, Enter o Espacio (js/panel-menu.js
-         solo cierra el abierto al hacer clic afuera o con Escape). -->
-    <ul class="contenedor panel-menu">
-      <li>
-        <details class="panel-desplegable" id="cuenta" name="panel-menu">
-          <summary>Mi cuenta</summary>
-          <div class="panel-desplegable-caja">
-            <p class="panel-desplegable-desc">Tus datos, turnos y compras.</p>
-            <ul class="panel-opciones">
-              <li><a href="/cuenta/mis-datos.html">Datos personales</a></li>
-              <li><a href="/cliente/turnos.html">Mis turnos</a></li>
-              <li><a href="/tienda/compras.html">Mis compras</a></li>
-              <li><a href="/cliente/historial.html">Ver factura</a></li>
-            </ul>
-          </div>
-        </details>
-      </li>
-      <li>
-        <details class="panel-desplegable" id="mascotas" name="panel-menu">
-          <summary>Mis mascotas</summary>
-          <div class="panel-desplegable-caja">
-            <p class="panel-desplegable-desc">Fichas, historia clínica y vacunas.</p>
-            <ul class="panel-opciones">
-              <li><a href="/cliente/mascotas.html">Agregar o editar mascotas</a></li>
-              <li><a href="/cliente/mascotas.html">Ver ficha y datos</a></li>
-              <li><a href="/cliente/historial.html">Historial clínico</a></li>
-              <li><a href="/cliente/calendario.html">Calendario sanitario</a></li>
-            </ul>
-          </div>
-        </details>
-      </li>
-      <li>
-        <details class="panel-desplegable" id="turnos" name="panel-menu">
-          <summary>Solicitar turno</summary>
-          <div class="panel-desplegable-caja">
-            <p class="panel-desplegable-desc">Te respondemos por WhatsApp.</p>
-            <ul class="panel-opciones">
-              <li><a href="https://wa.me/5491139010486?text=Hola%2C%20quiero%20solicitar%20un%20turno" target="_blank" rel="noopener noreferrer">Pedir turno por WhatsApp</a></li>
-            </ul>
-          </div>
-        </details>
-      </li>
-      <li>
-        <details class="panel-desplegable" id="tienda" name="panel-menu">
-          <summary>Tienda</summary>
-          <div class="panel-desplegable-caja">
-            <p class="panel-desplegable-desc">Productos para tu mascota.</p>
-            <ul class="panel-opciones">
-              <li><a href="/catalogo/catalogo.html#promociones">Promociones</a></li>
-              <li><a href="/catalogo/catalogo.html?categoria=MEDICAMENTO">Medicamentos</a></li>
-              <li><a href="/catalogo/catalogo.html?categoria=ALIMENTO">Alimento balanceado</a></li>
-              <li><a href="/catalogo/catalogo.html?categoria=ACCESORIO">Accesorios</a></li>
-              <li><a href="/catalogo/catalogo.html">Ver catálogo de productos</a></li>
-            </ul>
-          </div>
-        </details>
-      </li>
-      <li>
-        <details class="panel-desplegable" id="adopcion" name="panel-menu">
-          <summary>Adopción</summary>
-          <div class="panel-desplegable-caja">
-            <p class="panel-desplegable-desc">Animales que buscan familia.</p>
-            <ul class="panel-opciones">
-              <li><a href="/adopciones/adopciones.html">Animales disponibles</a></li>
-              <li><a href="/adopciones/adopciones.html">Postularse</a></li>
-              <li><a href="/adopciones/adopciones.html#seccion-mias">Mis postulaciones</a></li>
-            </ul>
-          </div>
-        </details>
-      </li>
-      <li>
-        <details class="panel-desplegable" id="notificaciones" name="panel-menu">
-          <summary>Notificaciones</summary>
-          <div class="panel-desplegable-caja">
-            <p class="panel-desplegable-desc">Turnos, compras y actividad de la cuenta.</p>
-            <ul class="panel-opciones">
-              <li><a href="/cuenta/notificaciones.html">Ver mis notificaciones</a></li>
-            </ul>
-          </div>
-        </details>
-      </li>
-      <li>
-        <details class="panel-desplegable" id="carrito" name="panel-menu">
-          <summary>Carrito</summary>
-          <div class="panel-desplegable-caja">
-            <p class="panel-desplegable-desc">Lo que elegiste en la tienda.</p>
-            <ul class="panel-opciones">
-              <li><a href="/tienda/carrito.html">Ver mi carrito</a></li>
-              <li><a href="/tienda/compras.html">Mis compras</a></li>
-            </ul>
-          </div>
-        </details>
-      </li>
-      <li><a class="panel-menu-enlace" href="#contacto">Contactanos</a></li>
-    </ul>
-  </nav>
   <!-- hidden: se muestra recién cuando guardia-panel.js confirma el rol -->
   <main class="panel-principal" hidden>
     <section class="panel-intro">
@@ -156,7 +60,6 @@
 
   <script type="module" src="/js/guardia-panel.js"></script>
   <script type="module" src="/js/auth.js"></script>
-  <script type="module" src="/js/panel-menu.js"></script>
   <script type="module" src="/js/contacto-panel.js"></script>
 </body>
 

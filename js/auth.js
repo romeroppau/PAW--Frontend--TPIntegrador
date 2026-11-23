@@ -2,9 +2,9 @@
  * auth.js — Estado de sesión en todas las páginas.
  *
  * Al cargarse, consulta al backend quién es el usuario actual (GET /api/auth/yo) y:
- *   - sin sesión: deja los botones "Inicia sesión" y "Registro" del encabezado;
- *   - con sesión: los reemplaza por el nombre del usuario y un botón "Salir";
- *   - si el rol es veterinario: agrega el enlace "Panel" al menú.
+ *   - sin sesión: deja el encabezado público, con "Inicia sesión" y "Registro";
+ *   - con sesión: pone la barra de "Mi panel" de su rol (barra-rol.js) en lugar del menú público,
+ *     con el nombre del usuario, la campana y un botón "Salir".
  *
  * IMPORTANTE: esto es solo presentación. Ocultar o mostrar opciones NO protege nada.
  * La seguridad real (quién puede ver o modificar qué) la hace el backend en cada endpoint.
@@ -19,6 +19,7 @@
  */
 import { api, setCsrf } from './api.js';
 import { el } from './ui.js';
+import { dibujarBarra } from './barra-rol.js';
 
 // Usuario actual en memoria. null = sin sesión.
 let usuario = null;
@@ -65,65 +66,55 @@ export async function exigirRol(roles) {
   return u;
 }
 
-/**
- * Enlaces que cada rol ve en el menú del encabezado, además de los comunes.
- * Para sumar una pantalla al menú de un rol, se agrega una fila acá.
- */
-const ENLACES_POR_ROL = {
-  VETERINARIO: [
-    ['Mi panel', '/paneles/panel-administrador.html'],
-    ['Agenda', '/panel/agenda.html'],
-    ['Adopciones y rescatistas', '/panel/adopciones.html'],
-    ['Ventas', '/panel/ventas.html'],
-    ['Reportes', '/panel/reportes.html'],
-  ],
-  CLIENTE: [
-    ['Mi panel', '/paneles/panel-cliente.html'],
-    ['Mis mascotas', '/cliente/mascotas.html'],
-    ['Mis turnos', '/cliente/turnos.html'],
-    ['Mis compras', '/tienda/compras.html'],
-    ['Carrito', '/tienda/carrito.html'],
-  ],
-  RESCATISTA: [
-    ['Mi panel', '/paneles/panel-rescatista.html'],
-    ['Mis mascotas', '/cliente/mascotas.html'],
-    ['Mis publicaciones', '/rescatista/publicaciones.html'],
-    ['Mis compras', '/tienda/compras.html'],
-    ['Carrito', '/tienda/carrito.html'],
-  ],
-};
-
 // Roles que pueden comprar en la tienda: ven "Carrito (N)" en el menú.
 const COMPRADORES = ['CLIENTE', 'RESCATISTA'];
 
-/** Ajusta el encabezado según el usuario: nombre, botón "Salir" y los enlaces de su rol en el menú. */
+/** Agrega una hoja de estilos si la página todavía no la tiene. */
+function estilos(href) {
+  if (!document.querySelector(`link[href="${href}"]`)) {
+    document.head.append(el('link', '', { rel: 'stylesheet', href }));
+  }
+}
+
+/** Recuerda el rol entre pantallas, para que layout.js no muestre el menú público mientras carga. */
+function recordarRol(rol) {
+  try {
+    if (rol) sessionStorage.setItem('huellavet-rol', rol);
+    else sessionStorage.removeItem('huellavet-rol');
+  } catch { /* sin almacenamiento: se ve el menú público un instante, nada más */ }
+  document.documentElement.classList.remove('barra-pendiente');
+}
+
+/**
+ * Ajusta el encabezado según el usuario: con sesión, la barra de su panel en lugar del menú público
+ * (barra-rol.js), el nombre con su enlace a "Mis datos", "Salir", la campana y "Carrito (N)".
+ */
 function pintar() {
+  recordarRol(usuario?.rol);
+  if (!usuario) return;                           // sin sesión queda el encabezado público
+
+  estilos('/css/barra-rol.css');
+  if (dibujarBarra(usuario)) {
+    // La campana va en la cabecera del panel (las páginas de panel no la cargaban).
+    estilos('/css/notificaciones.css');
+    import('./notificaciones.js');
+  }
+
   const zona = document.getElementById('sesion'); // contenedor de los botones de sesión
-  const menu = document.getElementById('menu');   // lista de enlaces del menú
-  if (!usuario || !zona) return;                  // sin sesión no se toca nada
+  if (!zona) return;
 
   // Botón "Salir": pide al backend que borre la cookie (responde 204 sin cuerpo; exige el token CSRF)
   // y vuelve al inicio.
   const salir = el('button', 'Salir', { type: 'button', class: 'boton boton-borde' });
   salir.addEventListener('click', async () => {
     try { await api('/api/auth/logout', { metodo: 'POST' }); } catch { /* aunque falle, se sale igual de la pantalla */ }
+    recordarRol(null);
     location.href = '/index.html';
   });
   // El nombre lleva a "Mis datos" (Entrega 5), como en la mayoría de los sitios.
   zona.replaceChildren(el('a', usuario.nombre ?? 'Mi cuenta', {
     class: 'sesion-nombre', href: '/cuenta/mis-datos.html', title: 'Mis datos',
   }), salir);
-
-  // Enlaces del menú según el rol (el veterinario entra por la portada del panel de administración).
-  if (menu) {
-    for (const [texto, destino] of ENLACES_POR_ROL[usuario.rol] ?? []) {
-      const li = el('li');
-      const enlace = el('a', texto, { href: destino });
-      if (destino === '/tienda/carrito.html') enlace.id = 'enlace-carrito';
-      li.append(enlace);
-      menu.append(li);
-    }
-  }
 
   if (COMPRADORES.includes(usuario.rol)) contarCarrito();
 }

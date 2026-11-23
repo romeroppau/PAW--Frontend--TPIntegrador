@@ -30,13 +30,13 @@ for (const pagina of ['registro-cliente', 'registro-rescatista']) {
   });
 }
 
-test('"Atender consulta" del menú lleva a la agenda', async ({ page }) => {
+test('"Agenda de turnos" del menú lleva a la agenda', async ({ page }) => {
   await simularSesion(page, VETERINARIO);
   await page.route('**/api/pacientes/turnos**', (route) => responderJson(route, { fecha: '2026-11-09', turnos: [] }));
 
   await page.goto('/paneles/panel-administrador.html');
   await abrirSeccion(page, 'agenda');
-  await page.getByRole('link', { name: 'Atender consulta' }).click();
+  await page.getByRole('link', { name: 'Agenda de turnos' }).click();
 
   await expect(page).toHaveURL(/\/panel\/agenda\.html$/);
 });

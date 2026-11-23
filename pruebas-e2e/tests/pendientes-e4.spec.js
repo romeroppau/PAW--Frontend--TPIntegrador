@@ -68,18 +68,18 @@ test('el historial sin mascota deja elegirla, y cada consulta enlaza a su factur
     .toHaveAttribute('href', '/cliente/factura.html?consulta=101');
 });
 
-test('el panel del cliente enlaza "Ver factura"', async ({ page }) => {
+test('el panel del cliente enlaza el historial clínico, donde están las facturas', async ({ page }) => {
   await simularSesion(page, CLIENTE);
   await page.goto('/paneles/panel-cliente.html');
-  await abrirSeccion(page, 'cuenta');
-  await expect(page.getByRole('link', { name: 'Ver factura' })).toHaveAttribute('href', '/cliente/historial.html');
+  await abrirSeccion(page, 'mascotas');
+  await expect(page.getByRole('link', { name: 'Historial clínico y facturas' })).toHaveAttribute('href', '/cliente/historial.html');
 });
 
 test('en el panel del cliente, "Mis compras" de la tarjeta Mi cuenta es un enlace', async ({ page }) => {
   await simularSesion(page, CLIENTE);
   await page.goto('/paneles/panel-cliente.html');
   await abrirSeccion(page, 'cuenta');
-  await expect(page.locator('#cuenta').getByRole('link', { name: 'Mis compras' })).toHaveAttribute('href', '/tienda/compras.html');
+  await expect(page.locator('#menu-cuenta').getByRole('link', { name: 'Mis compras' })).toHaveAttribute('href', '/tienda/compras.html');
 });
 
 test('Contactanos del panel del cliente: datos, el horario que configuró la veterinaria, WhatsApp y mapa', async ({ page }) => {
@@ -98,14 +98,14 @@ test('en el panel del cliente, el Shop lleva a promociones, a cada categoría y 
   await simularSesion(page, CLIENTE);
   await page.goto('/paneles/panel-cliente.html');
   await abrirSeccion(page, 'tienda');
-  const shop = page.locator('#tienda');
+  const shop = page.locator('#menu-tienda');
   await expect(shop.locator('.panel-opciones').getByRole('link')).toHaveText(['Promociones', 'Medicamentos', 'Alimento balanceado', 'Accesorios', 'Ver catálogo de productos']);
   await expect(shop.getByRole('link', { name: 'Promociones' })).toHaveAttribute('href', '/catalogo/catalogo.html#promociones');
   await expect(shop.getByRole('link', { name: 'Medicamentos' })).toHaveAttribute('href', '/catalogo/catalogo.html?categoria=MEDICAMENTO');
   await expect(shop.getByRole('link', { name: 'Alimento balanceado' })).toHaveAttribute('href', '/catalogo/catalogo.html?categoria=ALIMENTO');
   await expect(shop.getByRole('link', { name: 'Accesorios' })).toHaveAttribute('href', '/catalogo/catalogo.html?categoria=ACCESORIO');
-  // En Carrito ya no está "Pagar con Mercado Pago": se paga desde el carrito.
-  await expect(page.locator('#carrito')).not.toContainText('Pagar con Mercado Pago');
+  // "Pagar con Mercado Pago" no está en el menú: se paga desde el carrito.
+  await expect(page.locator('#menu')).not.toContainText('Pagar con Mercado Pago');
 });
 
 test('insumos: se marca "Ya pedido" con stock bajo y se reactiva uno dado de baja', async ({ page }) => {
