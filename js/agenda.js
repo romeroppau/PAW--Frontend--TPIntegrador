@@ -16,6 +16,7 @@ import { api } from './api.js';
 import { exigirRol } from './auth.js';
 import { confirmar, el, limpiarErrores, mostrarErrores } from './ui.js';
 import { textoEstadoTurno, textoMotivoTurno, textoEspecieMascota } from './etiquetas.js';
+import { aplicarHorario, horarioDeAtencion } from './horario.js';
 
 await exigirRol('VETERINARIO');
 
@@ -165,6 +166,12 @@ function acciones(turno, tr) {
     td.append(el('a', texto, {
       href: '/panel/consulta.html?id=' + turno.consulta_id, 'aria-label': `${texto} de ${nombre}`
     }));
+    // Atendido = consulta finalizada, que ya tiene su factura.
+    if (turno.estado === 'ATENDIDO') {
+      td.append(el('a', 'Ver factura', {
+        href: '/cliente/factura.html?consulta=' + turno.consulta_id, 'aria-label': `Ver la factura de ${nombre} (${turno.hora})`
+      }));
+    }
   }
 
   // Lugar para el error de esta fila (role="alert": el lector de pantalla lo anuncia).
@@ -209,6 +216,10 @@ function botonEstado(turno, tr, accion, texto, clase, pregunta) {
 const seccionTurno = document.getElementById('seccion-turno');
 const formTurno = document.getElementById('form-turno');
 const selectMascota = formTurno.elements.mascota_id;
+
+// El rango de la hora sale del horario que configuró la veterinaria (sin esperarlo: mientras
+// tanto queda el de siempre, y Pacientes igual valida al guardar).
+horarioDeAtencion().then((horario) => aplicarHorario(formTurno.elements.hora, horario, document.getElementById('ayuda-hora')));
 const botonGuardarTurno = document.getElementById('guardar-turno');
 // Al reprogramar solo cambian la fecha y la hora: la mascota y el motivo se ocultan.
 const camposSoloAlta = [selectMascota.closest('.campo'), formTurno.elements.motivo.closest('.campo')];

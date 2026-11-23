@@ -47,7 +47,7 @@
         <ul class="panel-opciones">
           <li>Datos personales</li>
           <li><a href="/cliente/turnos.html">Mis turnos</a></li>
-          <li>Mis compras</li>
+          <li><a href="/tienda/compras.html">Mis compras</a></li>
           <li><a href="/cliente/historial.html">Ver factura</a></li>
         </ul>
       </section>
@@ -69,12 +69,12 @@
       <section class="panel-tarjeta" id="tienda">
         <h2>Shop / Productos</h2>
         <ul class="panel-opciones">
-          <li>Recomendados para tus mascotas</li>
-          <li>Medicamentos</li>
-          <li>Alimento balanceado</li>
-          <li>Accesorios</li>
+          <li><a href="/catalogo/catalogo.html#promociones">Promociones</a></li>
+          <li><a href="/catalogo/catalogo.html?categoria=MEDICAMENTO">Medicamentos</a></li>
+          <li><a href="/catalogo/catalogo.html?categoria=ALIMENTO">Alimento balanceado</a></li>
+          <li><a href="/catalogo/catalogo.html?categoria=ACCESORIO">Accesorios</a></li>
+          <li><a href="/catalogo/catalogo.html">Ver catálogo de productos</a></li>
         </ul>
-        <p><a href="/catalogo/catalogo.html">Ver catálogo de productos</a></p>
       </section>
       <section class="panel-tarjeta" id="adopcion">
         <h2>Adopción</h2>
@@ -97,13 +97,30 @@
       <section class="panel-tarjeta" id="carrito">
         <h2>Carrito</h2>
         <ul class="panel-opciones">
-          <li>Pagar con Mercado Pago</li>
-          <li>Factura / comprobante</li>
+          <li><a href="/tienda/carrito.html">Ver mi carrito</a></li>
+          <li><a href="/tienda/compras.html">Mis compras</a></li>
         </ul>
       </section>
-      <section class="panel-tarjeta" id="contacto">
+      <!-- Contactanos: los datos de la veterinaria y el mapa. El horario es el que configura la
+           veterinaria (GET /api/pacientes/horario, lo pone js/contacto-panel.js). -->
+      <section class="panel-tarjeta panel-contacto" id="contacto">
         <h2>Contactanos</h2>
-        <p>Encontrá aquí las vías de contacto con HuellaVet.</p>
+        <div class="contacto-grilla">
+          <div>
+            <dl class="contacto-datos">
+              <div><dt>Dirección</dt><dd>Av. San Martín 1450, Luján</dd></div>
+              <div><dt>Teléfono</dt><dd><a href="tel:+5491139010486">+54 9 11 3901-0486</a></dd></div>
+              <div><dt>Horario de atención</dt><dd id="horario-atencion">De 08:00 a 20:00</dd></div>
+            </dl>
+            <ul class="panel-opciones">
+              <li><a href="https://wa.me/5491139010486?text=Hola%2C%20tengo%20una%20consulta" target="_blank" rel="noopener noreferrer">Escribinos por WhatsApp</a></li>
+              <li><a href="https://www.google.com/maps/search/?api=1&amp;query=Av.%20San%20Mart%C3%ADn%201450%2C%20Luj%C3%A1n%2C%20Buenos%20Aires" target="_blank" rel="noopener noreferrer">Cómo llegar</a></li>
+            </ul>
+          </div>
+          <iframe class="contacto-mapa" title="Mapa: HuellaVet, Av. San Martín 1450, Luján"
+                  src="https://www.google.com/maps?q=Av.%20San%20Mart%C3%ADn%201450%2C%20Luj%C3%A1n%2C%20Buenos%20Aires&amp;output=embed"
+                  loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+        </div>
       </section>
     </div>
     <p class="panel-aviso">Estas secciones representan la navegación prevista en el sitemap. Las acciones internas se
@@ -115,6 +132,7 @@
 
   <script type="module" src="/js/guardia-panel.js"></script>
   <script type="module" src="/js/auth.js"></script>
+  <script type="module" src="/js/contacto-panel.js"></script>
 </body>
 
 </html>

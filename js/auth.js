@@ -74,18 +74,27 @@ const ENLACES_POR_ROL = {
     ['Mi panel', '/paneles/panel-administrador.html'],
     ['Agenda', '/panel/agenda.html'],
     ['Adopciones y rescatistas', '/panel/adopciones.html'],
+    ['Ventas', '/panel/ventas.html'],
+    ['Reportes', '/panel/reportes.html'],
   ],
   CLIENTE: [
     ['Mi panel', '/paneles/panel-cliente.html'],
     ['Mis mascotas', '/cliente/mascotas.html'],
     ['Mis turnos', '/cliente/turnos.html'],
+    ['Mis compras', '/tienda/compras.html'],
+    ['Carrito', '/tienda/carrito.html'],
   ],
   RESCATISTA: [
     ['Mi panel', '/paneles/panel-rescatista.html'],
     ['Mis mascotas', '/cliente/mascotas.html'],
     ['Mis publicaciones', '/rescatista/publicaciones.html'],
+    ['Mis compras', '/tienda/compras.html'],
+    ['Carrito', '/tienda/carrito.html'],
   ],
 };
+
+// Roles que pueden comprar en la tienda: ven "Carrito (N)" en el menú.
+const COMPRADORES = ['CLIENTE', 'RESCATISTA'];
 
 /** Ajusta el encabezado según el usuario: nombre, botón "Salir" y los enlaces de su rol en el menú. */
 function pintar() {
@@ -106,11 +115,34 @@ function pintar() {
   if (menu) {
     for (const [texto, destino] of ENLACES_POR_ROL[usuario.rol] ?? []) {
       const li = el('li');
-      li.append(el('a', texto, { href: destino }));
+      const enlace = el('a', texto, { href: destino });
+      if (destino === '/tienda/carrito.html') enlace.id = 'enlace-carrito';
+      li.append(enlace);
       menu.append(li);
     }
   }
+
+  if (COMPRADORES.includes(usuario.rol)) contarCarrito();
 }
+
+/**
+ * "Carrito (N)" en el menú: N son las unidades del carrito abierto (GET /api/tienda/carrito).
+ * Las pantallas de la tienda avisan cuando cambia con el evento "carrito:cantidad" (ver tienda.js),
+ * así el número se actualiza sin volver a pedirlo.
+ */
+function mostrarCantidad(cantidad) {
+  const enlace = document.getElementById('enlace-carrito');
+  if (enlace) enlace.textContent = cantidad > 0 ? `Carrito (${cantidad})` : 'Carrito';
+}
+
+async function contarCarrito() {
+  try {
+    const carrito = await api('/api/tienda/carrito');
+    mostrarCantidad((carrito.items ?? []).reduce((suma, item) => suma + item.cantidad, 0));
+  } catch { /* si falla, el enlace queda como "Carrito" */ }
+}
+
+document.addEventListener('carrito:cantidad', (evento) => mostrarCantidad(evento.detail));
 
 // Se ejecuta al importar el archivo: consulta la sesión, pinta el encabezado y entrega el usuario.
 export const sesion = cargarUsuario().then((u) => { pintar(); return u; });

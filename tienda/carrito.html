@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mi carrito | HuellaVet</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Nunito+Sans:wght@400;600;700&display=swap">
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/tienda.css">
+</head>
+<!-- Carrito del comprador (cliente o rescatista). Lo maneja js/carrito.js.
+     Contrato: repo Inventario, docs/api/contrato-tienda.md.
+     "Ir a pagar" confirma la compra (aparta el stock por 15 minutos): solo se habilita después de
+     marcar que leyó la política de cancelación. Al costado, el resumen: total, cómo sigue la compra
+     (minutos para pagar y fecha de retiro) y la política. -->
+<body data-rol="CLIENTE,RESCATISTA">
+  <a class="saltar" href="#contenido">Saltar al contenido</a>
+  <div id="encabezado-sitio"></div>
+  <script src="/js/layout.js"></script>
+  <main id="contenido" class="seccion" hidden>
+    <div class="contenedor">
+      <p><a href="/catalogo/catalogo.html">&larr; Seguir comprando</a></p>
+      <h1>Mi carrito</h1>
+      <p class="estado" id="estado" role="status">Cargando tu carrito…</p>
+      <p class="mensaje mensaje-error" id="error" role="alert" hidden></p>
+
+      <div id="vacio" hidden>
+        <p>Tu carrito está vacío.</p>
+        <p><a class="boton" href="/catalogo/catalogo.html">Ver productos</a></p>
+      </div>
+
+      <div id="contenido-carrito" class="carrito-grilla" hidden>
+        <section class="carrito-lista" aria-labelledby="titulo-productos">
+          <h2 id="titulo-productos" class="solo-lectores">Productos de tu carrito</h2>
+          <div class="carrito-encabezado" aria-hidden="true">
+            <span>Producto</span><span>Cantidad</span><span>Precio</span><span></span>
+          </div>
+          <!-- Cada producto (lo arma carrito.js): foto, nombre y precio por unidad, cantidad con − / +,
+               subtotal y el tachito para quitarlo. -->
+          <ul id="filas" class="lista-carrito"></ul>
+        </section>
+
+        <aside class="resumen-carrito" aria-labelledby="titulo-resumen">
+          <h2 id="titulo-resumen">Resumen</h2>
+          <p class="resumen-unidades" id="unidades"></p>
+          <p class="resumen-total"><span>Total</span> <strong id="total"></strong></p>
+
+          <h3>¿Cómo sigue?</h3>
+          <ol class="pasos-compra">
+            <li>Pagás con Mercado Pago. Tenés <strong id="minutos">15 minutos</strong>: si no, la compra se cancela sola.</li>
+            <li>Retirás tu pedido en la veterinaria hasta el <strong id="retirar-hasta"></strong> inclusive.</li>
+          </ol>
+          <p class="politica-linea"><strong>Política de cancelación:</strong> <span id="politica"></span></p>
+
+          <div class="casilla">
+            <input id="acepto" type="checkbox">
+            <label for="acepto">Leí y acepto la política de cancelación</label>
+          </div>
+          <p class="campo-error" id="motivo-bloqueo" hidden></p>
+          <button id="ir-a-pagar" class="boton boton-grande boton-pagar" type="button" disabled>Ir a pagar</button>
+        </aside>
+      </div>
+    </div>
+  </main>
+  <div id="pie-sitio"></div>
+
+  <script type="module" src="/js/menu.js"></script>
+  <script type="module" src="/js/guardia-panel.js"></script>
+  <script type="module" src="/js/auth.js"></script>
+  <script type="module" src="/js/carrito.js"></script>
+</body>
+</html>

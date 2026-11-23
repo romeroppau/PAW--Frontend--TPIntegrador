@@ -1,41 +1,4 @@
 /* Estilos propios del catálogo y del detalle. Los valores de marca vienen de base.css. */
-.catalogo-header {
-  background: var(--blanco);
-  border-bottom: 1px solid var(--borde);
-}
-
-.encabezado-catalogo {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1.5rem;
-  padding-block: 1rem;
-}
-
-.marca-catalogo {
-  font-family: var(--fuente-titulo);
-  font-weight: 700;
-  font-size: 1.8rem;
-  text-decoration: none;
-  color: var(--pino-oscuro);
-}
-
-.encabezado-catalogo nav {
-  display: flex;
-  gap: 1.25rem;
-  flex-wrap: wrap;
-}
-
-.encabezado-catalogo nav a {
-  font-weight: 700;
-  text-decoration: none;
-}
-
-.encabezado-catalogo nav a[aria-current="page"] {
-  text-decoration: underline;
-  text-underline-offset: 5px;
-}
-
 .catalogo-principal {
   padding-block: clamp(2.5rem, 6vw, 4.5rem);
 }
@@ -100,9 +63,62 @@
   box-shadow: 0 3px 12px rgb(18 48 43 / 5%);
 }
 
+/* Foto de la tarjeta (o la huellita si el producto no tiene). */
+/* El cuadrado lo define aspect-ratio; la foto va encima, ocupándolo entero (position: absolute), así
+   su alto propio no agranda el cuadrado y object-fit: contain la muestra completa, sin cortarla. */
+.foto-producto {
+  position: relative;
+  display: grid;
+  place-items: center;
+  align-self: stretch;
+  aspect-ratio: 1;
+  margin: -.35rem -.35rem .2rem;
+  border-radius: 12px;
+  background: var(--menta);
+  color: var(--pino);
+  overflow: hidden;
+}
+
+.foto-producto img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: var(--blanco);
+}
+
+.foto-producto svg {
+  width: 30%;
+  height: 30%;
+  opacity: .45;
+}
+
 .tarjeta-producto .etiqueta,
 .tarjeta-producto .precio {
   margin: 0;
+}
+
+/* Tarjeta de un producto en promoción: un borde naranja la distingue en la grilla. */
+.tarjeta-en-promo {
+  border-color: var(--naranja);
+}
+
+/* Sección "Promociones", arriba del catálogo (catalogo.js). */
+.promociones-catalogo {
+  /* Al llegar desde el panel (#promociones), el título no queda pegado al borde de arriba. */
+  scroll-margin-top: 1.5rem;
+  margin-block: 1.5rem 2rem;
+}
+
+.promociones-catalogo h2 {
+  margin-bottom: .25rem;
+}
+
+/* auto-fill (no auto-fit): con una o dos promociones, las tarjetas tienen el mismo ancho que las
+   del catálogo en lugar de estirarse a toda la fila. */
+.promociones-catalogo .lista-productos {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 230px), 1fr));
 }
 
 .tarjeta-producto .nombre-producto {
@@ -111,8 +127,49 @@
   font-size: 1.35rem;
 }
 
-.tarjeta-producto .enlace-detalle {
+.tarjeta-producto .acciones-producto {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
   margin-top: auto;
+}
+
+/* La veterinaria no compra: catalogo.js pone esta clase en el <body> cuando sabe que es ella. */
+.rol-veterinario .boton-agregar {
+  display: none;
+}
+
+/* Lo que pasó al agregar al carrito. */
+.aviso-carrito {
+  min-height: 1.5em;
+  margin: .5rem 0 0;
+  font-weight: 700;
+  color: var(--ok);
+}
+
+.aviso-carrito.aviso-error {
+  color: var(--error);
+}
+
+/* Detalle: cantidad y "Agregar al carrito". */
+.form-agregar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: .75rem;
+  margin-bottom: 1rem;
+}
+
+.form-agregar[hidden] {
+  display: none;
+}
+
+.form-agregar .campo-cantidad {
+  margin: 0;
+}
+
+.form-agregar .campo-cantidad input {
+  width: 6rem;
 }
 
 .boton-cargar {
@@ -122,10 +179,6 @@
 
 .boton-cargar[hidden] {
   display: none;
-}
-
-.pie-catalogo {
-  margin-top: 2.5rem;
 }
 
 .detalle-principal {
@@ -220,16 +273,6 @@
 }
 
 @media (max-width: 760px) {
-  .encabezado-catalogo {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: .5rem;
-  }
-
-  .encabezado-catalogo nav {
-    gap: .75rem 1rem;
-  }
-
   .filtros-catalogo {
     grid-template-columns: 1fr;
     padding: 1rem;

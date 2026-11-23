@@ -74,6 +74,37 @@ test('el panel del cliente enlaza "Ver factura"', async ({ page }) => {
   await expect(page.getByRole('link', { name: 'Ver factura' })).toHaveAttribute('href', '/cliente/historial.html');
 });
 
+test('en el panel del cliente, "Mis compras" de la tarjeta Mi cuenta es un enlace', async ({ page }) => {
+  await simularSesion(page, CLIENTE);
+  await page.goto('/paneles/panel-cliente.html');
+  await expect(page.locator('#cuenta').getByRole('link', { name: 'Mis compras' })).toHaveAttribute('href', '/tienda/compras.html');
+});
+
+test('Contactanos del panel del cliente: datos, el horario que configuró la veterinaria, WhatsApp y mapa', async ({ page }) => {
+  await simularSesion(page, CLIENTE);
+  await page.route('**/api/pacientes/horario', (route) => responderJson(route, { apertura: '09:30', cierre: '18:00' }));
+  await page.goto('/paneles/panel-cliente.html');
+  const contacto = page.locator('#contacto');
+  await expect(contacto).toContainText('Av. San Martín 1450, Luján');
+  await expect(contacto.getByRole('link', { name: '+54 9 11 3901-0486' })).toHaveAttribute('href', 'tel:+5491139010486');
+  await expect(page.locator('#horario-atencion')).toHaveText('De 09:30 a 18:00');
+  await expect(contacto.getByRole('link', { name: 'Escribinos por WhatsApp' })).toHaveAttribute('href', /^https:\/\/wa\.me\/5491139010486/);
+  await expect(contacto.locator('iframe')).toHaveAttribute('title', 'Mapa: HuellaVet, Av. San Martín 1450, Luján');
+});
+
+test('en el panel del cliente, el Shop lleva a promociones, a cada categoría y al catálogo, con el mismo formato', async ({ page }) => {
+  await simularSesion(page, CLIENTE);
+  await page.goto('/paneles/panel-cliente.html');
+  const shop = page.locator('#tienda');
+  await expect(shop.locator('.panel-opciones').getByRole('link')).toHaveText(['Promociones', 'Medicamentos', 'Alimento balanceado', 'Accesorios', 'Ver catálogo de productos']);
+  await expect(shop.getByRole('link', { name: 'Promociones' })).toHaveAttribute('href', '/catalogo/catalogo.html#promociones');
+  await expect(shop.getByRole('link', { name: 'Medicamentos' })).toHaveAttribute('href', '/catalogo/catalogo.html?categoria=MEDICAMENTO');
+  await expect(shop.getByRole('link', { name: 'Alimento balanceado' })).toHaveAttribute('href', '/catalogo/catalogo.html?categoria=ALIMENTO');
+  await expect(shop.getByRole('link', { name: 'Accesorios' })).toHaveAttribute('href', '/catalogo/catalogo.html?categoria=ACCESORIO');
+  // En Carrito ya no está "Pagar con Mercado Pago": se paga desde el carrito.
+  await expect(page.locator('#carrito')).not.toContainText('Pagar con Mercado Pago');
+});
+
 test('insumos: se marca "Ya pedido" con stock bajo y se reactiva uno dado de baja', async ({ page }) => {
   await simularSesion(page, VET);
   let listados = 0;

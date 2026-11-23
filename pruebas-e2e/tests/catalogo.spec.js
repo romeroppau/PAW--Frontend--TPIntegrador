@@ -26,6 +26,36 @@ test('muestra los productos con el texto de la categoría, no el código', async
   await expect(tarjetas.first()).not.toContainText('ALIMENTO');
 });
 
+test('se puede entrar con una categoría ya elegida desde un enlace (?categoria=)', async ({ page }) => {
+  const pedido = page.waitForRequest((r) => r.url().includes('/api/tienda/productos?') && r.url().includes('categoria=ALIMENTO'));
+  await page.goto('/catalogo/catalogo.html?categoria=ALIMENTO');
+  await pedido;
+  await expect(page.locator('#categoria')).toHaveValue('ALIMENTO');
+  await expect(page.locator('#lista > li')).toHaveCount(1);
+  await expect(page.locator('#lista')).toContainText('Alimento cachorro 3 kg');
+});
+
+test('desde el enlace de promociones, sin promociones dice que no hay por el momento', async ({ page }) => {
+  await page.route('**/api/tienda/promociones', (route) => responderJson(route, { datos: [] }));
+  await page.goto('/catalogo/catalogo.html#promociones');
+  await expect(page.locator('#promociones')).toBeVisible();
+  await expect(page.locator('#sin-promociones')).toHaveText('No hay promociones por el momento.');
+  await expect(page.locator('#lista > li')).toHaveCount(3);
+});
+
+test('sin promociones y sin el enlace, la sección no se muestra', async ({ page }) => {
+  await page.route('**/api/tienda/promociones', (route) => responderJson(route, { datos: [] }));
+  await page.goto('/catalogo/catalogo.html');
+  await expect(page.locator('#lista > li')).toHaveCount(3);
+  await expect(page.locator('#promociones')).toBeHidden();
+});
+
+test('una categoría que no existe en el enlace se ignora', async ({ page }) => {
+  await page.goto('/catalogo/catalogo.html?categoria=CUALQUIERA');
+  await expect(page.locator('#categoria')).toHaveValue('');
+  await expect(page.locator('#lista > li')).toHaveCount(3);
+});
+
 test('la búsqueda filtra mientras se escribe, sin recargar la página', async ({ page }) => {
   await page.goto('/catalogo/catalogo.html');
   await expect(page.locator('#lista > li')).toHaveCount(3);

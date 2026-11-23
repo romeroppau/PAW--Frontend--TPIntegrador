@@ -184,3 +184,44 @@
 .panel-opciones a { display: block; margin: -.35rem -.65rem; padding: .35rem .65rem; border-radius: 999px; color: var(--pino); font-weight: 700; text-decoration: none; }
 .panel-opciones a:hover { text-decoration: underline; }
 @media (max-width: 600px) { .panel-cabecera .panel-usuario { margin-left: 0; } }
+/* Contactanos (panel del cliente): ocupa todo el ancho; los datos al costado del mapa. */
+.panel-contacto {
+  grid-column: 1 / -1;
+}
+
+.contacto-grilla {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.contacto-datos {
+  display: grid;
+  gap: .6rem;
+  margin: 0 0 1rem;
+}
+
+.contacto-datos dt {
+  font-weight: 700;
+  font-size: .9rem;
+  color: var(--tinta-suave);
+}
+
+.contacto-datos dd {
+  margin: .1rem 0 0;
+}
+
+.contacto-mapa {
+  width: 100%;
+  min-height: 16rem;
+  border: 0;
+  border-radius: var(--radio);
+}
+
+/* Celular: el mapa abajo de los datos. */
+@media (max-width: 700px) {
+  .contacto-grilla {
+    grid-template-columns: 1fr;
+  }
+}

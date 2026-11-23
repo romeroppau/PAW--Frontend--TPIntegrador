@@ -171,6 +171,14 @@ th { background: var(--menta); color: var(--pino-oscuro); }
 .producto-destacado h3 { margin: .25rem 0 0; }
 .etiqueta { font-weight: 700; color: var(--naranja-oscuro); margin: 0; }
 .precio { font-weight: 700; font-size: 1.15rem; margin: 0; }
+/* Precio en promoción (js/tienda.js, bloquePrecio): el de siempre tachado, el rebajado, el
+   porcentaje y hasta cuándo. El naranja oscuro cumple contraste AA sobre blanco. */
+.precio-con-promo { display: flex; flex-wrap: wrap; align-items: baseline; gap: .15rem .5rem; }
+.precio-anterior { font-weight: 400; font-size: .95rem; color: var(--tinta-suave); }
+.precio-promo { text-decoration: none; color: var(--naranja-oscuro); }
+.insignia.insignia-promo { background: #fde7d3; color: #7a3d07; font-size: .8rem; }
+.promo-hasta { flex-basis: 100%; font-size: .85rem; font-weight: 400; color: var(--tinta-suave); }
+.item-promo { color: var(--naranja-oscuro); white-space: nowrap; }
 
 @media (max-width: 800px) {
   .encabezado-fila {
@@ -299,3 +307,24 @@ form .boton + .boton { margin-left: .5rem; }
 
 /* Ítem de la consulta que se dio de baja después de cargarlo */
 .marca-baja { font-size: .85rem; font-weight: 700; color: var(--error); white-space: nowrap; }
+
+/* Pestañas (js/pestanas.js): el mismo diseño que las de reportes, para cualquier pantalla.
+   Hacen scroll horizontal en pantallas angostas en lugar de bajar de renglón. */
+.pestanas {
+  display: flex; gap: .25rem; margin: 1rem 0 1.5rem;
+  border-bottom: 1px solid var(--borde); overflow-x: auto;
+}
+.pestanas [role="tab"] {
+  background: none; border: 0; border-bottom: 3px solid transparent;
+  padding: .6rem 1rem; font: inherit; font-weight: 700; color: var(--tinta-suave);
+  cursor: pointer; white-space: nowrap;
+}
+.pestanas [role="tab"]:hover { color: var(--pino); }
+.pestanas [role="tab"][aria-selected="true"] { color: var(--pino-oscuro); border-bottom-color: var(--pino); }
+.pestanas [role="tab"]:focus-visible { outline: 3px solid var(--pino); outline-offset: 2px; }
+.pestanas .contador { font-weight: 600; color: var(--naranja-oscuro); }
+[role="tabpanel"]:focus-visible { outline: 3px solid var(--pino); outline-offset: 4px; }
+
+/* Anterior / Siguiente de una lista paginada */
+.paginacion { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: .75rem; margin-top: 1rem; }
+.paginacion .estado { min-height: 0; }
