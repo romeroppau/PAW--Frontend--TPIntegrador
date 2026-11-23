@@ -575,7 +575,7 @@ test('factura: una compra pagada y cancelada se ve cancelada; la vet vuelve a Ve
   await expect(page.locator('#estado-factura')).toHaveText('Cancelada');
   await expect(page.locator('#para-retirar')).toBeHidden();
   await expect(page.locator('#dato-estado')).toContainText('26/11/2026 09:00 · Venció el plazo de retiro');
-  await expect(page.getByRole('link', { name: '← Ventas de la tienda' })).toHaveAttribute('href', '/panel/ventas.html');
+  await expect(page.getByRole('link', { name: '← Volver a ventas' })).toHaveAttribute('href', '/panel/ventas.html');
 });
 
 test('factura: una compra sin pagar no tiene factura', async ({ page }) => {
