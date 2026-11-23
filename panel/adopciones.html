@@ -62,6 +62,25 @@
         <p class="ayuda">Cuando el rescatista elige al adoptante, programá el chequeo. El turno aparece en la
           <a href="/panel/agenda.html">agenda</a>: atendelo ese día como cualquier consulta y después completá la adopción.</p>
         <form class="form-item" id="filtro-curso" role="search" novalidate>
+          <!-- Orden y paso: cambian la lista enseguida (js/adopciones-vet.js); la búsqueda, con el botón. -->
+          <div class="campo campo-chico">
+            <label for="orden-curso">Ordenar</label>
+            <select id="orden-curso" name="orden">
+              <option value="prioridad">Prioridad</option>
+              <option value="recientes">Más recientes primero</option>
+              <option value="antiguas">Más antiguas primero</option>
+            </select>
+          </div>
+          <div class="campo campo-chico">
+            <label for="paso-curso">Paso</label>
+            <select id="paso-curso" name="estado">
+              <option value="">Todos</option>
+              <option value="CHEQUEO_PENDIENTE">Chequeo pendiente</option>
+              <option value="ADOPTANTE_ELEGIDO">Adoptante elegido</option>
+              <option value="CON_POSTULANTES">Con postulantes</option>
+              <option value="PUBLICADA">Publicada, sin postulantes</option>
+            </select>
+          </div>
           <div class="campo">
             <label for="buscar-curso">Buscar</label>
             <input id="buscar-curso" name="buscar" type="search" maxlength="60" autocomplete="off" placeholder="Mascota, adoptante o rescatista">
@@ -72,7 +91,7 @@
         <p class="estado" id="estado-curso" role="status">Cargando…</p>
         <div class="tabla-scroll" id="tabla-curso" hidden>
           <table>
-            <caption class="solo-lectores">Adopciones en curso, las que esperan hace más primero</caption>
+            <caption class="solo-lectores">Adopciones en curso, en el orden elegido</caption>
             <thead><tr><th scope="col">Animal</th><th scope="col">Estado</th><th scope="col">Adoptante</th><th scope="col">Chequeo</th><th scope="col">Acciones</th></tr></thead>
             <tbody id="filas-curso"></tbody>
           </table>
@@ -93,6 +112,13 @@
             <select id="resultado" name="estado">
               <option value="FINALIZADA">Adoptados</option>
               <option value="CANCELADA">Canceladas</option>
+            </select>
+          </div>
+          <div class="campo campo-chico">
+            <label for="orden-finalizadas">Ordenar</label>
+            <select id="orden-finalizadas" name="orden">
+              <option value="recientes">Más recientes primero</option>
+              <option value="antiguas">Más antiguas primero</option>
             </select>
           </div>
           <div class="campo campo-chico">

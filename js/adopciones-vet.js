@@ -190,16 +190,17 @@ function tarjetaModeracion(publicacion) {
 
 /* ---------- Adopciones en curso ---------- */
 
-const curso = { pagina: 1, buscar: '' };
+const curso = { pagina: 1, buscar: '', estado: '', orden: 'prioridad' };
 const paginasCurso = paginador('curso', (paso) => { curso.pagina += paso; cargarEnCurso(); });
 
 async function cargarEnCurso() {
   $('error-curso').textContent = '';
   try {
-    const respuesta = await pedirPagina({ buscar: curso.buscar }, curso);
-    // El número de la pestaña cuenta todas las en curso, sin la búsqueda.
-    if (!curso.buscar) contar('curso', respuesta.total);
-    const vacio = curso.buscar ? 'Ninguna adopción en curso coincide con la búsqueda.' : 'No hay adopciones en curso.';
+    const respuesta = await pedirPagina({ buscar: curso.buscar, estado: curso.estado, orden: curso.orden }, curso);
+    // El número de la pestaña cuenta todas las en curso, sin la búsqueda ni el filtro de paso.
+    const filtrada = curso.buscar || curso.estado;
+    if (!filtrada) contar('curso', respuesta.total);
+    const vacio = filtrada ? 'Ninguna adopción en curso coincide con los filtros.' : 'No hay adopciones en curso.';
     pintarTabla('curso', respuesta.adopciones.map(filaEnCurso), respuesta.total ? cantidad(respuesta.total) + ' en curso.' : vacio);
     paginasCurso(respuesta);
   } catch (e) {
@@ -208,12 +209,22 @@ async function cargarEnCurso() {
   }
 }
 
-$('filtro-curso').addEventListener('submit', (ev) => {
-  ev.preventDefault();
-  curso.buscar = ev.target.elements.buscar.value.trim();
+function filtrarEnCurso() {
+  const campos = $('filtro-curso').elements;
+  curso.buscar = campos.buscar.value.trim();
+  curso.estado = campos.estado.value;
+  curso.orden = campos.orden.value;
   curso.pagina = 1;
   cargarEnCurso();
+}
+
+$('filtro-curso').addEventListener('submit', (ev) => {
+  ev.preventDefault();
+  filtrarEnCurso();
 });
+// Ordenar y Paso cambian la lista enseguida, sin apretar "Buscar".
+$('orden-curso').addEventListener('change', filtrarEnCurso);
+$('paso-curso').addEventListener('change', filtrarEnCurso);
 
 function filaEnCurso(adopcion) {
   const { publicacion, adoptante, turno_chequeo: turno } = adopcion;
@@ -308,7 +319,8 @@ async function cargarFinalizadas() {
   $('error-finalizadas').textContent = '';
   const campos = formFinalizadas.elements;
   const filtros = {
-    estado: campos.estado.value, desde: campos.desde.value, hasta: campos.hasta.value, buscar: campos.buscar.value.trim()
+    estado: campos.estado.value, desde: campos.desde.value, hasta: campos.hasta.value, buscar: campos.buscar.value.trim(),
+    orden: campos.orden.value,
   };
   try {
     const respuesta = await pedirPagina(filtros, finalizadas);
@@ -342,6 +354,7 @@ formFinalizadas.addEventListener('submit', (ev) => {
 });
 // Cambiar entre adoptadas y canceladas filtra en el momento.
 formFinalizadas.elements.estado.addEventListener('change', () => formFinalizadas.requestSubmit());
+formFinalizadas.elements.orden.addEventListener('change', () => formFinalizadas.requestSubmit());
 
 /* ---------- Carga y pestañas ---------- */
 

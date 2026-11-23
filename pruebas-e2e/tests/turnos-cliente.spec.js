@@ -76,6 +76,23 @@ test('los filtros por mascota y estado valen para las dos pestañas y se limpian
   await expect(page.getByRole('tab', { name: 'Anteriores y cancelados (2)' })).toBeVisible();
 });
 
+test('el turno del chequeo de una adopción en curso aparece entre los próximos', async ({ page }) => {
+  await simularSesion(page, CLIENTE);
+  await page.route('**/api/pacientes/turnos', (route) => responderJson(route, { turnos: [turno(3, dia(4), 'PROGRAMADO')] }));
+  await page.route('**/api/adopciones/mis-postulaciones', (route) => responderJson(route, { postulaciones: [{
+    id: 7, estado: 'ELEGIDA', fecha: '2026-11-15 18:20:00',
+    adopcion: { id: 31, estado: 'CHEQUEO_PENDIENTE', turno_chequeo: { fecha: dia(2), hora: '10:00', estado: 'PROGRAMADO' } },
+    publicacion: { id: 1, titulo: 'Pipa', mascota: { id: 902, nombre: 'Pipa' } },
+  }] }));
+
+  await page.goto('/cliente/turnos.html');
+  const filas = page.locator('#filas-proximos > tr');
+  await expect(filas).toHaveCount(2);
+  // Ordenados por fecha: el chequeo (en 2 días) antes que el otro turno (en 4).
+  await expect(filas.first()).toContainText('Pipa (en adopción)');
+  await expect(filas.first()).toContainText('Chequeo de adopción');
+});
+
 test('el veterinario no entra a "Mis turnos"', async ({ page }) => {
   await simularSesion(page, { id: 101, nombre: 'Vet', email: 'v@prueba.huellavet', rol: 'VETERINARIO' });
   await page.goto('/cliente/turnos.html');
