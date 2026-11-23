@@ -104,9 +104,13 @@ function pintarDatos() {
   form.elements.diagnostico.value = consulta.diagnostico ?? '';
   form.elements.observaciones.value = consulta.observaciones ?? '';
   form.elements.valor_base.value = consulta.valor_base ?? '';
+  // El valor sale del precio que guardó el turno al sacarse (con el descuento de su franja): no se edita.
+  document.getElementById('ayuda-valor-base').textContent = consulta.descuento
+    ? `Es el precio del turno con el ${consulta.descuento} % de descuento de su franja (sin descuento: ${dinero(aCentavos(consulta.precio_lista))}). No se cambia.`
+    : 'Es el precio del turno (Configuración → Precio de la consulta): no se cambia.';
 
   const bloqueada = cerrada();
-  for (const campo of ['diagnostico', 'observaciones', 'valor_base']) {
+  for (const campo of ['diagnostico', 'observaciones']) {
     form.elements[campo].disabled = bloqueada;
   }
   document.getElementById('guardar').hidden = bloqueada;
@@ -246,11 +250,10 @@ for (const [tipo, cfg] of Object.entries(TIPOS)) {
 // PUT con lo que hay en el formulario. Lo usan "Guardar cambios" y "Finalizar consulta".
 async function guardar() {
   limpiarErrores(form);
-  const valor = form.elements.valor_base.value;
+  // El valor de la consulta no se manda: sale del precio del turno.
   const cuerpo = {
     diagnostico: form.elements.diagnostico.value,
-    observaciones: form.elements.observaciones.value,
-    valor_base: valor === '' ? null : Number(valor)
+    observaciones: form.elements.observaciones.value
   };
   consulta = desenvolver(await api(`${API}/consultas/${consulta.id}`, { metodo: 'PUT', cuerpo }));
 }

@@ -32,11 +32,13 @@
         <section class="tarjeta" aria-labelledby="t-promocionar">
           <h2 id="t-promocionar">Qué promocionar</h2>
           <p id="texto-promocionar"></p>
+          <p>Las 5 franjas con menos turnos se pueden <strong>publicitar</strong>: la consulta de los turnos que se saquen en esa franja tiene el descuento que elijas. Precio de la consulta: <span id="precio-consulta">—</span> (se cambia en Configuración).</p>
+          <p class="aviso-ok" id="aviso-franjas" role="status" hidden></p>
           <div class="tabla-scroll">
             <table>
               <caption class="solo-lectores">Turnos por día y franja en las últimas 4 semanas</caption>
               <thead>
-                <tr><th scope="col">Día</th><th scope="col">Franja</th><th scope="col">Turnos</th><th scope="col">Sugerencia</th></tr>
+                <tr><th scope="col">Día</th><th scope="col">Franja</th><th scope="col">Turnos</th><th scope="col">Sugerencia</th><th scope="col">Descuento sugerido</th><th scope="col">Promoción</th></tr>
               </thead>
               <tbody id="filas-franjas"></tbody>
             </table>
@@ -66,7 +68,8 @@
         <!-- Promociones vigentes (GET /api/inventario/promociones de Inventario): se terminan desde acá. -->
         <section class="bloque tarjeta" aria-labelledby="t-promociones">
           <h2 id="t-promociones">Promociones publicadas</h2>
-          <p class="estado" id="vacio-promociones">No hay promociones vigentes.</p>
+          <h3 id="t-promo-productos">Productos</h3>
+          <p class="estado" id="vacio-promociones">No hay productos en promoción.</p>
           <div class="tabla-scroll" id="tabla-promociones" hidden>
             <table>
               <caption class="solo-lectores">Promociones vigentes en la tienda</caption>
@@ -80,7 +83,49 @@
               <tbody id="filas-promociones"></tbody>
             </table>
           </div>
+
+          <!-- Franjas de turnos en promoción (GET /api/pacientes/promociones-turnos de Pacientes). -->
+          <h3 id="t-promo-turnos">Turnos</h3>
+          <p class="estado" id="vacio-promo-turnos">No hay franjas de turnos en promoción.</p>
+          <div class="tabla-scroll" id="tabla-promo-turnos" hidden>
+            <table>
+              <caption class="solo-lectores">Franjas de turnos en promoción</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Franja</th><th scope="col">Descuento</th><th scope="col">Consulta</th>
+                  <th scope="col">Hasta</th><th scope="col">Acción</th>
+                </tr>
+              </thead>
+              <tbody id="filas-promo-turnos"></tbody>
+            </table>
+          </div>
         </section>
+
+        <!-- "Publicitar" una franja: el descuento a la consulta y hasta cuándo (reportes.js). -->
+        <dialog class="dialogo dialogo-publicitar" id="dialogo-franja" aria-labelledby="titulo-franja">
+          <form id="form-franja" novalidate>
+            <h2 id="titulo-franja">Publicitar una franja</h2>
+            <p id="franja-texto"></p>
+            <div class="campo">
+              <label for="franja-porcentaje">Descuento en la consulta (%)</label>
+              <input id="franja-porcentaje" name="porcentaje" type="number" min="5" max="90" step="1" inputmode="numeric" required aria-describedby="ayuda-franja-porcentaje error-franja-porcentaje">
+              <p class="campo-ayuda" id="ayuda-franja-porcentaje">Entre 5 y 90 por ciento.</p>
+              <span class="campo-error" id="error-franja-porcentaje"></span>
+            </div>
+            <div class="campo">
+              <label for="franja-hasta">Hasta (inclusive)</label>
+              <input id="franja-hasta" name="hasta" type="date" required aria-describedby="ayuda-franja-hasta error-franja-hasta">
+              <p class="campo-ayuda" id="ayuda-franja-hasta">Vale para los turnos de esa franja hasta este día. Como mucho 90 días.</p>
+              <span class="campo-error" id="error-franja-hasta"></span>
+            </div>
+            <p class="precio-previo" id="franja-precio" aria-live="polite"></p>
+            <p class="campo-error" id="error-franja-general" role="alert" hidden></p>
+            <div class="dialogo-botones">
+              <button type="button" class="boton boton-borde" id="franja-cancelar">Cancelar</button>
+              <button type="submit" class="boton" id="franja-enviar">Publicitar</button>
+            </div>
+          </form>
+        </dialog>
 
         <!-- "Publicitar": elegir el descuento y hasta cuándo dura (reportes.js lo abre con showModal). -->
         <dialog class="dialogo dialogo-publicitar" id="dialogo-publicitar" aria-labelledby="titulo-publicitar">

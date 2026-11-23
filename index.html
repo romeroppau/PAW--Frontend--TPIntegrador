@@ -76,6 +76,15 @@
       </div>
     </section>
 
+    <!-- Franjas promocionadas: las pone js/promo-turnos-portada.js; sin promociones no se ve. -->
+    <section class="seccion promo-turnos" id="promo-turnos" aria-labelledby="titulo-promo-turnos" hidden>
+      <div class="contenedor">
+        <h2 id="titulo-promo-turnos" class="titulo-seccion">Turnos con descuento</h2>
+        <p>La consulta tiene descuento en estos días y horarios. Pedí tu turno por WhatsApp.</p>
+        <ul class="lista-promo-turnos" id="lista-promo-turnos"></ul>
+      </div>
+    </section>
+
     <section class="seccion" aria-labelledby="titulo-servicios">
       <div class="contenedor">
         <h2 id="titulo-servicios" class="titulo-seccion">Nuestros servicios</h2>
@@ -145,6 +154,7 @@
   <script type="module" src="/js/auth.js"></script>
   <script type="module" src="/js/portada.js"></script>
   <script type="module" src="/js/horario-portada.js"></script>
+  <script type="module" src="/js/promo-turnos-portada.js"></script>
   <script type="module" src="/js/resenas-portada.js"></script>
   <script type="module" src="/js/notificaciones.js"></script>
 </body>
