@@ -57,6 +57,8 @@ export const MENUS = {
         ['Ver mis notificaciones', '/cuenta/notificaciones.html']]],
       ['configuracion', 'Configuración', 'Cómo funciona la veterinaria.', [
         ['Horario de atención, avisos y stock bajo', '/panel/configuracion.html']]],
+      ['resenas', 'Reseñas', 'Lo que opinan los clientes; desde ahí las respondés.', [
+        ['Ver reseñas', '/resenas/resenas.html']]],
     ],
   },
   CLIENTE: {
@@ -86,6 +88,9 @@ export const MENUS = {
         ['Mis postulaciones', '/adopciones/adopciones.html#seccion-mias']]],
       ['notificaciones', 'Notificaciones', 'Turnos, compras y actividad de la cuenta.', [
         ['Ver mis notificaciones', '/cuenta/notificaciones.html']]],
+      ['resenas', 'Reseñas', 'Contanos cómo te atendimos.', [
+        ['Escribir reseña', '/resenas/escribir.html'],
+        ['Ver reseñas', '/resenas/resenas.html']]],
     ],
   },
   RESCATISTA: {
@@ -104,6 +109,9 @@ export const MENUS = {
         ['Mis compras', '/tienda/compras.html']]],
       ['notificaciones', 'Notificaciones', 'Publicaciones, postulaciones y adopciones.', [
         ['Ver mis notificaciones', '/cuenta/notificaciones.html']]],
+      ['resenas', 'Reseñas', 'Contanos cómo te atendimos.', [
+        ['Escribir reseña', '/resenas/escribir.html'],
+        ['Ver reseñas', '/resenas/resenas.html']]],
     ],
   },
 };

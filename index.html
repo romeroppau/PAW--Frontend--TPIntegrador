@@ -99,20 +99,11 @@
     <section class="opiniones seccion" aria-labelledby="titulo-opiniones">
       <div class="contenedor">
         <h2 id="titulo-opiniones" class="titulo-seccion">¿Qué opinan nuestros clientes?</h2>
-        <div class="burbujas">
-          <blockquote class="burbuja">
-            <p>Atendieron a mi perro de urgencia y me explicaron todo con mucha paciencia. Muy agradecida.</p>
-            <footer>Lucía F.</footer>
-          </blockquote>
-          <blockquote class="burbuja">
-            <p>Me encanta poder ver las vacunas de mis gatos desde el celular. Ya no me olvido ninguna.</p>
-            <footer>Martín G.</footer>
-          </blockquote>
-          <blockquote class="burbuja">
-            <p>Saco turno por WhatsApp en un minuto y siempre me atienden a horario.</p>
-            <footer>Carolina P.</footer>
-          </blockquote>
-        </div>
+        <!-- Las 3 reseñas más nuevas de 4 o 5 estrellas: las pone js/resenas-portada.js
+             (GET /api/resenas?minimo=4). -->
+        <div class="burbujas" id="burbujas"></div>
+        <p class="estado" id="estado-opiniones" role="status"></p>
+        <p class="ver-resenas"><a class="boton boton-borde" href="/resenas/resenas.html">Ver todas las reseñas</a></p>
       </div>
     </section>
 
@@ -154,6 +145,7 @@
   <script type="module" src="/js/auth.js"></script>
   <script type="module" src="/js/portada.js"></script>
   <script type="module" src="/js/horario-portada.js"></script>
+  <script type="module" src="/js/resenas-portada.js"></script>
   <script type="module" src="/js/notificaciones.js"></script>
 </body>
 </html>

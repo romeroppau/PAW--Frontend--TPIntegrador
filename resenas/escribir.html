@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Escribir una reseña | HuellaVet</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Nunito+Sans:wght@400;600;700&display=swap">
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/resenas.css">
+</head>
+<!-- Escribir una reseña (Entrega 5): clientes y rescatistas eligen de 1 a 5 estrellas y escriben su
+     opinión. Se publica enseguida y se vuelve a "Reseñas". Sin sesión, se va a iniciar sesión y
+     después se vuelve acá. Lo maneja js/escribir-resena.js con POST /api/resenas
+     (repo Backend, docs/api/contrato-resenas.md). -->
+<body>
+  <a class="saltar" href="#contenido">Saltar al contenido</a>
+  <div id="encabezado-sitio"></div>
+  <script src="/js/layout.js"></script>
+  <main id="contenido" class="seccion">
+    <div class="contenedor contenedor-resenas">
+      <p><a href="/resenas/resenas.html">&larr; Ver reseñas</a></p>
+      <h1>Escribir una reseña</h1>
+      <p class="estado" id="estado" role="status"></p>
+
+      <form class="tarjeta form-resena" id="form-resena" novalidate hidden>
+        <fieldset class="elegir-estrellas" aria-describedby="error-estrellas">
+          <legend>¿Cuántas estrellas nos das?</legend>
+          <div class="estrellas-opciones" id="estrellas-opciones">
+            <input type="radio" id="estrella-1" name="estrellas" value="1"><label for="estrella-1" title="1 estrella"><span aria-hidden="true">★</span><span class="solo-lectores">1 estrella</span></label>
+            <input type="radio" id="estrella-2" name="estrellas" value="2"><label for="estrella-2" title="2 estrellas"><span aria-hidden="true">★</span><span class="solo-lectores">2 estrellas</span></label>
+            <input type="radio" id="estrella-3" name="estrellas" value="3"><label for="estrella-3" title="3 estrellas"><span aria-hidden="true">★</span><span class="solo-lectores">3 estrellas</span></label>
+            <input type="radio" id="estrella-4" name="estrellas" value="4"><label for="estrella-4" title="4 estrellas"><span aria-hidden="true">★</span><span class="solo-lectores">4 estrellas</span></label>
+            <input type="radio" id="estrella-5" name="estrellas" value="5"><label for="estrella-5" title="5 estrellas"><span aria-hidden="true">★</span><span class="solo-lectores">5 estrellas</span></label>
+          </div>
+          <span class="campo-error" id="error-estrellas"></span>
+        </fieldset>
+
+        <div class="campo">
+          <label for="texto">Tu opinión</label>
+          <textarea id="texto" name="texto" rows="5" maxlength="1000" placeholder="Contanos cómo te atendimos" aria-describedby="ayuda-texto error-texto"></textarea>
+          <span class="campo-ayuda" id="ayuda-texto">Se publica enseguida, con tu nombre y la inicial de tu apellido. Hasta 1000 caracteres.</span>
+          <span class="campo-error" id="error-texto"></span>
+        </div>
+
+        <p id="error-general" class="mensaje mensaje-error" role="alert" hidden></p>
+        <button class="boton" type="submit">Publicar reseña</button>
+      </form>
+    </div>
+  </main>
+  <div id="pie-sitio"></div>
+
+  <script type="module" src="/js/menu.js"></script>
+  <script type="module" src="/js/auth.js"></script>
+  <script type="module" src="/js/notificaciones.js"></script>
+  <script type="module" src="/js/escribir-resena.js"></script>
+</body>
+</html>

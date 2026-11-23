@@ -1,0 +1,239 @@
+/* Reseñas (resenas/resenas.html y resenas/escribir.html). Lo de marca viene de base.css. */
+
+.contenedor-resenas {
+  max-width: 48rem;
+}
+
+/* Las estrellas: llenas ★ y vacías ☆, en naranja. */
+.estrellas {
+  color: var(--naranja-oscuro);
+  letter-spacing: .1em;
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.estrellas-grandes {
+  font-size: 1.5rem;
+}
+
+/* ---------- Resumen (como Google): promedio, total y una barra por cantidad de estrellas ---------- */
+.resumen-resenas {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 1rem 2rem;
+  align-items: center;
+  margin: 1rem 0 1.5rem;
+  padding: 1.25rem 1.5rem;
+  background: var(--blanco);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+}
+
+.resumen-resenas[hidden] {
+  display: none;
+}
+
+.resumen-promedio {
+  text-align: center;
+}
+
+.resumen-promedio p {
+  margin: 0;
+}
+
+.promedio-numero {
+  font-family: var(--fuente-titulo);
+  font-size: 3rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--pino-oscuro);
+}
+
+.resumen-total {
+  margin-top: .35rem;
+  color: var(--tinta-suave);
+}
+
+.resumen-barras {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: .3rem;
+}
+
+.resumen-barras li {
+  display: grid;
+  grid-template-columns: 1rem 1fr 2rem;
+  gap: .6rem;
+  align-items: center;
+  font-size: .9rem;
+}
+
+.barra {
+  height: .6rem;
+  background: var(--menta);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.barra-llena {
+  display: block;
+  height: 100%;
+  background: var(--naranja-oscuro);
+}
+
+.resumen-accion {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
+.resumen-accion[hidden] {
+  display: none;
+}
+
+/* ---------- Filtros y lista ---------- */
+.filtro-resenas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .75rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.filtro-resenas .campo {
+  margin: 0;
+}
+
+.lista-resenas {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: .85rem;
+}
+
+.resena {
+  padding: 1rem 1.25rem;
+  background: var(--blanco);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+}
+
+.resena p {
+  margin: 0;
+}
+
+.resena-cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .25rem .75rem;
+  margin-bottom: .5rem !important;
+}
+
+.resena-autor {
+  color: var(--tinta-suave);
+  font-size: .9rem;
+  font-weight: 600;
+}
+
+.resena-texto {
+  white-space: pre-line;
+}
+
+/* La respuesta de la veterinaria, debajo de la reseña. */
+.resena-respuesta {
+  margin-top: .75rem;
+  padding: .65rem .9rem;
+  background: var(--menta);
+  border-radius: var(--radio);
+}
+
+.resena-respuesta[hidden] {
+  display: none;
+}
+
+.resena-respuesta-titulo {
+  font-weight: 700;
+  font-size: .9rem;
+  color: var(--pino-oscuro);
+  margin-bottom: .2rem !important;
+}
+
+.resena-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+  margin-top: .75rem !important;
+}
+
+.form-respuesta {
+  margin-top: .75rem;
+}
+
+.form-respuesta textarea,
+.form-resena textarea {
+  width: 100%;
+  font: inherit;
+}
+
+/* ---------- Escribir: las 5 estrellas para elegir ---------- */
+.form-resena {
+  display: grid;
+  gap: 1rem;
+}
+
+.form-resena > .boton {
+  justify-self: start;
+}
+
+#ver-mas {
+  margin-top: 1rem;
+}
+
+.elegir-estrellas {
+  border: 0;
+  margin: 0;
+  padding: 0;
+}
+
+.elegir-estrellas legend {
+  font-weight: 700;
+  margin-bottom: .4rem;
+}
+
+.estrellas-opciones {
+  display: flex;
+  gap: .25rem;
+}
+
+/* El radio queda para el teclado y los lectores de pantalla; se ve la estrella. */
+.estrellas-opciones input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+
+.estrellas-opciones label {
+  cursor: pointer;
+  font-size: 2.2rem;
+  line-height: 1;
+  color: #c9d3cf;
+}
+
+.estrellas-opciones label.pintada {
+  color: var(--naranja-oscuro);
+}
+
+.estrellas-opciones input:focus-visible + label {
+  outline: 3px solid var(--pino);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+@media (max-width: 600px) {
+  .resumen-resenas {
+    grid-template-columns: 1fr;
+  }
+}

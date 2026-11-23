@@ -10,3 +10,18 @@
   object-position: center 40%;
   border-radius: var(--radio);
 }
+
+/* "¿Qué opinan nuestros clientes?": las estrellas de cada reseña y el botón a todas. */
+.burbuja .estrellas {
+  display: block;
+  margin-bottom: .35rem;
+  color: var(--naranja-oscuro);
+  letter-spacing: .1em;
+}
+
+.ver-resenas {
+  grid-column: 1 / -1;
+  justify-self: center;
+  margin: 2.5rem 0 0;
+  text-align: center;
+}
