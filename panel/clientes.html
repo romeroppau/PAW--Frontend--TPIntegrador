@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Clientes | HuellaVet</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Nunito+Sans:wght@400;600;700&display=swap">
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/cuenta.css">
+</head>
+<!-- Clientes (veterinaria, Entrega 5): la lista de clientes con su email y su teléfono, con buscador
+     (por nombre, email o teléfono), de a 20 ("Ver más"). El nombre lleva a la ficha del cliente.
+     Se llega desde Panel → Mis pacientes → Clientes. Solo lectura.
+     Lo maneja js/clientes.js con GET /api/clientes (repo Backend, docs/api/contrato.md, "Clientes"). -->
+<body data-rol="VETERINARIO">
+  <a class="saltar" href="#contenido">Saltar al contenido</a>
+  <div id="encabezado-sitio"></div>
+  <script src="/js/layout.js"></script>
+  <main id="contenido" class="seccion" hidden>
+    <div class="contenedor">
+      <p><a href="/paneles/panel-administrador.html#pacientes">&larr; Volver al panel</a></p>
+      <h1>Clientes</h1>
+
+      <div class="campo campo-buscador">
+        <label for="buscar">Buscar por nombre, email o teléfono</label>
+        <input id="buscar" type="search" placeholder="Ej.: Ana o 2323" autocomplete="off" maxlength="100">
+      </div>
+
+      <p class="estado" id="estado" role="status">Cargando clientes…</p>
+      <div class="tabla-scroll" id="tabla" hidden>
+        <table>
+          <caption class="solo-lectores">Clientes</caption>
+          <thead><tr><th scope="col">Nombre</th><th scope="col">Email</th><th scope="col">Teléfono</th></tr></thead>
+          <tbody id="filas"></tbody>
+        </table>
+      </div>
+      <p><button class="boton boton-borde" type="button" id="ver-mas" hidden>Ver más</button></p>
+    </div>
+  </main>
+  <div id="pie-sitio"></div>
+
+  <script type="module" src="/js/menu.js"></script>
+  <script type="module" src="/js/guardia-panel.js"></script>
+  <script type="module" src="/js/auth.js"></script>
+  <script type="module" src="/js/clientes.js"></script>
+</body>
+</html>

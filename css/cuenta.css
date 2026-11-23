@@ -1,0 +1,47 @@
+/* Mis datos (cuenta/mis-datos.html) y las pantallas de clientes de la veterinaria
+   (panel/clientes.html, panel/cliente.html). Los colores y medidas de marca vienen de base.css. */
+
+.contenedor-angosto {
+  max-width: 44rem;
+}
+
+.bloque-cuenta {
+  margin-block: 1.5rem;
+}
+
+.bloque-cuenta h2 {
+  font-size: 1.35rem;
+}
+
+/* El email no se cambia: se ve como un campo apagado. */
+.bloque-cuenta input[readonly] {
+  background: var(--menta);
+  color: var(--tinta-suave);
+}
+
+.campo-buscador {
+  max-width: 28rem;
+}
+
+/* Datos de contacto de la ficha del cliente. */
+.datos-persona {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: .75rem 1.5rem;
+  margin: 0;
+}
+
+.datos-persona dt {
+  font-weight: 700;
+  font-size: .9rem;
+  color: var(--tinta-suave);
+}
+
+.datos-persona dd {
+  margin: .1rem 0 0;
+  overflow-wrap: anywhere;
+}
+
+.acciones-tabla a + a {
+  margin-left: 1rem;
+}

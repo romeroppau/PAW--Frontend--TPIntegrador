@@ -13,6 +13,7 @@ import { api, debounce } from './api.js';
 import { exigirRol } from './auth.js';
 import { confirmar, el, limpiarErrores, mostrarErrores } from './ui.js';
 import { textoEspecieMascota } from './etiquetas.js';
+import { enlaceDuenio } from './personas.js';
 
 const usuario = await exigirRol(['CLIENTE', 'VETERINARIO', 'RESCATISTA']);
 // El rescatista (Entrega 5) maneja sus mascotas igual que un cliente, pero sin calendario ni historial.
@@ -100,7 +101,12 @@ function fila(mascota) {
   if (mascota.raza) nombre.append(el('span', mascota.raza, { class: 'ayuda' }));
   tr.append(nombre);
 
-  if (!esCliente) tr.append(el('td', mascota.duenio.nombre));
+  // La veterinaria: el nombre del dueño lleva a su ficha (datos de contacto y sus mascotas).
+  if (!esCliente) {
+    const duenio = el('td');
+    duenio.append(enlaceDuenio(mascota.duenio));
+    tr.append(duenio);
+  }
 
   tr.append(
     el('td', textoEspecieMascota(mascota.especie)),
