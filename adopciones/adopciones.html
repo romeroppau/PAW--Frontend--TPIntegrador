@@ -23,6 +23,8 @@
       <p class="etiqueta">Adopciones responsables</p>
       <div class="barra-titulo">
         <h1>Animales que buscan familia</h1>
+        <!-- Solo para el cliente con sesión (js/adopciones.js): baja directo a sus postulaciones. -->
+        <a class="boton boton-borde" id="ir-mias" href="#seccion-mias" hidden>Ver mis postulaciones</a>
       </div>
       <p>Rescatistas de la zona publican a los animales que tienen a su cargo. Cada publicación la revisa
         nuestra veterinaria, y antes de la entrega el animal pasa por un chequeo en HuellaVet.</p>
@@ -70,7 +72,7 @@
         <div class="tabla-scroll" id="tabla-mias" hidden>
           <table>
             <caption class="solo-lectores">Mis postulaciones</caption>
-            <thead><tr><th scope="col">Animal</th><th scope="col">Fecha</th><th scope="col">Estado</th></tr></thead>
+            <thead><tr><th scope="col">Animal</th><th scope="col">Fecha</th><th scope="col">Estado</th><th scope="col">Seguimiento</th></tr></thead>
             <tbody id="filas-mias"></tbody>
           </table>
         </div>

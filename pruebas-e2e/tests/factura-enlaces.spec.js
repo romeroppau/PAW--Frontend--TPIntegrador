@@ -34,6 +34,7 @@ test('en Mis turnos, un turno atendido enlaza a su factura y la factura vuelve a
   ] }));
   await page.route('**/api/pacientes/consultas/7/factura', (route) => responderJson(route, FACTURA));
   await page.goto('/cliente/turnos.html');
+  await page.getByRole('tab', { name: /Anteriores y cancelados/ }).click();
 
   const atendido = page.locator('#filas-anteriores tr[data-id="1"]');
   await expect(atendido.getByRole('link', { name: 'Ver la consulta de Tom en su historial clínico' })).toBeVisible();

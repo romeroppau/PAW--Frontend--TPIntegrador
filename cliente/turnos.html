@@ -27,8 +27,38 @@
         <a href="https://wa.me/5491139010486?text=Hola%2C%20quiero%20consultar%20por%20un%20turno" target="_blank" rel="noopener noreferrer">WhatsApp</a>.</p>
       <p class="estado" id="estado" role="status"></p>
 
-      <section class="bloque" aria-labelledby="titulo-proximos">
-        <h2 id="titulo-proximos">Próximos</h2>
+      <!-- Filtros y pestañas (js/turnos-cliente.js): con muchos turnos, se elige qué mirar sin bajar
+           hasta el final de la página. Los filtros valen para las dos pestañas. -->
+      <form class="filtros-turnos" id="filtros" role="search" aria-label="Filtrar turnos">
+        <div class="campo">
+          <label for="filtro-mascota">Mascota</label>
+          <select id="filtro-mascota" name="mascota"><option value="">Todas</option></select>
+        </div>
+        <div class="campo">
+          <label for="filtro-estado">Estado</label>
+          <select id="filtro-estado" name="estado">
+            <option value="">Todos</option>
+            <option value="PROGRAMADO">Programado</option>
+            <option value="EN_ATENCION">En atención</option>
+            <option value="ATENDIDO">Atendido</option>
+            <option value="CANCELADO">Cancelado</option>
+            <option value="AUSENTE">Ausente</option>
+          </select>
+        </div>
+        <div class="campo">
+          <label for="filtro-motivo">Motivo</label>
+          <select id="filtro-motivo" name="motivo"><option value="">Todos</option></select>
+        </div>
+        <button type="reset" class="boton boton-borde boton-chico" id="limpiar-filtros">Limpiar filtros</button>
+      </form>
+
+      <div class="pestanas" role="tablist" aria-label="Turnos" id="pestanas-turnos">
+        <button type="button" role="tab" id="tab-proximos" aria-selected="true" aria-controls="panel-proximos" data-vista="proximos">Próximos <span class="contador" id="contador-proximos"></span></button>
+        <button type="button" role="tab" id="tab-anteriores" aria-selected="false" tabindex="-1" aria-controls="panel-anteriores" data-vista="anteriores">Anteriores y cancelados <span class="contador" id="contador-anteriores"></span></button>
+      </div>
+
+      <section class="bloque" id="panel-proximos" role="tabpanel" aria-labelledby="tab-proximos" tabindex="0">
+        <h2 id="titulo-proximos" class="solo-lectores">Próximos</h2>
         <p class="estado" id="vacio-proximos" hidden></p>
         <div class="tabla-scroll" id="tabla-proximos" hidden>
           <table>
@@ -39,8 +69,8 @@
         </div>
       </section>
 
-      <section class="bloque" aria-labelledby="titulo-anteriores">
-        <h2 id="titulo-anteriores">Anteriores y cancelados</h2>
+      <section class="bloque" id="panel-anteriores" role="tabpanel" aria-labelledby="tab-anteriores" tabindex="0" hidden>
+        <h2 id="titulo-anteriores" class="solo-lectores">Anteriores y cancelados</h2>
         <p class="ayuda">Los de los últimos 30 días y los cancelados. El historial completo de cada mascota está en su historial clínico.</p>
         <p class="estado" id="vacio-anteriores" hidden></p>
         <div class="tabla-scroll" id="tabla-anteriores" hidden>

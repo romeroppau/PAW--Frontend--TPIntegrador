@@ -1,6 +1,11 @@
 /* Barra de "Mi panel" (js/barra-rol.js): la cabecera y el menú desplegable de cada rol.
    La usan los paneles y, con sesión, todas las pantallas del sitio. Reutiliza las variables de base.css. */
 
+/* La barra queda fija arriba: al saltar a una sección (#seccion-mias, #contacto…) que no quede tapada. */
+html {
+  scroll-padding-top: 5rem;
+}
+
 /* Mientras se confirma la sesión, el menú público no se muestra a quien ya entró (layout.js + auth.js). */
 .barra-pendiente .encabezado #navegacion {
   visibility: hidden;
@@ -9,6 +14,8 @@
 /* ---------- Cabecera ---------- */
 
 .panel-cabecera {
+  position: relative;
+  z-index: 25;   /* por encima de la barra fija: la caja de la campana se abre sobre el menú */
   background: var(--blanco);
   border-bottom: 1px solid var(--borde);
 }
@@ -148,11 +155,7 @@
   animation: panel-aparecer .14s ease-out;
 }
 
-/* Las dos últimas secciones abren hacia la izquierda para no salirse de la pantalla. */
-.panel-menu > li:nth-last-child(-n + 2) .panel-desplegable-caja {
-  right: 0;
-  left: auto;
-}
+/* Si la caja se saldría de la pantalla por la derecha, barra-rol.js la corre hacia la izquierda. */
 
 @keyframes panel-aparecer {
   from { opacity: 0; transform: translateY(-4px); }
@@ -245,8 +248,7 @@
     position: static;
   }
 
-  .panel-desplegable-caja,
-  .panel-menu > li:nth-last-child(-n + 2) .panel-desplegable-caja {
+  .panel-desplegable-caja {
     right: 0;
     left: 0;
     width: auto;

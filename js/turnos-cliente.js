@@ -1,8 +1,9 @@
 /**
  * turnos-cliente.js — Mis turnos (cliente/turnos.html), rol 3, Entrega 5
  *
- * Muestra los turnos de las mascotas del cliente: los próximos y los de los últimos 30 días. Los turnos
- * se piden y se cambian por WhatsApp (los carga el veterinario), así que esta página solo los muestra.
+ * Muestra los turnos de las mascotas del cliente: los próximos y los de los últimos 30 días, en dos
+ * pestañas, con filtros por mascota, estado y motivo (valen para las dos) y la cantidad de cada una.
+ * Los turnos se piden y se cambian por WhatsApp (los carga el veterinario): esta página solo los muestra.
  *
  * Contrato de la API: GET /api/pacientes/turnos en docs/api/contrato-mascotas-turnos.md (repo Pacientes).
  * Seguridad: el backend devuelve solo los turnos de las mascotas del cliente de la sesión.
@@ -12,6 +13,7 @@ import { api } from './api.js';
 import { exigirRol } from './auth.js';
 import { el } from './ui.js';
 import { textoEstadoTurno, textoMotivoTurno } from './etiquetas.js';
+import { activarPestanas } from './pestanas.js';
 
 await exigirRol('CLIENTE');
 
@@ -78,15 +80,52 @@ function pintar(id, turnos, conConsulta, textoVacio) {
   vacio.hidden = turnos.length > 0;
 }
 
+// Todos los turnos que devolvió la API (se filtran acá, sin volver a pedirlos).
+let todos = [];
+const filtros = document.getElementById('filtros');
+
+// Las opciones de Mascota y Motivo salen de los turnos que tiene el cliente.
+function llenarOpciones(select, valores) {
+  const actual = select.value;
+  select.replaceChildren(el('option', select.options[0]?.textContent ?? 'Todos', { value: '' }));
+  for (const [valor, texto] of valores) select.append(el('option', texto, { value: valor }));
+  select.value = [...select.options].some((o) => o.value === actual) ? actual : '';
+}
+
+function pasaFiltros(turno) {
+  const { mascota, estado: estadoTurno, motivo } = Object.fromEntries(new FormData(filtros));
+  return (!mascota || String(turno.mascota.id) === mascota)
+    && (!estadoTurno || turno.estado === estadoTurno)
+    && (!motivo || turno.motivo === motivo);
+}
+
+function mostrar() {
+  const hayFiltros = [...new FormData(filtros).values()].some((v) => v !== '');
+  const elegidos = todos.filter(pasaFiltros);
+  const proximos = elegidos.filter(esProximo);
+  const anteriores = elegidos.filter((t) => !esProximo(t)).reverse();   // el más reciente primero
+  pintar('proximos', proximos, false, hayFiltros ? 'Ningún turno próximo coincide con los filtros.' : 'No tenés turnos próximos.');
+  pintar('anteriores', anteriores, true, hayFiltros ? 'Ningún turno anterior coincide con los filtros.' : 'No tuviste turnos en los últimos 30 días.');
+  document.getElementById('contador-proximos').textContent = `(${proximos.length})`;
+  document.getElementById('contador-anteriores').textContent = `(${anteriores.length})`;
+}
+
+filtros.addEventListener('change', mostrar);
+filtros.addEventListener('submit', (e) => e.preventDefault());
+filtros.addEventListener('reset', () => setTimeout(mostrar));   // después de que el formulario se vacíe
+
+activarPestanas(document.getElementById('pestanas-turnos'), () => {});
+
 async function cargar() {
   estado.textContent = 'Cargando…';
   try {
     // La API los devuelve ordenados por fecha y hora, desde 30 días atrás.
-    const { turnos } = await api('/api/pacientes/turnos');
-    const proximos = turnos.filter(esProximo);
-    const anteriores = turnos.filter((t) => !esProximo(t)).reverse();   // el más reciente primero
-    pintar('proximos', proximos, false, 'No tenés turnos próximos.');
-    pintar('anteriores', anteriores, true, 'No tuviste turnos en los últimos 30 días.');
+    ({ turnos: todos } = await api('/api/pacientes/turnos'));
+    const mascotas = new Map(todos.map((t) => [String(t.mascota.id), t.mascota.nombre]));
+    llenarOpciones(document.getElementById('filtro-mascota'), [...mascotas].sort((a, b) => a[1].localeCompare(b[1])));
+    const motivos = new Set(todos.map((t) => t.motivo));
+    llenarOpciones(document.getElementById('filtro-motivo'), [...motivos].map((m) => [m, textoMotivoTurno(m)]));
+    mostrar();
     estado.textContent = '';
   } catch {
     estado.textContent = 'No se pudieron cargar tus turnos. Probá de nuevo en un momento.';
