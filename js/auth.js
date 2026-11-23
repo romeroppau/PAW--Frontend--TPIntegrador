@@ -109,7 +109,10 @@ function pintar() {
     try { await api('/api/auth/logout', { metodo: 'POST' }); } catch { /* aunque falle, se sale igual de la pantalla */ }
     location.href = '/index.html';
   });
-  zona.replaceChildren(el('span', usuario.nombre ?? 'Mi cuenta', { class: 'sesion-nombre' }), salir);
+  // El nombre lleva a "Mis datos" (Entrega 5), como en la mayoría de los sitios.
+  zona.replaceChildren(el('a', usuario.nombre ?? 'Mi cuenta', {
+    class: 'sesion-nombre', href: '/cuenta/mis-datos.html', title: 'Mis datos',
+  }), salir);
 
   // Enlaces del menú según el rol (el veterinario entra por la portada del panel de administración).
   if (menu) {

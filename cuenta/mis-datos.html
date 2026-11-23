@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mis datos | HuellaVet</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Nunito+Sans:wght@400;600;700&display=swap">
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/cuenta.css">
+</head>
+<!-- Mis datos (Entrega 5): cada usuario (cliente, rescatista o veterinaria) ve los datos de su cuenta,
+     cambia su nombre y su teléfono (el rescatista también su organización) y cambia su contraseña.
+     El email no se cambia: es el usuario para entrar. Se llega desde "Datos personales" de los paneles
+     y desde el nombre de arriba a la derecha.
+     Lo maneja js/mis-datos.js con GET/PUT /api/cuenta y PUT /api/cuenta/contrasena
+     (repo Backend, docs/api/contrato.md, "Mis datos"). -->
+<body data-rol="CLIENTE,RESCATISTA,VETERINARIO">
+  <a class="saltar" href="#contenido">Saltar al contenido</a>
+  <div id="encabezado-sitio"></div>
+  <script src="/js/layout.js"></script>
+  <main id="contenido" class="seccion" hidden>
+    <div class="contenedor contenedor-angosto">
+      <p><a id="volver" href="/index.html">&larr; Volver al panel</a></p>
+      <h1>Mis datos</h1>
+      <p class="estado" id="estado" role="status">Cargando tus datos…</p>
+
+      <section class="tarjeta bloque-cuenta" aria-labelledby="titulo-datos" id="bloque-datos" hidden>
+        <h2 id="titulo-datos">Datos personales</h2>
+        <form id="form-datos" novalidate>
+          <div class="campo">
+            <label for="email">Email</label>
+            <input type="email" id="email" readonly aria-describedby="ayuda-email">
+            <span class="campo-ayuda" id="ayuda-email">Es tu usuario para entrar: no se puede cambiar.</span>
+          </div>
+
+          <div class="campo">
+            <label for="nombre">Nombre y apellido</label>
+            <input type="text" id="nombre" name="nombre" autocomplete="name" required minlength="2" maxlength="100" aria-describedby="error-nombre">
+            <span class="campo-error" id="error-nombre"></span>
+          </div>
+
+          <div class="campo">
+            <label for="telefono" id="etiqueta-telefono">Teléfono</label>
+            <input type="tel" id="telefono" name="telefono" autocomplete="tel" placeholder="ej.: 2323 555555" aria-describedby="ayuda-telefono error-telefono">
+            <span class="campo-ayuda" id="ayuda-telefono">A este número te llegan los avisos por WhatsApp.</span>
+            <span class="campo-error" id="error-telefono"></span>
+          </div>
+
+          <!-- Solo el rescatista. -->
+          <div class="campo" id="campo-organizacion" hidden>
+            <label for="organizacion">Organización (opcional)</label>
+            <input type="text" id="organizacion" name="organizacion" autocomplete="organization" maxlength="100" aria-describedby="error-organizacion">
+            <span class="campo-error" id="error-organizacion"></span>
+          </div>
+
+          <p id="error-general" class="mensaje mensaje-error" role="alert" hidden></p>
+          <p id="ok-datos" class="mensaje mensaje-ok" role="status" hidden></p>
+          <button type="submit" class="boton">Guardar cambios</button>
+        </form>
+      </section>
+
+      <section class="tarjeta bloque-cuenta" aria-labelledby="titulo-contrasena" id="bloque-contrasena" hidden>
+        <h2 id="titulo-contrasena">Cambiar contraseña</h2>
+        <form id="form-contrasena" novalidate>
+          <div class="campo">
+            <label for="actual">Contraseña actual</label>
+            <input type="password" id="actual" name="actual" autocomplete="current-password" required aria-describedby="error-actual">
+            <button type="button" class="boton boton-borde mostrar-password" aria-controls="actual" aria-pressed="false">Mostrar</button>
+            <span class="campo-error" id="error-actual"></span>
+          </div>
+
+          <div class="campo">
+            <label for="nueva">Contraseña nueva</label>
+            <input type="password" id="nueva" name="nueva" autocomplete="new-password" required minlength="8" maxlength="72" aria-describedby="ayuda-nueva error-nueva">
+            <span class="campo-ayuda" id="ayuda-nueva">Entre 8 y 72 caracteres.</span>
+            <button type="button" class="boton boton-borde mostrar-password" aria-controls="nueva" aria-pressed="false">Mostrar</button>
+            <span class="campo-error" id="error-nueva"></span>
+          </div>
+
+          <div class="campo">
+            <label for="repetir">Repetí la contraseña nueva</label>
+            <input type="password" id="repetir" name="repetir" autocomplete="new-password" required aria-describedby="error-repetir">
+            <button type="button" class="boton boton-borde mostrar-password" aria-controls="repetir" aria-pressed="false">Mostrar</button>
+            <span class="campo-error" id="error-repetir"></span>
+          </div>
+
+          <p id="ok-contrasena" class="mensaje mensaje-ok" role="status" hidden></p>
+          <button type="submit" class="boton">Cambiar contraseña</button>
+        </form>
+      </section>
+    </div>
+  </main>
+  <div id="pie-sitio"></div>
+
+  <script type="module" src="/js/menu.js"></script>
+  <script type="module" src="/js/guardia-panel.js"></script>
+  <script type="module" src="/js/auth.js"></script>
+  <script type="module" src="/js/mis-datos.js"></script>
+  <script src="/js/mostrar-password.js" defer></script>
+</body>
+</html>
