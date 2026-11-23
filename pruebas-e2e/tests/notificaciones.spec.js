@@ -1,7 +1,6 @@
 // Campana de notificaciones (js/notificaciones.js): la fecha de cada aviso va en día/mes/año.
 const { test, expect } = require('@playwright/test');
 const { responderJson, simularSesion, abrirSeccion } = require('./ayudas');
-const { responderJson, simularSesion } = require('./ayudas');
 
 test('la campana muestra la fecha de cada aviso como día/mes/año', async ({ page }) => {
   await simularSesion(page, { id: 102, nombre: 'Cliente de Prueba', email: 'c@prueba.huellavet', rol: 'CLIENTE' });
