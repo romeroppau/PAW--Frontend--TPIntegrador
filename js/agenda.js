@@ -18,6 +18,7 @@ import { confirmar, el, limpiarErrores, mostrarErrores } from './ui.js';
 import { textoEstadoTurno, textoMotivoTurno, textoEspecieMascota } from './etiquetas.js';
 import { aplicarHorario, horarioDeAtencion } from './horario.js';
 import { enlaceDuenio } from './personas.js';
+import { precioPara, promocionesDeTurnos, textoPrecio } from './precio-turno.js';
 
 await exigirRol('VETERINARIO');
 
@@ -132,7 +133,13 @@ function fila(turno) {
   const celdaEstado = el('td');
   celdaEstado.append(el('span', textoEstadoTurno(turno.estado), { class: CLASE_ESTADO[turno.estado] ?? 'insignia' }));
 
-  tr.append(el('td', turno.hora), mascota, duenio, el('td', textoMotivoTurno(turno.motivo)), celdaEstado, acciones(turno, tr));
+  // El motivo, y si el turno se sacó en una franja promocionada, su descuento (lo guardó al sacarse).
+  const motivo = el('td', textoMotivoTurno(turno.motivo));
+  if (turno.precio?.descuento) {
+    motivo.append(' ', el('span', `${turno.precio.descuento} % off`, { class: 'insignia insignia-promo', title: textoPrecio(turno.precio) }));
+  }
+
+  tr.append(el('td', turno.hora), mascota, duenio, motivo, celdaEstado, acciones(turno, tr));
   return tr;
 }
 
@@ -223,6 +230,23 @@ const selectMascota = formTurno.elements.mascota_id;
 // tanto queda el de siempre, y Pacientes igual valida al guardar).
 horarioDeAtencion().then((horario) => aplicarHorario(formTurno.elements.hora, horario, document.getElementById('ayuda-hora')));
 const botonGuardarTurno = document.getElementById('guardar-turno');
+
+// El precio que va a guardar el turno: el precio base y, si la fecha y la hora caen en una franja
+// promocionada, su descuento (Pacientes lo calcula igual al guardarlo).
+const promocionesTurnos = promocionesDeTurnos();
+const textoPrecioTurno = document.getElementById('precio-turno');
+async function pintarPrecioTurno() {
+  const precio = precioPara(await promocionesTurnos, formTurno.elements.fecha.value, formTurno.elements.hora.value);
+  if (!precio) {
+    textoPrecioTurno.textContent = '';
+  } else if (precio.descuento) {
+    textoPrecioTurno.textContent = `${precio.nombre} está en promoción: la consulta sale ${textoPrecio(precio)}.`;
+  } else {
+    textoPrecioTurno.textContent = `Precio de la consulta: ${textoPrecio(precio)}.`;
+  }
+}
+formTurno.elements.fecha.addEventListener('input', pintarPrecioTurno);
+formTurno.elements.hora.addEventListener('input', pintarPrecioTurno);
 // Al reprogramar solo cambian la fecha y la hora: la mascota y el motivo se ocultan.
 const camposSoloAlta = [selectMascota.closest('.campo'), formTurno.elements.motivo.closest('.campo')];
 let mascotasCargadas = false;
@@ -241,10 +265,12 @@ async function abrirFormularioTurno(turno = null) {
   botonGuardarTurno.textContent = turno ? 'Guardar cambios' : 'Guardar turno';
   seccionTurno.hidden = false;
   seccionTurno.scrollIntoView({ block: 'nearest' });
+  textoPrecioTurno.textContent = '';
 
   if (turno) {
     formTurno.elements.fecha.value = turno.fecha >= hoy() ? turno.fecha : hoy();
     formTurno.elements.hora.value = turno.hora;
+    pintarPrecioTurno();
     formTurno.elements.fecha.focus();
     return;
   }

@@ -179,6 +179,12 @@ th { background: var(--menta); color: var(--pino-oscuro); }
 .insignia.insignia-promo { background: #fde7d3; color: #7a3d07; font-size: .8rem; }
 .promo-hasta { flex-basis: 100%; font-size: .85rem; font-weight: 400; color: var(--tinta-suave); }
 .item-promo { color: var(--naranja-oscuro); white-space: nowrap; }
+/* Turnos con descuento (js/precio-turno.js): portada y Mis turnos. */
+.promo-turnos { margin-block: 1rem; }
+.promo-turnos h2, .promo-turnos h3 { margin-bottom: .4rem; }
+.lista-promo-turnos { list-style: none; margin: 0; padding: 0; display: grid; gap: .4rem; }
+.promo-turno strong { color: var(--pino-oscuro); }
+.precio-turno { font-weight: 700; color: var(--tinta); }
 
 @media (max-width: 800px) {
   .encabezado-fila {

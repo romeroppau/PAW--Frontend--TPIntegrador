@@ -171,7 +171,12 @@ async function cargarSugerencias() {
     const sugerida = promo.franja_sugerida;
 
     $('texto-promocionar').textContent = sugerida?.sugerencia ?? 'Todavía no hay datos para sugerir.';
-    $('filas-franjas').replaceChildren(...(promo.franjas ?? []).map((f) => filaFranja(f, sugerida)));
+    franjas = promo.franjas ?? [];
+    franjaSugerida = sugerida;
+    aPromocionar = promo.a_promocionar ?? [];
+    precioConsulta = Number(promo.precio_consulta ?? 0);
+    $('precio-consulta').textContent = dinero(precioConsulta);
+    await cargarPromoTurnos();
 
     liquidar = datos.que_liquidar ?? [];
     $('vacio-liquidar').hidden = liquidar.length > 0;
@@ -183,12 +188,156 @@ async function cargarSugerencias() {
   }
 }
 
+// Una fila de "Qué promocionar". Las 5 franjas con menos turnos (a_promocionar del motor) traen el
+// descuento sugerido y "Publicitar", o la promoción que ya tienen.
 function filaFranja(f, sugerida) {
   const esSugerida = sugerida && f.dia_semana === sugerida.dia_semana && f.franja === sugerida.franja;
+  const candidata = aPromocionar.find((a) => a.dia_semana === f.dia_semana && a.franja === f.franja);
   const tr = el('tr');
-  tr.append(el('td', f.dia_semana), el('td', f.franja), el('td', f.cantidad_turnos), el('td', esSugerida ? 'Sugerida' : ''));
+  const celdaPromo = el('td', '', { class: 'celda-promo' });
+  if (candidata) {
+    const vigente = promoTurnos.find((p) => p.dia_semana === candidata.dia_numero && p.franja === candidata.franja_codigo);
+    if (vigente) {
+      celdaPromo.append(el('span', `${vigente.porcentaje} % hasta el ${fecha(vigente.hasta).slice(0, 5)}`, { class: 'insignia insignia-promo' }));
+    } else {
+      const nombre = `${f.dia_semana} a la ${f.franja}`;
+      const boton = el('button', 'Publicitar', { type: 'button', class: 'boton boton-chico', 'aria-label': `Publicitar ${nombre}` });
+      boton.addEventListener('click', () => abrirFranja(candidata, boton));
+      celdaPromo.append(boton);
+    }
+  }
+  tr.append(
+    el('td', f.dia_semana), el('td', f.franja), el('td', f.cantidad_turnos), el('td', esSugerida ? 'Sugerida' : ''),
+    el('td', candidata ? `${candidata.descuento_sugerido} %` : ''), celdaPromo
+  );
   return tr;
 }
+
+/* ------------------------------------------------------------------ */
+/* Franjas de turnos: "Publicitar" y las publicadas (API de Pacientes)  */
+/* ------------------------------------------------------------------ */
+
+let franjas = [];          // las 12 franjas del motor
+let franjaSugerida = null;
+let aPromocionar = [];     // las 5 con menos turnos, con su descuento sugerido
+let precioConsulta = 0;
+let promoTurnos = [];      // las franjas en promoción
+
+// Pide las franjas en promoción y vuelve a pintar "Qué promocionar" y la lista de publicadas.
+async function cargarPromoTurnos() {
+  try {
+    ({ datos: promoTurnos = [] } = await api('/api/pacientes/promociones-turnos'));
+  } catch {
+    promoTurnos = [];
+  }
+  $('filas-franjas').replaceChildren(...franjas.map((f) => filaFranja(f, franjaSugerida)));
+  $('filas-promo-turnos').replaceChildren(...promoTurnos.map(filaPromoTurno));
+  $('vacio-promo-turnos').hidden = promoTurnos.length > 0;
+  $('tabla-promo-turnos').hidden = promoTurnos.length === 0;
+}
+
+function filaPromoTurno(p) {
+  const tr = el('tr');
+  const terminar = el('button', 'Terminar', { type: 'button', class: 'boton boton-borde boton-chico', 'aria-label': `Terminar la promoción de ${p.nombre}` });
+  terminar.addEventListener('click', async () => {
+    const si = await confirmar(`¿Terminar la promoción de ${p.nombre}? Los turnos nuevos de esa franja vuelven al precio de siempre; los que ya se sacaron conservan el descuento.`, { aceptar: 'Terminar la promoción', peligro: true });
+    if (!si) return;
+    terminar.disabled = true;
+    try {
+      await api(`/api/pacientes/promociones-turnos/${p.id}`, { metodo: 'DELETE' });
+      avisarFranjas(`Se terminó la promoción de ${p.nombre}.`);
+    } catch (e) {
+      if (e?.estado !== 404) avisarFranjas('No se pudo terminar la promoción. Probá de nuevo.');
+    }
+    await cargarPromoTurnos();
+  });
+  const accion = el('td');
+  accion.append(terminar);
+  tr.append(
+    el('td', p.nombre), el('td', p.porcentaje + ' %'),
+    el('td', `${dinero(p.precio_promocion)} (antes ${dinero(p.precio)})`), el('td', fecha(p.hasta)), accion
+  );
+  return tr;
+}
+
+const avisoFranjas = $('aviso-franjas');
+function avisarFranjas(texto) {
+  avisoFranjas.textContent = texto;
+  avisoFranjas.hidden = false;
+}
+
+const dialogoFranja = $('dialogo-franja');
+const formFranja = $('form-franja');
+let publicitandoFranja = null;   // { franja, boton }
+
+function abrirFranja(franja, boton) {
+  publicitandoFranja = { franja, boton };
+  for (const campo of ['porcentaje', 'hasta']) {
+    $('error-franja-' + campo).textContent = '';
+    formFranja.elements[campo].removeAttribute('aria-invalid');
+  }
+  $('error-franja-general').hidden = true;
+  $('franja-texto').textContent = `${franja.dia_semana} a la ${franja.franja}: ${franja.cantidad_turnos} turnos en las últimas 4 semanas. Consulta: ${dinero(precioConsulta)}.`;
+  const hasta = formFranja.elements.hasta;
+  const enDias = (n) => { const d = new Date(); d.setDate(d.getDate() + n); return aISO(d); };
+  hasta.min = enDias(0);
+  hasta.max = enDias(90);
+  hasta.value = enDias(30);
+  formFranja.elements.porcentaje.value = String(franja.descuento_sugerido ?? 10);
+  previsualizarFranja();
+  dialogoFranja.showModal();
+  formFranja.elements.porcentaje.focus();
+}
+
+function previsualizarFranja() {
+  const porcentaje = Number(formFranja.elements.porcentaje.value);
+  const valido = Number.isInteger(porcentaje) && porcentaje >= 5 && porcentaje <= 90;
+  $('franja-precio').textContent = valido
+    ? `La consulta en esa franja: ${dinero(Math.round(precioConsulta * (100 - porcentaje)) / 100)}`
+    : '';
+}
+
+formFranja.elements.porcentaje.addEventListener('input', previsualizarFranja);
+$('franja-cancelar').addEventListener('click', () => dialogoFranja.close());
+dialogoFranja.addEventListener('close', () => { publicitandoFranja?.boton.focus(); });
+
+formFranja.addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  const { franja } = publicitandoFranja;
+  for (const campo of ['porcentaje', 'hasta']) {
+    $('error-franja-' + campo).textContent = '';
+    formFranja.elements[campo].removeAttribute('aria-invalid');
+  }
+  $('error-franja-general').hidden = true;
+  const porcentaje = formFranja.elements.porcentaje.value.trim();
+  const cuerpo = {
+    dia_semana: franja.dia_numero,
+    franja: franja.franja_codigo,
+    porcentaje: /^\d+$/.test(porcentaje) ? Number(porcentaje) : porcentaje,
+    hasta: formFranja.elements.hasta.value,
+  };
+  const enviar = $('franja-enviar');
+  enviar.disabled = true;
+  try {
+    const promo = await api('/api/pacientes/promociones-turnos', { metodo: 'POST', cuerpo });
+    dialogoFranja.close();
+    avisarFranjas(`Listo: ${promo.nombre} tiene ${promo.porcentaje} % de descuento en la consulta hasta el ${fecha(promo.hasta)}. Los clientes la ven en el sitio.`);
+    await cargarPromoTurnos();
+  } catch (e) {
+    const campos = e?.datos?.campos ?? {};
+    for (const [campo, mensaje] of Object.entries(campos)) {
+      const destino = $('error-franja-' + campo);
+      if (destino) destino.textContent = mensaje;
+      formFranja.elements[campo]?.setAttribute('aria-invalid', 'true');
+    }
+    const general = $('error-franja-general');
+    general.textContent = e?.estado === 400 ? 'Revisá los datos marcados.' : (e?.datos?.error ?? 'No se pudo publicitar. Probá de nuevo.');
+    general.hidden = false;
+    if (e?.estado === 409) await cargarPromoTurnos();
+  } finally {
+    enviar.disabled = false;
+  }
+});
 
 // Una fila de "Qué liquidar". La última columna: la promoción vigente del producto, o "Publicitar".
 function filaLiquidar(p) {

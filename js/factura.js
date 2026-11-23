@@ -55,7 +55,11 @@ function mostrar(f) {
   poner('diagnostico', c.diagnostico || '—');
 
   // Una fila por concepto: la consulta (valor base) y cada insumo y producto con su precio copiado.
-  const filas = [fila('Consulta veterinaria', 1, c.valor_base ?? f.subtotal_base)];
+  // Si el turno se sacó en una franja promocionada, la consulta dice el descuento y el precio sin él.
+  const concepto = c.descuento
+    ? `Consulta veterinaria (${c.descuento} % de descuento; sin descuento: ${dinero(c.precio_lista)})`
+    : 'Consulta veterinaria';
+  const filas = [fila(concepto, 1, c.valor_base ?? f.subtotal_base)];
   for (const i of c.insumos ?? []) filas.push(fila(i.nombre, i.cantidad, i.costo_unitario));
   for (const p of c.productos ?? []) filas.push(fila(p.nombre, p.cantidad, p.precio_unitario));
   document.getElementById('filas').replaceChildren(...filas);

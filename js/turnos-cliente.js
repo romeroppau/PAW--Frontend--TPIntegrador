@@ -14,6 +14,7 @@ import { exigirRol } from './auth.js';
 import { el } from './ui.js';
 import { textoEstadoTurno, textoMotivoTurno } from './etiquetas.js';
 import { activarPestanas } from './pestanas.js';
+import { pintarTurnosConDescuento, textoPrecio } from './precio-turno.js';
 
 await exigirRol('CLIENTE');
 
@@ -38,6 +39,15 @@ const textoFecha = (fecha) => new Intl.DateTimeFormat('es-AR', {
 
 const esProximo = (t) => t.fecha >= hoy && (t.estado === 'PROGRAMADO' || t.estado === 'EN_ATENCION');
 
+// El motivo y, en los turnos que todavía no se atendieron, el precio que guardó al sacarse.
+function motivoYPrecio(turno) {
+  const td = el('td', textoMotivoTurno(turno.motivo));
+  if (turno.precio && (turno.estado === 'PROGRAMADO' || turno.estado === 'EN_ATENCION')) {
+    td.append(el('span', textoPrecio(turno.precio), { class: 'ayuda' }));
+  }
+  return td;
+}
+
 function fila(turno, conConsulta) {
   const tr = el('tr', '', { 'data-id': turno.id });
   const celdaEstado = el('td');
@@ -46,7 +56,7 @@ function fila(turno, conConsulta) {
     el('td', textoFecha(turno.fecha)),
     el('td', turno.hora),
     el('td', turno.mascota.nombre),
-    el('td', textoMotivoTurno(turno.motivo)),
+    motivoYPrecio(turno),
     celdaEstado
   );
   if (conConsulta) {
@@ -133,3 +143,5 @@ async function cargar() {
 }
 
 cargar();
+// Las franjas con descuento, para que el cliente sepa cuándo conviene pedir turno.
+pintarTurnosConDescuento(document.getElementById('promo-turnos'), document.getElementById('lista-promo-turnos'));
