@@ -1,7 +1,7 @@
 // Pendientes de la Entrega 4: factura de la consulta, "Ya pedido" y reactivar insumos y productos,
 // historial sin mascota elegida e imagen del detalle de producto.
 const { test, expect } = require('@playwright/test');
-const { responderJson, simularSesion } = require('./ayudas');
+const { responderJson, simularSesion, abrirSeccion } = require('./ayudas');
 
 const CLIENTE = { id: 103, nombre: 'Cliente Dos', email: 'c2@prueba.huellavet', rol: 'CLIENTE' };
 const VET = { id: 101, nombre: 'Vet', email: 'v@prueba.huellavet', rol: 'VETERINARIO' };
@@ -71,12 +71,14 @@ test('el historial sin mascota deja elegirla, y cada consulta enlaza a su factur
 test('el panel del cliente enlaza "Ver factura"', async ({ page }) => {
   await simularSesion(page, CLIENTE);
   await page.goto('/paneles/panel-cliente.html');
+  await abrirSeccion(page, 'cuenta');
   await expect(page.getByRole('link', { name: 'Ver factura' })).toHaveAttribute('href', '/cliente/historial.html');
 });
 
 test('en el panel del cliente, "Mis compras" de la tarjeta Mi cuenta es un enlace', async ({ page }) => {
   await simularSesion(page, CLIENTE);
   await page.goto('/paneles/panel-cliente.html');
+  await abrirSeccion(page, 'cuenta');
   await expect(page.locator('#cuenta').getByRole('link', { name: 'Mis compras' })).toHaveAttribute('href', '/tienda/compras.html');
 });
 
@@ -95,6 +97,7 @@ test('Contactanos del panel del cliente: datos, el horario que configuró la vet
 test('en el panel del cliente, el Shop lleva a promociones, a cada categoría y al catálogo, con el mismo formato', async ({ page }) => {
   await simularSesion(page, CLIENTE);
   await page.goto('/paneles/panel-cliente.html');
+  await abrirSeccion(page, 'tienda');
   const shop = page.locator('#tienda');
   await expect(shop.locator('.panel-opciones').getByRole('link')).toHaveText(['Promociones', 'Medicamentos', 'Alimento balanceado', 'Accesorios', 'Ver catálogo de productos']);
   await expect(shop.getByRole('link', { name: 'Promociones' })).toHaveAttribute('href', '/catalogo/catalogo.html#promociones');

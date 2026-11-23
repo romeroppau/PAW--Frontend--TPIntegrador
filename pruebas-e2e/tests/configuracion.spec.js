@@ -2,7 +2,7 @@
 // pantallas que los usan (el horario en la agenda, el stock bajo en reportes).
 // La API se simula con el formato de docs/api/contrato.md de Backend, sección "Configuración".
 const { test, expect } = require('@playwright/test');
-const { responderJson, simularSesion } = require('./ayudas');
+const { responderJson, simularSesion, abrirSeccion } = require('./ayudas');
 
 const VETERINARIO = { id: 101, nombre: 'Vet', email: 'v@prueba.huellavet', rol: 'VETERINARIO', estado_validacion: null };
 
@@ -121,6 +121,7 @@ test('la agenda usa el horario de atención configurado', async ({ page }) => {
 test('desde el panel se llega a la configuración', async ({ page }) => {
   await simularSesion(page, VETERINARIO);
   await page.goto('/paneles/panel-administrador.html');
+  await abrirSeccion(page, 'configuracion');
   await page.getByRole('link', { name: 'Horario de atención, avisos y stock bajo' }).click();
   await expect(page).toHaveURL(/\/panel\/configuracion\.html$/);
 });

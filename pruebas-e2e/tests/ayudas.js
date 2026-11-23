@@ -26,4 +26,9 @@ const PRODUCTOS = [
   { id: 103, nombre: 'Antipulgas gatos', categoria: 'MEDICAMENTO', especie: 'GATO', precio: 4500.5, vencimiento: null, disponible: true },
 ];
 
-module.exports = { responderJson, simularSesion, PRODUCTOS };
+/** Paneles: las opciones de cada sección están en un menú desplegable; esto lo abre. */
+async function abrirSeccion(page, id) {
+  await page.locator(`#${id} > summary`).click();
+}
+
+module.exports = { responderJson, simularSesion, abrirSeccion, PRODUCTOS };
