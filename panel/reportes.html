@@ -21,14 +21,16 @@
       <h1>Reportes y sugerencias</h1>
 
       <div class="pestanas" role="tablist" aria-label="Secciones de reportes" id="pestanas">
-        <button type="button" role="tab" id="tab-sugerencias" aria-selected="true" aria-controls="panel-sugerencias" data-vista="sugerencias">Sugerencias</button>
+        <button type="button" role="tab" id="tab-promocionar" aria-selected="true" aria-controls="panel-promocionar" data-vista="promocionar">Qué promocionar</button>
+        <button type="button" role="tab" id="tab-liquidar" aria-selected="false" tabindex="-1" aria-controls="panel-liquidar" data-vista="liquidar">Qué liquidar</button>
+        <button type="button" role="tab" id="tab-promociones" aria-selected="false" tabindex="-1" aria-controls="panel-promociones" data-vista="promociones">Promociones publicadas</button>
         <button type="button" role="tab" id="tab-turnos-atendidos" aria-selected="false" tabindex="-1" aria-controls="panel-turnos-atendidos" data-vista="turnos-atendidos">Turnos atendidos</button>
         <button type="button" role="tab" id="tab-stock" aria-selected="false" tabindex="-1" aria-controls="panel-stock" data-vista="stock">Stock y movimientos</button>
       </div>
       <p class="estado" id="estado" role="status"></p>
 
-      <!-- Sugerencias -->
-      <div id="panel-sugerencias" role="tabpanel" aria-labelledby="tab-sugerencias" tabindex="0">
+      <!-- Las sugerencias del motor, una pestaña cada una (las tres salen de GET /api/reportes/sugerencias). -->
+      <div id="panel-promocionar" role="tabpanel" aria-labelledby="tab-promocionar" tabindex="0">
         <section class="tarjeta" aria-labelledby="t-promocionar">
           <h2 id="t-promocionar">Qué promocionar</h2>
           <p id="texto-promocionar"></p>
@@ -44,8 +46,10 @@
             </table>
           </div>
         </section>
+      </div>
 
-        <section class="bloque tarjeta" aria-labelledby="t-liquidar">
+      <div id="panel-liquidar" role="tabpanel" aria-labelledby="tab-liquidar" tabindex="0" hidden>
+        <section class="tarjeta" aria-labelledby="t-liquidar">
           <h2 id="t-liquidar">Qué liquidar</h2>
           <p>Con <strong>Publicitar</strong> el producto pasa a la sección de promociones de la tienda con el descuento que elijas.</p>
           <p class="estado" id="vacio-liquidar" hidden>No hay productos por vencer con stock.</p>
@@ -64,10 +68,13 @@
             </table>
           </div>
         </section>
+      </div>
 
-        <!-- Promociones vigentes (GET /api/inventario/promociones de Inventario): se terminan desde acá. -->
-        <section class="bloque tarjeta" aria-labelledby="t-promociones">
+      <!-- Promociones vigentes (GET /api/inventario/promociones de Inventario): se terminan desde acá. -->
+      <div id="panel-promociones" role="tabpanel" aria-labelledby="tab-promociones" tabindex="0" hidden>
+        <section class="tarjeta" aria-labelledby="t-promociones">
           <h2 id="t-promociones">Promociones publicadas</h2>
+          <p class="aviso-ok" id="aviso-publicadas" role="status" hidden></p>
           <h3 id="t-promo-productos">Productos</h3>
           <p class="estado" id="vacio-promociones">No hay productos en promoción.</p>
           <div class="tabla-scroll" id="tabla-promociones" hidden>
@@ -100,59 +107,61 @@
             </table>
           </div>
         </section>
-
-        <!-- "Publicitar" una franja: el descuento a la consulta y hasta cuándo (reportes.js). -->
-        <dialog class="dialogo dialogo-publicitar" id="dialogo-franja" aria-labelledby="titulo-franja">
-          <form id="form-franja" novalidate>
-            <h2 id="titulo-franja">Publicitar una franja</h2>
-            <p id="franja-texto"></p>
-            <div class="campo">
-              <label for="franja-porcentaje">Descuento en la consulta (%)</label>
-              <input id="franja-porcentaje" name="porcentaje" type="number" min="5" max="90" step="1" inputmode="numeric" required aria-describedby="ayuda-franja-porcentaje error-franja-porcentaje">
-              <p class="campo-ayuda" id="ayuda-franja-porcentaje">Entre 5 y 90 por ciento.</p>
-              <span class="campo-error" id="error-franja-porcentaje"></span>
-            </div>
-            <div class="campo">
-              <label for="franja-hasta">Hasta (inclusive)</label>
-              <input id="franja-hasta" name="hasta" type="date" required aria-describedby="ayuda-franja-hasta error-franja-hasta">
-              <p class="campo-ayuda" id="ayuda-franja-hasta">Vale para los turnos de esa franja hasta este día. Como mucho 90 días.</p>
-              <span class="campo-error" id="error-franja-hasta"></span>
-            </div>
-            <p class="precio-previo" id="franja-precio" aria-live="polite"></p>
-            <p class="campo-error" id="error-franja-general" role="alert" hidden></p>
-            <div class="dialogo-botones">
-              <button type="button" class="boton boton-borde" id="franja-cancelar">Cancelar</button>
-              <button type="submit" class="boton" id="franja-enviar">Publicitar</button>
-            </div>
-          </form>
-        </dialog>
-
-        <!-- "Publicitar": elegir el descuento y hasta cuándo dura (reportes.js lo abre con showModal). -->
-        <dialog class="dialogo dialogo-publicitar" id="dialogo-publicitar" aria-labelledby="titulo-publicitar">
-          <form id="form-publicitar" novalidate>
-            <h2 id="titulo-publicitar">Publicitar</h2>
-            <p id="publicitar-producto"></p>
-            <div class="campo">
-              <label for="publicitar-porcentaje">Descuento (%)</label>
-              <input id="publicitar-porcentaje" name="porcentaje" type="number" min="5" max="90" step="1" inputmode="numeric" required aria-describedby="ayuda-porcentaje error-porcentaje">
-              <p class="campo-ayuda" id="ayuda-porcentaje">Entre 5 y 90 por ciento.</p>
-              <span class="campo-error" id="error-porcentaje"></span>
-            </div>
-            <div class="campo">
-              <label for="publicitar-hasta">Hasta (inclusive)</label>
-              <input id="publicitar-hasta" name="hasta" type="date" required aria-describedby="ayuda-hasta error-hasta">
-              <p class="campo-ayuda" id="ayuda-hasta"></p>
-              <span class="campo-error" id="error-hasta"></span>
-            </div>
-            <p class="precio-previo" id="publicitar-precio" aria-live="polite"></p>
-            <p class="campo-error" id="error-general" role="alert" hidden></p>
-            <div class="dialogo-botones">
-              <button type="button" class="boton boton-borde" id="publicitar-cancelar">Cancelar</button>
-              <button type="submit" class="boton" id="publicitar-enviar">Publicitar</button>
-            </div>
-          </form>
-        </dialog>
       </div>
+
+      <!-- Los cuadros de "Publicitar" quedan fuera de las pestañas (un <dialog> dentro de una pestaña
+           oculta no se vería). Se abren desde "Qué promocionar" y "Qué liquidar". -->
+      <!-- "Publicitar" una franja: el descuento a la consulta y hasta cuándo (reportes.js). -->
+      <dialog class="dialogo dialogo-publicitar" id="dialogo-franja" aria-labelledby="titulo-franja">
+        <form id="form-franja" novalidate>
+          <h2 id="titulo-franja">Publicitar una franja</h2>
+          <p id="franja-texto"></p>
+          <div class="campo">
+            <label for="franja-porcentaje">Descuento en la consulta (%)</label>
+            <input id="franja-porcentaje" name="porcentaje" type="number" min="5" max="90" step="1" inputmode="numeric" required aria-describedby="ayuda-franja-porcentaje error-franja-porcentaje">
+            <p class="campo-ayuda" id="ayuda-franja-porcentaje">Entre 5 y 90 por ciento.</p>
+            <span class="campo-error" id="error-franja-porcentaje"></span>
+          </div>
+          <div class="campo">
+            <label for="franja-hasta">Hasta (inclusive)</label>
+            <input id="franja-hasta" name="hasta" type="date" required aria-describedby="ayuda-franja-hasta error-franja-hasta">
+            <p class="campo-ayuda" id="ayuda-franja-hasta">Vale para los turnos de esa franja hasta este día. Como mucho 90 días.</p>
+            <span class="campo-error" id="error-franja-hasta"></span>
+          </div>
+          <p class="precio-previo" id="franja-precio" aria-live="polite"></p>
+          <p class="campo-error" id="error-franja-general" role="alert" hidden></p>
+          <div class="dialogo-botones">
+            <button type="button" class="boton boton-borde" id="franja-cancelar">Cancelar</button>
+            <button type="submit" class="boton" id="franja-enviar">Publicitar</button>
+          </div>
+        </form>
+      </dialog>
+
+      <!-- "Publicitar": elegir el descuento y hasta cuándo dura (reportes.js lo abre con showModal). -->
+      <dialog class="dialogo dialogo-publicitar" id="dialogo-publicitar" aria-labelledby="titulo-publicitar">
+        <form id="form-publicitar" novalidate>
+          <h2 id="titulo-publicitar">Publicitar</h2>
+          <p id="publicitar-producto"></p>
+          <div class="campo">
+            <label for="publicitar-porcentaje">Descuento (%)</label>
+            <input id="publicitar-porcentaje" name="porcentaje" type="number" min="5" max="90" step="1" inputmode="numeric" required aria-describedby="ayuda-porcentaje error-porcentaje">
+            <p class="campo-ayuda" id="ayuda-porcentaje">Entre 5 y 90 por ciento.</p>
+            <span class="campo-error" id="error-porcentaje"></span>
+          </div>
+          <div class="campo">
+            <label for="publicitar-hasta">Hasta (inclusive)</label>
+            <input id="publicitar-hasta" name="hasta" type="date" required aria-describedby="ayuda-hasta error-hasta">
+            <p class="campo-ayuda" id="ayuda-hasta"></p>
+            <span class="campo-error" id="error-hasta"></span>
+          </div>
+          <p class="precio-previo" id="publicitar-precio" aria-live="polite"></p>
+          <p class="campo-error" id="error-general" role="alert" hidden></p>
+          <div class="dialogo-botones">
+            <button type="button" class="boton boton-borde" id="publicitar-cancelar">Cancelar</button>
+            <button type="submit" class="boton" id="publicitar-enviar">Publicitar</button>
+          </div>
+        </form>
+      </dialog>
 
       <!-- Turnos atendidos -->
       <div id="panel-turnos-atendidos" role="tabpanel" aria-labelledby="tab-turnos-atendidos" tabindex="0" hidden>

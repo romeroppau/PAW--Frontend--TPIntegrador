@@ -1,9 +1,10 @@
 /**
  * reportes.js — Panel de reportes (panel/reportes.html)
  *
- * Tres pestañas (sugerencias, turnos atendidos, stock y movimientos) y, dentro de stock, tres
- * sub-pestañas. Cada una pide sus datos la primera vez que se abre. La pestaña activa viaja en el
- * hash de la URL (#turnos-atendidos, #stock-insumos), así los enlaces de los paneles caen en la correcta.
+ * Cinco pestañas (qué promocionar, qué liquidar, promociones publicadas, turnos atendidos, stock y
+ * movimientos) y, dentro de stock, tres sub-pestañas. Cada una pide sus datos la primera vez que se
+ * abre (las tres primeras, un solo pedido). La pestaña activa viaja en el hash de la URL
+ * (#liquidar, #turnos-atendidos, #stock-insumos), así los enlaces de los paneles caen en la correcta.
  * Contrato: docs/api/contrato-reportes.md del repo Reportes. "Publicitar" y las promociones usan la
  * API de Inventario (docs/api/contrato-tienda.md, sección "Promociones").
  * La guardia de rol es solo comodidad de interfaz; la autorización real la hace el backend.
@@ -260,11 +261,18 @@ function filaPromoTurno(p) {
   return tr;
 }
 
-const avisoFranjas = $('aviso-franjas');
-function avisarFranjas(texto) {
-  avisoFranjas.textContent = texto;
-  avisoFranjas.hidden = false;
+// Lo que se publicita o se termina se avisa en la pestaña donde se hizo y también en "Promociones
+// publicadas" (desde ahí se terminan): así el aviso se ve en la que esté abierta.
+const avisoPublicadas = $('aviso-publicadas');
+function mostrarAviso(elemento, texto) {
+  for (const aviso of [elemento, avisoPublicadas]) {
+    aviso.textContent = texto;
+    aviso.hidden = false;
+  }
 }
+
+const avisoFranjas = $('aviso-franjas');
+const avisarFranjas = (texto) => mostrarAviso(avisoFranjas, texto);
 
 const dialogoFranja = $('dialogo-franja');
 const formFranja = $('form-franja');
@@ -420,10 +428,7 @@ async function terminarPromocion(promo, boton) {
 }
 
 const avisoPromo = $('aviso-promociones');
-function avisar(texto) {
-  avisoPromo.textContent = texto;
-  avisoPromo.hidden = false;
-}
+const avisar = (texto) => mostrarAviso(avisoPromo, texto);
 
 const dialogo = $('dialogo-publicitar');
 const formPublicitar = $('form-publicitar');
@@ -623,14 +628,25 @@ formMov.addEventListener('submit', (ev) => { ev.preventDefault(); cargarStock();
 /* ------------------------------------------------------------------ */
 
 const cargadas = new Set();
-let vistaActual = 'sugerencias';
+let vistaActual = 'promocionar';
+
+// Las tres pestañas de sugerencias salen del mismo pedido (GET /api/reportes/sugerencias): se carga una vez.
+const CARGA = {
+  promocionar: ['sugerencias', cargarSugerencias],
+  liquidar: ['sugerencias', cargarSugerencias],
+  promociones: ['sugerencias', cargarSugerencias],
+  'turnos-atendidos': ['turnos-atendidos', cargarTurnos],
+  stock: ['stock', cargarStock],
+};
+const VISTAS_SIMPLES = ['promocionar', 'liquidar', 'promociones', 'turnos-atendidos'];
 let subActual = 'productos';
 let iniciando = true;
 
 function cargarVista(vista) {
-  if (cargadas.has(vista)) return;
-  cargadas.add(vista);
-  ({ 'sugerencias': cargarSugerencias, 'turnos-atendidos': cargarTurnos, 'stock': cargarStock })[vista]();
+  const [clave, cargar] = CARGA[vista];
+  if (cargadas.has(clave)) return;
+  cargadas.add(clave);
+  cargar();
 }
 
 // Deja la pestaña activa en la URL sin sumar entradas al historial ni mover la página.
@@ -642,8 +658,8 @@ function actualizarHash() {
 function desdeHash() {
   const nombre = location.hash.slice(1);
   if (nombre.startsWith('stock')) return { vista: 'stock', sub: nombre.split('-')[1] || 'productos' };
-  if (nombre === 'turnos-atendidos') return { vista: 'turnos-atendidos', sub: null };
-  return { vista: 'sugerencias', sub: null };
+  if (VISTAS_SIMPLES.includes(nombre)) return { vista: nombre, sub: null };
+  return { vista: 'promocionar', sub: null };   // también #sugerencias, de los enlaces de antes
 }
 
 const elegirPrincipal = activarPestanas($('pestanas'), (vista) => {

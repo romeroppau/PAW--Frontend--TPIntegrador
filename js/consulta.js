@@ -144,7 +144,8 @@ function filaItem(tipo, cfg, it) {
     el('td', dinero(unitario * it.cantidad))
   );
 
-  const acciones = el('td', '', { class: 'acciones' });
+  // La caja con display:flex va adentro de la celda (una celda flex se sale de la tabla).
+  const acciones = el('div', '', { class: 'acciones' });
   if (!cerrada()) {
     const quitar = el('button', 'Quitar', {
       type: 'button', class: 'boton boton-peligro boton-chico', 'aria-label': 'Quitar ' + it.nombre
@@ -163,7 +164,9 @@ function filaItem(tipo, cfg, it) {
     });
     acciones.append(quitar);
   }
-  tr.append(acciones);
+  const celda = el('td');
+  celda.append(acciones);
+  tr.append(celda);
   return tr;
 }
 

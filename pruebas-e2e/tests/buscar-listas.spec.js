@@ -54,3 +54,20 @@ test('insumos: busca por nombre mientras se escribe', async ({ page }) => {
   await page.getByLabel('Buscar un insumo por nombre').fill('bisturí');
   await expect(page.locator('#estado')).toHaveText('Ningún insumo se llama "bisturí".');
 });
+
+test('insumos: las acciones quedan dentro de la tabla, en su columna', async ({ page }) => {
+  await simularSesion(page, VETERINARIO);
+  await page.route('**/api/inventario/insumos', (route) => responderJson(route, { datos: [
+    { id: 101, nombre: 'Jeringa descartable 3 ml', stock: 200, costo: 150, estado: 'DISPONIBLE', activo: true },
+    { id: 109, nombre: 'Venda elástica 5 cm', stock: 10, costo: 900, estado: 'DISPONIBLE', activo: false },
+  ] }));
+  await page.goto('/panel/insumos.html');
+
+  // Cada fila tiene sus 5 celdas, y la de acciones es una celda de tabla (no una caja flex suelta).
+  const celdas = page.locator('#filas tr').first().locator('td');
+  await expect(celdas).toHaveCount(5);
+  expect(await celdas.last().evaluate((td) => getComputedStyle(td).display)).toBe('table-cell');
+  const tabla = await page.locator('table').boundingBox();
+  const acciones = await celdas.last().boundingBox();
+  expect(acciones.x + acciones.width).toBeLessThanOrEqual(tabla.x + tabla.width + 1);
+});
