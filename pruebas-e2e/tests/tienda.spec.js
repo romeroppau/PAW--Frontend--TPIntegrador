@@ -2,7 +2,7 @@
 // política de cancelación, la compra con la cuenta regresiva, mis compras y las ventas de la veterinaria.
 // Contrato de la API: repo Inventario, docs/api/contrato-tienda.md.
 const { test, expect } = require('@playwright/test');
-const { responderJson, simularSesion, PRODUCTOS } = require('./ayudas');
+const { responderJson, simularSesion, abrirSeccion, PRODUCTOS } = require('./ayudas');
 
 const CLIENTE = { id: 102, nombre: 'Cliente de Prueba', email: 'c@prueba.huellavet', rol: 'CLIENTE' };
 const RESCATISTA = { id: 104, nombre: 'Rescatista', email: 'r@prueba.huellavet', rol: 'RESCATISTA' };
@@ -722,6 +722,7 @@ test('el panel del rescatista tiene acceso a la tienda (también compra)', async
   await simularSesion(page, RESCATISTA);
   await page.route('**/api/tienda/carrito', (route) => responderJson(route, VACIO));
   await page.goto('/paneles/panel-rescatista.html');
+  await abrirSeccion(page, 'tienda');
   const tienda = page.locator('#tienda');
   await expect(tienda.getByRole('link', { name: 'Ver catálogo de productos' })).toHaveAttribute('href', '/catalogo/catalogo.html');
   await expect(tienda.getByRole('link', { name: 'Mi carrito' })).toHaveAttribute('href', '/tienda/carrito.html');

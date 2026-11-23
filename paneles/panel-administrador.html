@@ -20,94 +20,135 @@
     </div>
   </header>
   <nav class="panel-nav" aria-label="Navegación del administrador">
-      <div class="contenedor">
-      <a href="#agenda">Agenda</a><a href="#pacientes">Mis pacientes</a><a href="#productos">Tienda</a><a
-        href="#insumos">Insumos</a><a href="#reportes">Reportes</a><a href="#rescatistas">Rescatistas</a><a
-        href="#adopcion">Adopción</a><a href="#notificaciones">Notificaciones</a><a
-        href="#configuracion">Configuración</a>
-    </div>
+    <!-- Cada sección es un <details>: se despliega con clic, Enter o Espacio (js/panel-menu.js
+         solo cierra el abierto al hacer clic afuera o con Escape). -->
+    <ul class="contenedor panel-menu">
+      <li>
+        <details class="panel-desplegable" id="agenda" name="panel-menu">
+          <summary>Agenda</summary>
+          <div class="panel-desplegable-caja">
+            <p class="panel-desplegable-desc">Turnos y consultas del día.</p>
+            <ul class="panel-opciones">
+              <li><a href="/panel/agenda.html">Registrar turno</a></li>
+              <li><a href="/panel/agenda.html">Turnos del día</a></li>
+              <li><a href="/panel/agenda.html">Atender consulta</a></li>
+            </ul>
+          </div>
+        </details>
+      </li>
+      <li>
+        <details class="panel-desplegable" id="pacientes" name="panel-menu">
+          <summary>Mis pacientes</summary>
+          <div class="panel-desplegable-caja">
+            <p class="panel-desplegable-desc">Clientes, mascotas y su historia clínica.</p>
+            <ul class="panel-opciones">
+              <li><a href="/panel/clientes.html">Clientes</a></li>
+              <li><a href="/cliente/mascotas.html">Ficha de mascotas</a></li>
+              <li><a href="/cliente/historial.html">Historial clínico</a></li>
+              <li><a href="/cliente/calendario.html">Calendario sanitario</a></li>
+            </ul>
+          </div>
+        </details>
+      </li>
+      <li>
+        <details class="panel-desplegable" id="productos" name="panel-menu">
+          <summary>Tienda</summary>
+          <div class="panel-desplegable-caja">
+            <p class="panel-desplegable-desc">Productos, stock y pedidos de la tienda.</p>
+            <ul class="panel-opciones">
+              <li><a href="/panel/productos.html">Administrar productos</a></li>
+              <li><a href="/panel/productos.html">Cargar stock</a></li>
+              <li><a href="/panel/ventas.html">Pedidos para retirar</a></li>
+            </ul>
+          </div>
+        </details>
+      </li>
+      <li>
+        <details class="panel-desplegable" id="insumos" name="panel-menu">
+          <summary>Insumos</summary>
+          <div class="panel-desplegable-caja">
+            <p class="panel-desplegable-desc">Lo que se usa en las consultas.</p>
+            <ul class="panel-opciones">
+              <li><a href="/panel/insumos.html">Administrar insumos</a></li>
+              <li><a href="/panel/insumos.html">Cargar stock</a></li>
+              <li><a href="/panel/insumo-movimientos.html">Movimientos</a></li>
+            </ul>
+          </div>
+        </details>
+      </li>
+      <li>
+        <details class="panel-desplegable" id="reportes" name="panel-menu">
+          <summary>Reportes</summary>
+          <div class="panel-desplegable-caja">
+            <p class="panel-desplegable-desc">Sugerencias, turnos atendidos y stock.</p>
+            <ul class="panel-opciones">
+              <li><a href="/panel/reportes.html">Sugerencias: qué promocionar y qué liquidar</a></li>
+              <li><a href="/panel/reportes.html#turnos-atendidos">Turnos atendidos</a></li>
+              <li><a href="/panel/reportes.html#stock">Stock / movimientos de inventario</a></li>
+            </ul>
+          </div>
+        </details>
+      </li>
+      <li>
+        <details class="panel-desplegable" id="rescatistas" name="panel-menu">
+          <summary>Rescatistas</summary>
+          <div class="panel-desplegable-caja">
+            <p class="panel-desplegable-desc">Cuentas de rescatistas por aprobar.</p>
+            <ul class="panel-opciones">
+              <li><a href="/panel/adopciones.html#rescatistas">Solicitudes pendientes</a></li>
+            </ul>
+          </div>
+        </details>
+      </li>
+      <li>
+        <details class="panel-desplegable" id="adopcion" name="panel-menu">
+          <summary>Adopción</summary>
+          <div class="panel-desplegable-caja">
+            <p class="panel-desplegable-desc">Publicaciones y adopciones en curso.</p>
+            <ul class="panel-opciones">
+              <li><a href="/panel/adopciones.html#moderacion">Moderar publicaciones</a></li>
+              <li><a href="/panel/adopciones.html#en-curso">Adopciones en curso</a></li>
+              <li><a href="/panel/adopciones.html#en-curso">Completar adopción</a></li>
+              <li><a href="/panel/adopciones.html#finalizadas">Adopciones finalizadas</a></li>
+            </ul>
+          </div>
+        </details>
+      </li>
+      <li>
+        <details class="panel-desplegable" id="notificaciones" name="panel-menu">
+          <summary>Notificaciones</summary>
+          <div class="panel-desplegable-caja">
+            <p class="panel-desplegable-desc">Alertas y novedades administrativas.</p>
+            <ul class="panel-opciones">
+              <li><a href="/cuenta/notificaciones.html">Ver mis notificaciones</a></li>
+            </ul>
+          </div>
+        </details>
+      </li>
+      <li>
+        <details class="panel-desplegable" id="configuracion" name="panel-menu">
+          <summary>Configuración</summary>
+          <div class="panel-desplegable-caja">
+            <p class="panel-desplegable-desc">Cómo funciona la veterinaria.</p>
+            <ul class="panel-opciones">
+              <li><a href="/panel/configuracion.html">Horario de atención, avisos y stock bajo</a></li>
+            </ul>
+          </div>
+        </details>
+      </li>
+    </ul>
   </nav>
   <!-- hidden: se muestra recién cuando guardia-panel.js confirma el rol -->
   <main class="panel-principal" hidden>
     <section class="panel-intro">
-      <p class="etiqueta">Gestión del sistema</p>
-      <h1>Panel de administrador</h1>
-      <p>Accesos generales para administrar turnos, pacientes, productos, inventario y adopciones.</p>
+      <div>
+        <p class="etiqueta">Gestión del sistema</p>
+        <h1>Panel de administrador</h1>
+        <p>Accesos generales para administrar turnos, pacientes, productos, inventario y adopciones.</p>
+        <p class="panel-pista"><span aria-hidden="true">↑</span> Elegí una sección en el menú de arriba para ver sus opciones.</p>
+      </div>
+      <div class="panel-intro-huella"><svg viewBox="0 0 64 64" aria-hidden="true" focusable="false"><g fill="currentColor"><ellipse cx="14" cy="27" rx="7" ry="9"/><ellipse cx="29" cy="15" rx="7" ry="10"/><ellipse cx="45" cy="15" rx="7" ry="10"/><ellipse cx="57" cy="29" rx="6" ry="9"/><path d="M32 31c-9 0-18 9-18 17 0 6 5 9 11 8 3-.6 5-1.5 7-1.5s4 .9 7 1.5c6 1 11-2 11-8 0-8-9-17-18-17z"/></g></svg></div>
     </section>
-    <h2 class="panel-seccion-titulo">Secciones de administración</h2>
-    <div class="panel-grilla">
-      <section class="panel-tarjeta" id="agenda">
-        <h2>Agenda</h2>
-        <ul class="panel-opciones">
-          <li><a href="/panel/agenda.html">Registrar turno</a></li>
-          <li><a href="/panel/agenda.html">Turnos del día</a></li>
-          <li><a href="/panel/agenda.html">Atender consulta</a></li>
-        </ul>
-      </section>
-      <section class="panel-tarjeta" id="pacientes">
-        <h2>Mis pacientes</h2>
-        <ul class="panel-opciones">
-          <li><a href="/panel/clientes.html">Clientes</a></li>
-          <li><a href="/cliente/mascotas.html">Ficha de mascotas</a></li>
-          <li><a href="/cliente/historial.html">Historial clínico</a></li>
-          <li><a href="/cliente/calendario.html">Calendario sanitario</a></li>
-        </ul>
-      </section>
-      <section class="panel-tarjeta" id="productos">
-        <h2>Tienda</h2>
-        <ul class="panel-opciones">
-          <li><a href="/panel/productos.html">Administrar productos</a></li>
-          <li><a href="/panel/productos.html">Cargar stock</a></li>
-          <li><a href="/panel/ventas.html">Pedidos para retirar</a></li>
-        </ul>
-      </section>
-      <section class="panel-tarjeta" id="insumos">
-        <h2>Insumos</h2>
-        <ul class="panel-opciones">
-          <li><a href="/panel/insumos.html">Administrar insumos</a></li>
-          <li><a href="/panel/insumos.html">Cargar stock</a></li>
-          <li><a href="/panel/insumo-movimientos.html">Movimientos</a></li>
-        </ul>
-      </section>
-      <section class="panel-tarjeta" id="reportes">
-        <h2>Reportes</h2>
-        <ul class="panel-opciones">
-          <li><a href="/panel/reportes.html">Sugerencias: qué promocionar y qué liquidar</a></li>
-          <li><a href="/panel/reportes.html#turnos-atendidos">Turnos atendidos</a></li>
-          <li><a href="/panel/reportes.html#stock">Stock / movimientos de inventario</a></li>
-        </ul>
-      </section>
-      <section class="panel-tarjeta" id="rescatistas">
-        <h2>Rescatistas</h2>
-        <ul class="panel-opciones">
-          <li><a href="/panel/adopciones.html#rescatistas">Solicitudes pendientes</a></li>
-        </ul>
-      </section>
-      <section class="panel-tarjeta" id="adopcion">
-        <h2>Adopción</h2>
-        <ul class="panel-opciones">
-          <li><a href="/panel/adopciones.html#moderacion">Moderar publicaciones</a></li>
-          <li><a href="/panel/adopciones.html#en-curso">Adopciones en curso</a></li>
-          <li><a href="/panel/adopciones.html#en-curso">Completar adopción</a></li>
-          <li><a href="/panel/adopciones.html#finalizadas">Adopciones finalizadas</a></li>
-        </ul>
-      </section>
-      <section class="panel-tarjeta" id="notificaciones">
-        <h2>Notificaciones</h2>
-        <p>Alertas y novedades administrativas.</p>
-        <ul class="panel-opciones">
-          <li><a href="/cuenta/notificaciones.html">Ver mis notificaciones</a></li>
-        </ul>
-      </section>
-      <section class="panel-tarjeta" id="configuracion">
-        <h2>Configuración</h2>
-        <ul class="panel-opciones">
-          <li><a href="/panel/configuracion.html">Horario de atención, avisos y stock bajo</a></li>
-        </ul>
-      </section>
-    </div>
-    <p class="panel-aviso">Estas secciones representan la navegación prevista en el sitemap. Las acciones
-      administrativas reales deben conectarse a sus endpoints y permisos.</p>
   </main>
   <footer class="panel-pie">
     <p>HuellaVet · Administración</p>
@@ -115,6 +156,7 @@
 
   <script type="module" src="/js/guardia-panel.js"></script>
   <script type="module" src="/js/auth.js"></script>
+  <script type="module" src="/js/panel-menu.js"></script>
 </body>
 
 </html>

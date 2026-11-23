@@ -1,7 +1,7 @@
 // Mis datos (cliente, rescatista y veterinaria) y Clientes (la veterinaria: lista, ficha y los enlaces
 // desde el nombre del dueño en Mascotas y en la Agenda).
 const { test, expect } = require('@playwright/test');
-const { responderJson, simularSesion } = require('./ayudas');
+const { responderJson, simularSesion, abrirSeccion } = require('./ayudas');
 
 const CLIENTE = { id: 102, nombre: 'Cliente de Prueba', email: 'cliente@prueba.huellavet', rol: 'CLIENTE' };
 const RESCATISTA = { id: 104, nombre: 'Rescatista Aprobada', email: 'rescatista@prueba.huellavet', rol: 'RESCATISTA' };
@@ -109,12 +109,14 @@ test('el nombre de arriba lleva a "Mis datos", y "Datos personales" de los panel
   await simularSesion(page, CLIENTE);
   await page.goto('/paneles/panel-cliente.html');
   await expect(page.locator('a.sesion-nombre').first()).toHaveAttribute('href', '/cuenta/mis-datos.html');
+  await abrirSeccion(page, 'cuenta');
   await expect(page.locator('#cuenta').getByRole('link', { name: 'Datos personales' })).toHaveAttribute('href', '/cuenta/mis-datos.html');
 });
 
 test('el panel del rescatista enlaza "Datos personales"', async ({ page }) => {
   await simularSesion(page, RESCATISTA);
   await page.goto('/paneles/panel-rescatista.html');
+  await abrirSeccion(page, 'cuenta');
   await expect(page.getByRole('link', { name: 'Datos personales' })).toHaveAttribute('href', '/cuenta/mis-datos.html');
 });
 
@@ -125,6 +127,7 @@ const LISTA = Array.from({ length: 20 }, (_, i) => cuentaDe({ id: 200 + i, nombr
 test('clientes: el panel lo enlaza; lista con email y teléfono, buscador y "Ver más"', async ({ page }) => {
   await simularSesion(page, VET);
   await page.goto('/paneles/panel-administrador.html');
+  await abrirSeccion(page, 'pacientes');
   await expect(page.locator('#pacientes').getByRole('link', { name: 'Clientes' })).toHaveAttribute('href', '/panel/clientes.html');
 
   const consultas = [];

@@ -2,7 +2,7 @@
 // del rescatista y el panel de adopciones de la veterinaria. La API se simula (ver ayudas.js) con el
 // formato de docs/api/contrato-adopciones.md del repo Adopciones.
 const { test, expect } = require('@playwright/test');
-const { responderJson, simularSesion } = require('./ayudas');
+const { responderJson, simularSesion, abrirSeccion } = require('./ayudas');
 
 const CLIENTE = { id: 103, nombre: 'Cliente Dos', email: 'c2@prueba.huellavet', rol: 'CLIENTE', estado_validacion: null };
 const RESCATISTA = { id: 104, nombre: 'Rescatista Aprobada', email: 'r@prueba.huellavet', rol: 'RESCATISTA', estado_validacion: 'APROBADO' };
@@ -127,6 +127,7 @@ test('desde su panel, el cliente llega a las adopciones y a sus postulaciones; H
 
   await page.goto('/paneles/panel-cliente.html');
   await expect(page.getByText('Huellitas')).toHaveCount(0);
+  await abrirSeccion(page, 'adopcion');
   await page.locator('#adopcion').getByRole('link', { name: 'Mis postulaciones' }).click();
   await expect(page).toHaveURL(/\/adopciones\/adopciones\.html#seccion-mias$/);
   await expect(page.locator('#filas-mias tr')).toContainText(['Pipa']);

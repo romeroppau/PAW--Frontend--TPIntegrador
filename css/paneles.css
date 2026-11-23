@@ -1,5 +1,14 @@
 /* Paneles HuellaVet: estilos específicos. Reutiliza las variables de css/base.css. */
 
+/* El pie queda abajo aunque el contenido sea corto. */
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* ---------- Cabecera ---------- */
+
 .panel-cabecera {
   background: var(--blanco);
   border-bottom: 1px solid var(--borde);
@@ -23,89 +32,249 @@
 }
 
 .panel-usuario {
-  margin: 0;
+  margin: 0 0 0 auto;
   color: var(--tinta-suave);
   text-align: right;
   font-size: .95rem;
 }
 
+/* ---------- Barra con menús desplegables ---------- */
+
 .panel-nav {
+  position: sticky;
+  top: 0;
+  z-index: 20;
   background: var(--blanco);
   border-bottom: 1px solid var(--borde);
+  box-shadow: 0 2px 10px rgb(18 48 43 / 4%);
 }
 
-.panel-nav .contenedor {
+.panel-menu {
+  position: relative;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: .25rem;
-  overflow-x: auto;
-  padding-block: .35rem;
-  scrollbar-width: thin;
+  margin-block: 0;
+  padding: .4rem 0;
+  list-style: none;
 }
 
-.panel-nav a {
+.panel-desplegable {
+  position: relative;
+}
+
+/* El título de cada sección (y el enlace suelto "Contactanos") */
+.panel-desplegable > summary,
+.panel-menu-enlace {
   display: inline-flex;
   align-items: center;
+  gap: .45rem;
   min-height: 42px;
-  padding: .55rem .8rem;
+  padding: .55rem .85rem;
   border-radius: 9px;
   color: var(--tinta);
   font-size: .94rem;
   font-weight: 700;
   text-decoration: none;
   white-space: nowrap;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+  transition: background-color .15s, color .15s;
 }
 
-.panel-nav a:hover,
-.panel-nav a:focus-visible {
+.panel-desplegable > summary::-webkit-details-marker {
+  display: none;
+}
+
+/* Flechita que gira al abrir */
+.panel-desplegable > summary::after {
+  content: "";
+  width: .42rem;
+  height: .42rem;
+  margin-top: -.2rem;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(45deg);
+  opacity: .6;
+  transition: transform .15s, margin .15s;
+}
+
+.panel-desplegable[open] > summary::after {
+  margin-top: .2rem;
+  transform: rotate(-135deg);
+  opacity: 1;
+}
+
+.panel-desplegable > summary:hover,
+.panel-desplegable > summary:focus-visible,
+.panel-menu-enlace:hover,
+.panel-menu-enlace:focus-visible {
   background: var(--menta);
   color: var(--pino-oscuro);
 }
 
+.panel-desplegable[open] > summary {
+  background: var(--pino);
+  color: var(--blanco);
+}
+
+/* La caja que se despliega */
+.panel-desplegable-caja {
+  position: absolute;
+  top: calc(100% + .45rem);
+  left: 0;
+  z-index: 30;
+  width: max-content;
+  min-width: 260px;
+  max-width: min(340px, calc(100vw - 2rem));
+  padding: .5rem;
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  background: var(--blanco);
+  box-shadow: 0 14px 34px rgb(18 48 43 / 16%);
+  animation: panel-aparecer .14s ease-out;
+}
+
+/* Las dos últimas secciones abren hacia la izquierda para no salirse de la pantalla. */
+.panel-menu > li:nth-last-child(-n + 2) .panel-desplegable-caja {
+  right: 0;
+  left: auto;
+}
+
+@keyframes panel-aparecer {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: none; }
+}
+
+.panel-desplegable-desc {
+  margin: .35rem .65rem .45rem;
+  color: var(--tinta-suave);
+  font-size: .85rem;
+}
+
+.panel-desplegable .panel-opciones {
+  display: grid;
+  gap: .1rem;
+}
+
+.panel-desplegable .panel-opciones li {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+}
+
+.panel-desplegable .panel-opciones a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 0;
+  padding: .6rem .7rem;
+  border-radius: 9px;
+  color: var(--pino-oscuro);
+  font-size: .94rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.panel-desplegable .panel-opciones a::after {
+  content: "→";
+  color: var(--pino);
+  opacity: 0;
+  transform: translateX(-4px);
+  transition: opacity .15s, transform .15s;
+}
+
+.panel-desplegable .panel-opciones a:hover,
+.panel-desplegable .panel-opciones a:focus-visible {
+  background: var(--fondo);
+  text-decoration: none;
+}
+
+.panel-desplegable .panel-opciones a:hover::after,
+.panel-desplegable .panel-opciones a:focus-visible::after {
+  opacity: 1;
+  transform: none;
+}
+
+/* ---------- Contenido ---------- */
+
 .panel-principal {
+  flex: 1;
   width: min(1120px, 100% - 2rem);
   margin-inline: auto;
-  padding-block: clamp(2rem, 5vw, 4rem);
+  padding-block: clamp(2rem, 5vw, 3.5rem);
 }
 
 .panel-intro {
-  margin-bottom: 2rem;
-  padding: clamp(1.4rem, 4vw, 2.5rem);
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 2rem;
+  overflow: hidden;
+  padding: clamp(1.6rem, 4vw, 3rem);
   border: 1px solid var(--borde);
-  border-radius: var(--radio);
-  background: var(--menta);
+  border-radius: calc(var(--radio) + 4px);
+  background: linear-gradient(135deg, var(--menta) 0%, #e9f3ef 55%, var(--blanco) 100%);
 }
 
 .panel-intro .etiqueta {
   margin-bottom: .45rem;
   color: var(--pino);
+  font-size: .8rem;
   font-weight: 800;
   letter-spacing: .08em;
   text-transform: uppercase;
-  font-size: .8rem;
 }
 
 .panel-intro h1 {
   margin-bottom: .65rem;
 }
 
-.panel-intro p:last-child {
-  margin-bottom: 0;
+.panel-intro p {
   color: var(--tinta-suave);
 }
 
-.panel-seccion-titulo {
-  margin: 0 0 1rem;
+.panel-pista {
+  display: inline-flex;
+  align-items: center;
+  gap: .6rem;
+  margin: 1rem 0 0;
+  padding: .6rem .95rem;
+  border: 1px dashed var(--borde);
+  border-radius: 999px;
+  background: rgb(255 255 255 / 70%);
+  font-size: .92rem;
 }
 
-.panel-grilla {
+.panel-pista span {
+  color: var(--pino);
+  font-weight: 800;
+}
+
+/* Huella decorativa */
+.panel-intro-huella {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 245px), 1fr));
-  gap: 1rem;
+  place-items: center;
+  width: clamp(120px, 16vw, 190px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--blanco);
+  box-shadow: 0 10px 30px rgb(18 48 43 / 10%);
+  color: var(--pino);
+}
+
+.panel-intro-huella svg {
+  width: 55%;
+  transform: rotate(-12deg);
 }
 
 .panel-tarjeta {
-  scroll-margin-top: 1rem;
+  scroll-margin-top: 5rem;
   padding: 1.25rem;
   border: 1px solid var(--borde);
   border-radius: var(--radio);
@@ -122,6 +291,7 @@
   color: var(--tinta-suave);
 }
 
+/* Opciones como "pastillas" (Contactanos) */
 .panel-opciones {
   display: flex;
   flex-wrap: wrap;
@@ -140,53 +310,23 @@
   font-size: .9rem;
 }
 
-.panel-aviso {
-  margin-top: 1.5rem;
-  padding: .85rem 1rem;
-  border-left: 4px solid var(--naranja);
-  border-radius: 8px;
-  background: var(--blanco);
-  color: var(--tinta-suave);
+.panel-opciones a {
+  display: block;
+  margin: -.35rem -.65rem;
+  padding: .35rem .65rem;
+  border-radius: 999px;
+  color: var(--pino);
+  font-weight: 700;
+  text-decoration: none;
 }
 
-.panel-pie {
-  padding: 1.5rem 1rem;
-  background: var(--pino-oscuro);
-  color: var(--menta);
-  text-align: center;
+.panel-opciones a:hover {
+  text-decoration: underline;
 }
 
-.panel-pie p {
-  max-width: none;
-  margin: 0;
-}
-
-@media (max-width: 600px) {
-  .panel-cabecera .contenedor {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: .25rem;
-  }
-  .panel-usuario {
-    text-align: left;
-  }
-  .panel-nav .contenedor {
-    width: 100%;
-    padding-inline: .5rem;
-  }
-  .panel-principal {
-    width: min(100% - 1.25rem, 1120px);
-  }
-}
-
-/* Sesión en los paneles (auth.js rellena #sesion con el nombre y "Salir") */
-.panel-cabecera .panel-usuario { margin-left: auto; }
-.panel-opciones a { display: block; margin: -.35rem -.65rem; padding: .35rem .65rem; border-radius: 999px; color: var(--pino); font-weight: 700; text-decoration: none; }
-.panel-opciones a:hover { text-decoration: underline; }
-@media (max-width: 600px) { .panel-cabecera .panel-usuario { margin-left: 0; } }
-/* Contactanos (panel del cliente): ocupa todo el ancho; los datos al costado del mapa. */
+/* Contactanos (paneles de cliente y rescatista): los datos al costado del mapa. */
 .panel-contacto {
-  grid-column: 1 / -1;
+  margin-top: 1.5rem;
 }
 
 .contacto-grilla {
@@ -203,9 +343,9 @@
 }
 
 .contacto-datos dt {
-  font-weight: 700;
-  font-size: .9rem;
   color: var(--tinta-suave);
+  font-size: .9rem;
+  font-weight: 700;
 }
 
 .contacto-datos dd {
@@ -219,9 +359,86 @@
   border-radius: var(--radio);
 }
 
-/* Celular: el mapa abajo de los datos. */
+/* ---------- Pie ---------- */
+
+.panel-pie {
+  padding: 1.5rem 1rem;
+  background: var(--pino-oscuro);
+  color: var(--menta);
+  text-align: center;
+}
+
+.panel-pie p {
+  max-width: none;
+  margin: 0;
+}
+
+/* ---------- Celular ---------- */
+
 @media (max-width: 700px) {
   .contacto-grilla {
     grid-template-columns: 1fr;
   }
+
+  /* La caja ocupa todo el ancho, debajo de la barra. */
+  .panel-desplegable {
+    position: static;
+  }
+
+  .panel-desplegable-caja,
+  .panel-menu > li:nth-last-child(-n + 2) .panel-desplegable-caja {
+    right: 0;
+    left: 0;
+    width: auto;
+    max-width: none;
+    top: calc(100% + .2rem);
+  }
+
+  .panel-intro {
+    grid-template-columns: 1fr;
+  }
+
+  .panel-intro-huella {
+    display: none;
+  }
+}
+
+@media (max-width: 600px) {
+  /* En celular la barra ocupa varias filas: no queda fija para no tapar el contenido. */
+  .panel-nav {
+    position: relative;
+  }
+
+  .panel-cabecera .contenedor {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: .25rem;
+  }
+
+  .panel-usuario {
+    margin-left: 0;
+    text-align: left;
+  }
+
+  .panel-menu {
+    width: 100%;
+    padding-inline: .5rem;
+    gap: .1rem;
+  }
+
+  .panel-desplegable > summary,
+  .panel-menu-enlace {
+    padding-inline: .7rem;
+    font-size: .9rem;
+  }
+
+  .panel-principal {
+    width: min(100% - 1.25rem, 1120px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panel-desplegable-caja { animation: none; }
+  .panel-desplegable > summary::after,
+  .panel-desplegable .panel-opciones a::after { transition: none; }
 }
