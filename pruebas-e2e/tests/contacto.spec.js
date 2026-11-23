@@ -109,7 +109,7 @@ test('Configuración: los datos de la veterinaria se editan como texto y se pued
   });
   await page.goto('/panel/configuracion.html');
 
-  await expect(page.locator('legend')).toHaveText(['Datos de la veterinaria']);
+  await expect(page.getByRole('tab', { name: 'Datos de la veterinaria' })).toHaveAttribute('aria-selected', 'true');
   await expect(page.getByLabel('Dirección')).toHaveValue('Av. San Martín 1450, Luján');
   await expect(page.locator('#ayuda-direccion')).toHaveText('Ayuda de Dirección. Por defecto: Av. San Martín 1450, Luján.');
   await expect(page.getByLabel('Instagram')).toHaveAttribute('type', 'url');

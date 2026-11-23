@@ -7,7 +7,7 @@ const { responderJson, simularSesion, abrirSeccion } = require('./ayudas');
 const VETERINARIO = { id: 101, nombre: 'Vet', email: 'v@prueba.huellavet', rol: 'VETERINARIO', estado_validacion: null };
 
 function parametro(clave, grupo, nombre, tipo, defecto, extra = {}) {
-  const grupos = { TURNOS: 'Turnos', AVISOS: 'Avisos a los clientes', STOCK: 'Stock y vencimientos' };
+  const grupos = { TURNOS: 'Turnos', AVISOS: 'Avisos a los clientes', STOCK: 'Stock y vencimientos', CONTACTO: 'Datos de la veterinaria' };
   return {
     clave, grupo, nombre_grupo: grupos[grupo], nombre, ayuda: `Ayuda de ${nombre}.`, tipo,
     unidad: tipo === 'ENTERO' ? 'días' : null,
@@ -44,39 +44,92 @@ async function simularConfiguracion(page, { responderPut } = {}) {
   return enviados;
 }
 
-test('la veterinaria ve los parámetros agrupados con su valor por defecto', async ({ page }) => {
+test('una pestaña por grupo: se ve una por vez, con su valor por defecto', async ({ page }) => {
   await simularConfiguracion(page);
   await page.goto('/panel/configuracion.html');
 
-  await expect(page.locator('legend')).toHaveText(['Turnos', 'Avisos a los clientes', 'Stock y vencimientos']);
+  const pestanas = page.getByRole('tablist', { name: 'Qué querés configurar' }).getByRole('tab');
+  await expect(pestanas).toHaveText(['Turnos', 'Avisos a los clientes', 'Stock y vencimientos']);
+  // La primera vez se abre la primera.
+  await expect(page.getByRole('tab', { name: 'Turnos' })).toHaveAttribute('aria-selected', 'true');
   await expect(page.getByLabel('Apertura')).toHaveValue('08:00');
+  await expect(page.getByLabel('Aviso de vacuna próxima')).toBeHidden();
+
+  await page.getByRole('tab', { name: 'Avisos a los clientes' }).click();
+  await expect(page.getByLabel('Apertura')).toBeHidden();
   await expect(page.getByLabel('Aviso de vacuna próxima')).toHaveValue('7');
+  await expect(page).toHaveURL(/#avisos$/);
   await expect(page.locator('#ayuda-dias_aviso_vacuna')).toContainText('Entre 1 y 30 días. Por defecto: 7 días.');
   // Con el valor por defecto, no hace falta el botón para volver a él.
   await expect(page.getByRole('button', { name: /Usar el valor por defecto/ })).toHaveCount(0);
 });
 
-test('guardar manda solo lo que cambió y muestra quién lo cambió', async ({ page }) => {
+test('guardar manda solo lo que cambió en la pestaña abierta y muestra quién lo cambió', async ({ page }) => {
   const enviados = await simularConfiguracion(page);
   await page.goto('/panel/configuracion.html');
 
   await page.getByLabel('Apertura').fill('09:00');
-  await page.getByLabel('Aviso de vacuna próxima').fill('5');
+  await page.getByLabel('Cierre').fill('19:00');
   await page.getByRole('button', { name: 'Guardar cambios' }).click();
 
-  await expect(page.locator('#guardado')).toHaveText('Listo: se guardaron "Apertura" y "Aviso de vacuna próxima". Ya se usa en todo el sistema.');
-  expect(enviados).toEqual([{ hora_apertura: '09:00', dias_aviso_vacuna: 5 }]);
+  await expect(page.locator('#guardado')).toHaveText('Listo: se guardaron "Apertura" y "Cierre". Ya se usa en todo el sistema.');
+  expect(enviados).toEqual([{ hora_apertura: '09:00', hora_cierre: '19:00' }]);
   await expect(page.locator('.parametro', { hasText: 'Apertura' })).toContainText('Cambiado por Vet el 20/11/2026.');
+  await expect(page.getByRole('tab', { name: 'Turnos' })).toHaveAttribute('aria-selected', 'true');   // sigue en la misma
 
   // Sin cambios nuevos no se llama a la API.
   await page.getByRole('button', { name: 'Guardar cambios' }).click();
-  await expect(page.locator('#guardado')).toHaveText('No cambiaste ningún valor.');
+  await expect(page.locator('#guardado')).toHaveText('No cambiaste ningún valor en esta pestaña.');
   expect(enviados).toHaveLength(1);
+
+  // Otra pestaña se guarda por separado.
+  await page.getByRole('tab', { name: 'Avisos a los clientes' }).click();
+  await page.getByLabel('Aviso de vacuna próxima').fill('5');
+  await page.getByRole('button', { name: 'Guardar cambios' }).click();
+  await expect(page.locator('#guardado')).toHaveText('Listo: se guardó "Aviso de vacuna próxima". Ya se usa en todo el sistema.');
+  expect(enviados[1]).toEqual({ dias_aviso_vacuna: 5 });
+});
+
+test('cambiar de pestaña con cambios sin guardar pregunta si se descartan', async ({ page }) => {
+  const enviados = await simularConfiguracion(page);
+  await page.goto('/panel/configuracion.html');
+
+  await page.getByLabel('Apertura').fill('10:00');
+  await page.getByRole('tab', { name: 'Stock y vencimientos' }).click();
+  const dialogo = page.getByRole('dialog');
+  await expect(dialogo).toContainText('Cambiaste valores en "Turnos" y no los guardaste. ¿Los descartás?');
+
+  // "Volver": se queda en Turnos con lo que había escrito.
+  await dialogo.getByRole('button', { name: 'Volver' }).click();
+  await expect(page.getByRole('tab', { name: 'Turnos' })).toHaveAttribute('aria-selected', 'true');
+  await expect(page.getByLabel('Apertura')).toHaveValue('10:00');
+
+  // "Descartar cambios": pasa a Stock y Turnos vuelve a lo guardado.
+  await page.getByRole('tab', { name: 'Stock y vencimientos' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Descartar cambios' }).click();
+  await expect(page.getByLabel('Stock bajo')).toBeVisible();
+  await page.getByRole('tab', { name: 'Turnos' }).click();
+  await expect(page.getByLabel('Apertura')).toHaveValue('08:00');
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  expect(enviados).toHaveLength(0);
+});
+
+test('se abre la última pestaña que se usó, o la del enlace', async ({ page }) => {
+  await simularConfiguracion(page);
+  await page.goto('/panel/configuracion.html');
+  await page.getByRole('tab', { name: 'Stock y vencimientos' }).click();
+
+  await page.goto('/panel/configuracion.html');
+  await expect(page.getByRole('tab', { name: 'Stock y vencimientos' })).toHaveAttribute('aria-selected', 'true');
+  await expect(page.getByLabel('Stock bajo')).toBeVisible();
+
+  await page.goto('/panel/configuracion.html#avisos');
+  await expect(page.getByRole('tab', { name: 'Avisos a los clientes' })).toHaveAttribute('aria-selected', 'true');
 });
 
 test('"Usar el valor por defecto" pone el de siempre en el campo', async ({ page }) => {
   await simularConfiguracion(page);
-  await page.goto('/panel/configuracion.html');
+  await page.goto('/panel/configuracion.html#stock');
 
   await page.getByLabel('Stock bajo').fill('3');
   const volver = page.getByRole('button', { name: 'Usar el valor por defecto (10 unidades)' });
@@ -122,6 +175,6 @@ test('desde el panel se llega a la configuración', async ({ page }) => {
   await simularSesion(page, VETERINARIO);
   await page.goto('/paneles/panel-administrador.html');
   await abrirSeccion(page, 'configuracion');
-  await page.getByRole('link', { name: 'Horario de atención, avisos y stock bajo' }).click();
-  await expect(page).toHaveURL(/\/panel\/configuracion\.html$/);
+  await page.getByRole('link', { name: 'Turnos, avisos, stock, tienda y datos de la veterinaria' }).click();
+  await expect(page).toHaveURL(/\/panel\/configuracion\.html(#turnos)?$/);
 });

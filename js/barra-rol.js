@@ -58,7 +58,7 @@ export const MENUS = {
       ['notificaciones', 'Notificaciones', 'Alertas y novedades administrativas.', [
         ['Ver mis notificaciones', '/cuenta/notificaciones.html']]],
       ['configuracion', 'Configuración', 'Cómo funciona la veterinaria.', [
-        ['Horario de atención, avisos y stock bajo', '/panel/configuracion.html']]],
+        ['Turnos, avisos, stock, tienda y datos de la veterinaria', '/panel/configuracion.html']]],
       ['resenas', 'Reseñas', 'Lo que opinan los clientes; desde ahí las respondés.', [
         ['Ver reseñas', '/resenas/resenas.html']]],
     ],

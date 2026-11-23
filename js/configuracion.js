@@ -1,17 +1,20 @@
 /**
  * configuracion.js — Configuración de la veterinaria (panel/configuracion.html), rol 3, Entrega 5
  *
- * Arma un grupo por cada "grupo" de la API (Turnos, Avisos a los clientes, Stock y vencimientos, Tienda
- * y Datos de la veterinaria: dirección, teléfono, WhatsApp, email y redes, que son de tipo TEXTO) con
+ * Arma una pestaña por cada "grupo" de la API (Turnos, Avisos a los clientes, Stock y vencimientos,
+ * Tienda y Datos de la veterinaria: dirección, teléfono, WhatsApp, email y redes, de tipo TEXTO), con
  * un campo por parámetro: su rango, su unidad, el valor por defecto y quién lo cambió por última vez.
- * Al guardar manda solo los que cambiaron (PUT /api/configuracion); se guardan todos o ninguno, y
- * los errores vuelven por campo. "Usar el valor por defecto" pone el de siempre en el campo (se
- * guarda con el resto).
+ * Se ve una pestaña por vez y "Guardar cambios" guarda solo esa: manda los que cambiaron
+ * (PUT /api/configuracion), se guardan todos o ninguno y los errores vuelven por campo. Si se elige
+ * otra pestaña con cambios sin guardar, pregunta si se descartan.
+ * Se abre la última pestaña que se usó (o la del enlace: configuracion.html#tienda).
+ * "Usar el valor por defecto" pone el de siempre en el campo (se guarda con el resto).
  * Contrato: docs/api/contrato.md de Backend, sección "Configuración". Todo texto de la API va con el().
  */
 import { api } from './api.js';
 import { exigirRol } from './auth.js';
-import { el, limpiarErrores, mostrarErrores } from './ui.js';
+import { el, limpiarErrores, mostrarErrores, confirmar } from './ui.js';
+import { activarPestanas } from './pestanas.js';
 
 await exigirRol('VETERINARIO');
 
@@ -22,6 +25,23 @@ const guardado = $('guardado');
 
 // Los parámetros tal como los devolvió el servidor por última vez.
 let parametros = [];
+
+// La pestaña abierta: el grupo en minúsculas ("turnos", "tienda", "contacto"…). Se recuerda en este
+// navegador (si no se puede, no pasa nada: se abre la primera).
+const RECORDAR = 'configuracion-pestana';
+const vistaDe = (grupo) => grupo.toLowerCase();
+let vistaActual = location.hash.slice(1) || leerRecordada();
+let elegirPestana = () => {};
+
+function leerRecordada() {
+  try { return localStorage.getItem(RECORDAR) ?? ''; } catch { return ''; }
+}
+function recordar(vista) {
+  try { localStorage.setItem(RECORDAR, vista); } catch { /* sin almacenamiento: no se recuerda */ }
+  history.replaceState(null, '', '#' + vista);
+}
+
+const deLaPestana = (vista) => parametros.filter((p) => vistaDe(p.grupo) === vista);
 
 // "2026-11-20 10:15:00" → "20/11/2026"
 const fecha = (texto) => texto.slice(0, 10).split('-').reverse().join('/');
@@ -103,18 +123,47 @@ function campo(p) {
   return caja;
 }
 
+// Una pestaña y un panel por grupo, en el orden en que vienen de la API.
 function pintar() {
-  const grupos = new Map();
+  const lista = el('div', '', { class: 'pestanas', role: 'tablist', 'aria-label': 'Qué querés configurar' });
+  const paneles = new Map();
   for (const p of parametros) {
-    if (!grupos.has(p.grupo)) {
-      const fieldset = el('fieldset', '', { class: 'grupo-parametros' });
-      fieldset.append(el('legend', p.nombre_grupo));
-      grupos.set(p.grupo, fieldset);
+    const vista = vistaDe(p.grupo);
+    if (!paneles.has(vista)) {
+      lista.append(el('button', p.nombre_grupo, {
+        type: 'button', role: 'tab', id: 'tab-' + vista, 'aria-controls': 'panel-' + vista,
+        'aria-selected': 'false', tabindex: '-1', 'data-vista': vista,
+      }));
+      const fieldset = el('fieldset', '', { class: 'grupo-parametros', id: 'panel-' + vista, role: 'tabpanel', 'aria-labelledby': 'tab-' + vista, hidden: '' });
+      fieldset.append(el('legend', p.nombre_grupo, { class: 'solo-lectores' }));
+      paneles.set(vista, fieldset);
     }
-    grupos.get(p.grupo).append(campo(p));
+    paneles.get(vista).append(campo(p));
   }
-  $('grupos').replaceChildren(...grupos.values());
+  $('grupos').replaceChildren(lista, ...paneles.values());
   parametros.forEach(actualizarBotonDefecto);
+
+  if (!paneles.has(vistaActual)) vistaActual = paneles.keys().next().value;
+  elegirPestana = activarPestanas(lista, alCambiarPestana);
+  elegirPestana(vistaActual);
+}
+
+// Al elegir otra pestaña: si en la que se deja quedaron cambios sin guardar, se pregunta. "Volver"
+// vuelve a esa pestaña; "Descartar" deja los campos como están guardados.
+async function alCambiarPestana(vista) {
+  if (vista === vistaActual) { recordar(vista); return; }
+  const anterior = vistaActual;
+  const pendientes = deLaPestana(anterior).filter(cambio);
+  if (pendientes.length > 0) {
+    const nombre = parametros.find((p) => vistaDe(p.grupo) === anterior).nombre_grupo;
+    const descartar = await confirmar(`Cambiaste valores en "${nombre}" y no los guardaste. ¿Los descartás?`, { aceptar: 'Descartar cambios' });
+    if (!descartar) { elegirPestana(anterior); return; }
+  }
+  vistaActual = vista;
+  limpiarErrores(form);
+  guardado.hidden = true;
+  if (pendientes.length > 0) pintar();   // vuelve los campos a lo guardado (y abre la pestaña nueva)
+  else recordar(vista);
 }
 
 async function cargar() {
@@ -133,9 +182,10 @@ form.addEventListener('submit', async (ev) => {
   limpiarErrores(form);
   guardado.hidden = true;
 
-  const valores = Object.fromEntries(parametros.filter(cambio).map((p) => [p.clave, valorDelCampo(p)]));
+  // Solo la pestaña abierta.
+  const valores = Object.fromEntries(deLaPestana(vistaActual).filter(cambio).map((p) => [p.clave, valorDelCampo(p)]));
   if (Object.keys(valores).length === 0) {
-    guardado.textContent = 'No cambiaste ningún valor.';
+    guardado.textContent = 'No cambiaste ningún valor en esta pestaña.';
     guardado.hidden = false;
     return;
   }
@@ -161,11 +211,18 @@ form.addEventListener('submit', async (ev) => {
   }
 });
 
-// Vuelve los campos a lo que está guardado.
+// Vuelve los campos a lo que está guardado (las otras pestañas no tienen cambios: no se puede salir
+// de una sin guardar o descartar).
 $('descartar').addEventListener('click', () => {
   limpiarErrores(form);
   guardado.hidden = true;
   pintar();
+});
+
+// Un enlace a otra pestaña estando ya en la pantalla (configuracion.html#tienda) solo cambia el "#".
+window.addEventListener('hashchange', () => {
+  const vista = location.hash.slice(1);
+  if (vista && vista !== vistaActual) elegirPestana(vista);
 });
 
 cargar();
