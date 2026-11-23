@@ -71,7 +71,7 @@ export async function exigirRol(roles) {
  */
 const ENLACES_POR_ROL = {
   VETERINARIO: [
-    ['Panel', '/paneles/panel-administrador.html'],
+    ['Mi panel', '/paneles/panel-administrador.html'],
     ['Agenda', '/panel/agenda.html'],
     ['Adopciones y rescatistas', '/panel/adopciones.html'],
   ],
