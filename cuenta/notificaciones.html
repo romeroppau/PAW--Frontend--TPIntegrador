@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mis notificaciones | HuellaVet</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Nunito+Sans:wght@400;600;700&display=swap">
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/cuenta.css">
+</head>
+<!-- Mis notificaciones (Entrega 5): el historial de avisos de cualquier usuario (cliente, rescatista o
+     veterinaria). Filtros Todas / Sin leer / Leídas y Desde / Hasta (por defecto, los últimos 30
+     días), de a 20 ("Ver más"). Cada aviso sin leer se puede marcar como leído, o todos juntos.
+     Se llega desde "Ver todas" de la campana y desde la tarjeta Notificaciones de los paneles.
+     Lo maneja js/historial-notificaciones.js con GET /api/notificaciones/historial,
+     POST /api/notificaciones/{id}/leida y POST /api/notificaciones/leidas
+     (repo Backend, docs/api/contrato-notificaciones.md). -->
+<body data-rol="CLIENTE,RESCATISTA,VETERINARIO">
+  <a class="saltar" href="#contenido">Saltar al contenido</a>
+  <div id="encabezado-sitio"></div>
+  <script src="/js/layout.js"></script>
+  <main id="contenido" class="seccion" hidden>
+    <div class="contenedor contenedor-angosto">
+      <p><a id="volver" href="/index.html">&larr; Volver al panel</a></p>
+      <h1>Mis notificaciones</h1>
+
+      <form id="filtro" class="filtro-avisos" novalidate>
+        <div class="campo">
+          <label for="estado-filtro">Mostrar</label>
+          <select id="estado-filtro" name="estado">
+            <option value="TODAS">Todas</option>
+            <option value="SIN_LEER">Sin leer</option>
+            <option value="LEIDAS">Leídas</option>
+          </select>
+        </div>
+        <div class="campo">
+          <label for="desde">Desde</label>
+          <input id="desde" name="desde" type="date">
+        </div>
+        <div class="campo">
+          <label for="hasta">Hasta</label>
+          <input id="hasta" name="hasta" type="date">
+        </div>
+        <button class="boton" type="submit">Filtrar</button>
+        <button class="boton boton-borde" type="button" id="ultimos-30">Últimos 30 días</button>
+      </form>
+
+      <p id="resumen-sin-leer" class="resumen-avisos" hidden>
+        <span id="texto-sin-leer"></span>
+        <button class="boton boton-borde boton-chico" type="button" id="marcar-todas">Marcar todas como leídas</button>
+      </p>
+
+      <p class="estado" id="estado" role="status">Cargando tus notificaciones…</p>
+      <ul class="lista-avisos" id="lista"></ul>
+      <p><button class="boton boton-borde" type="button" id="ver-mas" hidden>Ver más</button></p>
+    </div>
+  </main>
+  <div id="pie-sitio"></div>
+
+  <script type="module" src="/js/menu.js"></script>
+  <script type="module" src="/js/guardia-panel.js"></script>
+  <script type="module" src="/js/auth.js"></script>
+  <script type="module" src="/js/historial-notificaciones.js"></script>
+</body>
+</html>
