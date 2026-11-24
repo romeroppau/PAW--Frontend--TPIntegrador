@@ -104,7 +104,7 @@ test('el cliente se postula: los errores van a cada campo y, al corregir, ve su 
   expect(await page.evaluate(() => window.sinRecargar)).toBe(true);
 });
 
-test('mis postulaciones: un botón arriba baja a la lista, y la elegida dice en qué paso está', async ({ page }) => {
+test('mis postulaciones: es una pestaña, y la elegida dice en qué paso está', async ({ page }) => {
   await simularSesion(page, CLIENTE);
   await page.route(/\/api\/adopciones\/publicaciones(\?.*)?$/, (route) => responderJson(route, { publicaciones: [publicacion(1, 'Pipa')] }));
   await page.route('**/api/adopciones/mis-postulaciones', (route) => responderJson(route, { postulaciones: [
@@ -114,9 +114,13 @@ test('mis postulaciones: un botón arriba baja a la lista, y la elegida dice en 
   ] }));
 
   await page.goto('/adopciones/adopciones.html');
-  await page.getByRole('link', { name: 'Ver mis postulaciones' }).click();
+  // Dos pestañas: los animales (abierta) y sus postulaciones.
+  await expect(page.getByRole('tab', { name: 'Animales que buscan familia' })).toHaveAttribute('aria-selected', 'true');
+  await expect(page.locator('#seccion-mias')).toBeHidden();
+  await page.getByRole('tab', { name: 'Mis postulaciones' }).click();
   await expect(page).toHaveURL(/#seccion-mias$/);
-  await expect(page.locator('#seccion-mias')).toBeInViewport();
+  await expect(page.locator('#seccion-mias')).toBeVisible();
+  await expect(page.locator('#publicaciones')).toBeHidden();
 
   const filas = page.locator('#filas-mias > tr');
   await expect(filas.nth(0)).toContainText('Turno de chequeo: jue 26/11 a las 10:00.');
@@ -152,6 +156,50 @@ test('desde su panel, el cliente llega a las adopciones y a sus postulaciones; H
   await expect(page).toHaveURL(/\/adopciones\/adopciones\.html#seccion-mias$/);
   await expect(page.locator('#filas-mias tr')).toContainText(['Pipa']);
   await expect(page.locator('#seccion-mias')).toBeInViewport();
+});
+
+test('mis postulaciones: el animal lleva a su publicación, aunque ya no esté disponible', async ({ page }) => {
+  await simularSesion(page, CLIENTE);
+  await page.route(/\/api\/adopciones\/publicaciones(\?.*)?$/, (route) => responderJson(route, { publicaciones: [] }));
+  await page.route('**/api/adopciones/mis-postulaciones', (route) => responderJson(route, { postulaciones: [
+    postulacion(7, 'Cliente Dos', { estado: 'RECHAZADA', adopcion: { id: 1, estado: 'ADOPTANTE_ELEGIDO' } }),
+  ] }));
+  await page.route('**/api/adopciones/publicaciones/1', (route) => responderJson(route, {
+    publicacion: publicacion(1, 'Pipa', { adopcion: { id: 1, estado: 'ADOPTANTE_ELEGIDO' } }),
+  }));
+
+  await page.goto('/adopciones/adopciones.html#seccion-mias');
+  await expect(page.locator('#seccion-mias')).toBeVisible();
+  await page.getByRole('link', { name: 'Ver la publicación de Pipa' }).click();
+  await expect(page).toHaveURL(/\/adopciones\/publicacion\.html\?id=1$/);
+  await expect(page.getByRole('heading', { level: 1, name: 'Pipa' })).toBeVisible();
+  await expect(page.locator('#descripcion')).toHaveText('Pipa es muy cariñoso y está vacunado.');
+  await expect(page.locator('#disponibilidad')).toHaveText('Ya no recibe postulaciones nuevas.');
+  await expect(page.getByRole('link', { name: 'Quiero adoptarlo' })).toHaveCount(0);
+  await expect(page.getByRole('link', { name: 'Ver mis postulaciones' })).toHaveAttribute('href', '/adopciones/adopciones.html#seccion-mias');
+});
+
+test('la publicación de un animal disponible ofrece "Quiero adoptarlo", que abre el formulario', async ({ page }) => {
+  await simularSesion(page, CLIENTE);
+  await page.route('**/api/adopciones/publicaciones/1', (route) => responderJson(route, { publicacion: publicacion(1, 'Pipa') }));
+  await page.route(/\/api\/adopciones\/publicaciones(\?.*)?$/, (route) => responderJson(route, { publicaciones: [publicacion(1, 'Pipa')] }));
+  await page.route('**/api/adopciones/mis-postulaciones', (route) => responderJson(route, { postulaciones: [] }));
+
+  await page.goto('/adopciones/publicacion.html?id=1');
+  await expect(page.locator('#disponibilidad')).toHaveText('Busca familia.');
+  await page.getByRole('link', { name: 'Quiero adoptarlo' }).click();
+  await expect(page).toHaveURL(/\/adopciones\/adopciones\.html\?postular=1$/);
+  await expect(page.locator('#titulo-postulacion')).toHaveText('Postularme para adoptar a Pipa');
+  await expect(page.locator('#tipo_vivienda')).toBeFocused();
+});
+
+test('sin sesión no hay pestañas: se ve la lista de animales', async ({ page }) => {
+  await simularSesion(page, null);
+  await page.route(/\/api\/adopciones\/publicaciones(\?.*)?$/, (route) => responderJson(route, { publicaciones: [publicacion(1, 'Pipa')] }));
+  await page.goto('/adopciones/adopciones.html');
+  await expect(page.locator('#pestanas-adopciones')).toBeHidden();
+  await expect(page.locator('#publicaciones article')).toHaveCount(1);
+  await expect(page.locator('#seccion-mias')).toBeHidden();
 });
 
 /* ---------- Rescatista ---------- */

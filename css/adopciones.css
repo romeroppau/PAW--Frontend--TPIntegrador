@@ -25,6 +25,14 @@
 .seccion-adopciones + .seccion-adopciones { margin-top: 2.5rem; }
 .aviso-cuenta { margin-bottom: 1.25rem; }
 
+/* Una publicación (adopciones/publicacion.html): foto y datos lado a lado; en celular, uno abajo del otro. */
+.detalle-publicacion { display: grid; grid-template-columns: minmax(0, 24rem) 1fr; gap: 1.5rem; align-items: start; }
+.detalle-publicacion .foto-publicacion { width: 100%; height: auto; aspect-ratio: 4 / 3; object-fit: cover; border-radius: var(--radio); background: var(--menta); }
+.detalle-publicacion .cuerpo { display: grid; gap: .6rem; }
+.detalle-publicacion h1, .detalle-publicacion p { margin: 0; }
+.detalle-publicacion .datos { color: var(--tinta-suave); }
+@media (max-width: 700px) { .detalle-publicacion { grid-template-columns: 1fr; } }
+
 /* Detalle de una adopción (panel/adopcion.html) */
 .detalle-adopcion { display: grid; grid-template-columns: minmax(0, 20rem) 1fr; gap: 1.5rem; align-items: start; }
 .detalle-adopcion img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: var(--radio); background: var(--menta); }

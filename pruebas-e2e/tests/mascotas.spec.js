@@ -175,3 +175,31 @@ test('una foto de otro tipo se avisa en el campo, sin llamar a la API', async ({
   await expect(page.locator('#error-foto')).toHaveText('La foto debe ser PNG, JPG o WEBP');
   expect(pedidos).toBe(0);
 });
+
+// La tabla no se "desnivela": todas las celdas siguen siendo celdas de tabla (una celda con
+// display: flex se separa de la fila) y, en cada fila, todas tienen el mismo alto. En el cliente y
+// en la veterinaria, también con la pantalla angosta.
+for (const [rol, usuario] of [['el cliente', CLIENTE], ['la veterinaria', VETERINARIO]]) {
+  test(`la tabla de mascotas queda pareja para ${rol}, con y sin foto`, async ({ page }) => {
+    await simularSesion(page, usuario);
+    await simularListado(page, [
+      mascota(101, 'Coco', { tiene_foto: true, raza: 'Caniche toy' }),
+      mascota(102, 'Mishi', { tiene_foto: true, raza: 'Europeo común', especie: 'GATO' }),
+      mascota(103, 'Rocco', { raza: 'Labrador retriever' }),
+    ]);
+    await page.route(/\/api\/pacientes\/mascotas\/\d+\/foto/, (route) => route.fulfill({ status: 200, contentType: 'image/png', body: PNG }));
+
+    for (const ancho of [1280, 700]) {
+      await page.setViewportSize({ width: ancho, height: 900 });
+      await page.goto('/cliente/mascotas.html');
+      await expect(page.locator('tbody tr')).toHaveCount(3);
+      const filas = await page.locator('tbody tr').evaluateAll((trs) => trs.map((tr) => [...tr.cells].map((td) => ({
+        display: getComputedStyle(td).display, alto: Math.round(td.getBoundingClientRect().height),
+      }))));
+      for (const celdas of filas) {
+        expect(celdas.every((c) => c.display === 'table-cell')).toBe(true);
+        expect(new Set(celdas.map((c) => c.alto)).size).toBe(1);
+      }
+    }
+  });
+}
