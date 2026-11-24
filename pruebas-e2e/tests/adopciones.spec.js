@@ -177,7 +177,7 @@ test('mis postulaciones: el animal lleva a su publicación, aunque ya no esté d
   await expect(page.getByRole('heading', { level: 1, name: 'Pipa' })).toBeVisible();
   await expect(page.locator('#descripcion')).toHaveText('Pipa es muy cariñoso y está vacunado.');
   // Ya se postuló: ve el estado de su postulación en lugar de los botones.
-  await expect(page.locator('.tu-postulacion')).toContainText('Tu postulación: Rechazada');
+  await expect(page.locator('.tu-postulacion')).toContainText('Tu postulación: Cancelada por la rescatista');
   await expect(page.getByRole('link', { name: 'Quiero adoptarlo' })).toHaveCount(0);
   await expect(page.getByRole('link', { name: 'Ver mis postulaciones' })).toHaveCount(0);
   await expect(page.locator('#volver')).toHaveText('← Volver a mis postulaciones');
@@ -351,7 +351,7 @@ test('la rescatista ve los postulantes y elige al adoptante; el teléfono aparec
   await page.getByRole('button', { name: 'Elegir a Cliente Dos' }).click();
   await page.locator('dialog').getByRole('button', { name: 'Elegir adoptante' }).click();
   await expect(page.locator('#filas-postulantes')).toContainText('Tel.: 1155550103');
-  await expect(page.locator('#filas-postulantes')).toContainText('Rechazada');
+  await expect(page.locator('#filas-postulantes')).toContainText('Cancelada por vos');
   await expect(page.getByRole('button', { name: /^Elegir a/ })).toHaveCount(0);
   expect(elegida).toEqual({ postulacion_id: 2 });
 });
@@ -590,7 +590,7 @@ test('el detalle de una adopción finalizada muestra a las personas, el recorrid
   await expect(page.getByRole('link', { name: 'Ver la consulta del chequeo' })).toHaveAttribute('href', '/panel/consulta.html?id=7');
 
   await expect(page.locator('#filas-postulaciones tr')).toHaveCount(2);
-  await expect(page.locator('#filas-postulaciones')).toContainText('Rechazada');
+  await expect(page.locator('#filas-postulaciones')).toContainText('Cancelada por la rescatista');
   await expect(page.getByRole('link', { name: /Volver a las adopciones/ })).toHaveAttribute('href', '/panel/adopciones.html#finalizadas');
 });
 
@@ -678,4 +678,65 @@ test('la consulta de un chequeo cuya adopción ya terminó no ofrece completarla
   // Se preguntó por las adopciones en curso y ninguna tiene este chequeo.
   await expect.poll(() => datos.pedidos.length).toBeGreaterThan(0);
   await expect(page.getByRole('link', { name: 'Ir a completar la adopción' })).toHaveCount(0);
+});
+
+test('el cliente cancela su postulación pendiente desde Mis postulaciones (con confirmación)', async ({ page }) => {
+  await simularSesion(page, CLIENTE);
+  await page.route(/\/api\/adopciones\/publicaciones(\?.*)?$/, (route) => responderJson(route, { publicaciones: [publicacion(1, 'Pipa')] }));
+  let estado = 'PENDIENTE';
+  await page.route('**/api/adopciones/mis-postulaciones', (route) => responderJson(route, { postulaciones: [
+    postulacion(7, 'Cliente Dos', { estado }),
+    postulacion(8, 'Cliente Dos', { estado: 'ELEGIDA', adopcion: { id: 2, estado: 'ADOPTANTE_ELEGIDO', turno_chequeo: null }, publicacion: { id: 2, titulo: 'Toby', mascota: { id: 902, nombre: 'Toby' } } }),
+  ] }));
+  const pedidos = [];
+  await page.route('**/api/adopciones/postulaciones/7/cancelar', (route) => {
+    pedidos.push(route.request().method());
+    estado = 'CANCELADA';
+    return responderJson(route, { postulacion: postulacion(7, 'Cliente Dos', { estado: 'CANCELADA' }) });
+  });
+
+  await page.goto('/adopciones/adopciones.html#seccion-mias');
+  const filas = page.locator('#filas-mias > tr');
+  await expect(filas.nth(0)).toContainText('Esperando revisión');
+  // Solo la pendiente se puede cancelar.
+  await expect(filas.nth(1).getByRole('button')).toHaveCount(0);
+
+  // "Volver" en la confirmación no cancela.
+  await page.getByRole('button', { name: 'Cancelar mi postulación para adoptar a Pipa' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Volver' }).click();
+  expect(pedidos).toEqual([]);
+
+  await page.getByRole('button', { name: 'Cancelar mi postulación para adoptar a Pipa' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Cancelar postulación' }).click();
+  await expect(filas.nth(0)).toContainText('Cancelada por vos');
+  await expect(filas.nth(0)).toContainText('no te podés volver a postular');
+  await expect(filas.nth(0).getByRole('button')).toHaveCount(0);
+  expect(pedidos).toEqual(['POST']);
+  // La tarjeta del animal tampoco ofrece postularse.
+  await page.getByRole('tab', { name: 'Animales que buscan familia' }).click();
+  await expect(page.locator('.tarjeta-adopcion', { hasText: 'Pipa' }).locator('.tu-postulacion')).toContainText('Cancelada por vos');
+});
+
+test('desde la publicación también se cancela, y si la rescatista ya eligió avisa el error', async ({ page }) => {
+  await simularSesion(page, CLIENTE);
+  await page.route('**/api/adopciones/publicaciones/1', (route) => responderJson(route, { publicacion: publicacion(1, 'Pipa') }));
+  await page.route('**/api/adopciones/mis-postulaciones', (route) => responderJson(route, { postulaciones: [postulacion(7, 'Cliente Dos')] }));
+  await page.route('**/api/adopciones/postulaciones/7/cancelar', (route) =>
+    responderJson(route, { error: 'Solo se puede cancelar una postulación que la rescatista todavía no revisó', campos: {} }, 409));
+
+  await page.goto('/adopciones/publicacion.html?id=1');
+  await page.locator('.tu-postulacion').getByRole('button', { name: 'Cancelar postulación' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Cancelar postulación' }).click();
+  await expect(page.locator('.tu-postulacion .campo-error')).toHaveText('Solo se puede cancelar una postulación que la rescatista todavía no revisó');
+});
+
+test('la rescatista y la veterinaria ven quién canceló cada postulación', async ({ page }) => {
+  await simularSesion(page, { id: 101, nombre: 'Vet', email: 'v@prueba.huellavet', rol: 'VETERINARIO', estado_validacion: null });
+  await page.goto('/index.html');
+  const textos = await page.evaluate(async () => {
+    const { insigniaPostulacion } = await import('/js/etiquetas-adopciones.js');
+    const t = (estado, mira) => insigniaPostulacion(estado, { mira }).textContent;
+    return [t('CANCELADA', 'rescatista'), t('RECHAZADA', 'rescatista'), t('CANCELADA', 'veterinaria'), t('RECHAZADA', 'veterinaria'), t('CANCELADA', 'postulante'), t('RECHAZADA', 'postulante')];
+  });
+  expect(textos).toEqual(['Cancelada por el postulante', 'Cancelada por vos', 'Cancelada por el postulante', 'Cancelada por la rescatista', 'Cancelada por vos', 'Cancelada por la rescatista']);
 });

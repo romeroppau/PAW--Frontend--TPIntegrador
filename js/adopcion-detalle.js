@@ -11,7 +11,7 @@ import { api } from './api.js';
 import { exigirRol } from './auth.js';
 import { el } from './ui.js';
 import { textoEspecieMascota } from './etiquetas.js';
-import { edad, fecha, insignia, textoEstado } from './etiquetas-adopciones.js';
+import { edad, fecha, insignia, insigniaPostulacion, textoEstado } from './etiquetas-adopciones.js';
 
 await exigirRol(['VETERINARIO']);
 
@@ -103,7 +103,7 @@ function pintarPostulaciones(postulaciones) {
     cliente.append(el('span', p.cliente.nombre));
     if (p.cliente.telefono) cliente.append(el('span', p.cliente.telefono, { class: 'ayuda' }));
     const celdaEstado = el('td');
-    celdaEstado.append(insignia(p.estado));
+    celdaEstado.append(insigniaPostulacion(p.estado));
     tr.append(cliente, el('td', fecha(p.fecha)), el('td', p.tipo_vivienda), el('td', p.otras_mascotas), el('td', p.tiempo_disponible), celdaEstado);
     return tr;
   }));

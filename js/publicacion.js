@@ -69,7 +69,7 @@ async function cargar() {
 
   if (mia) {
     document.getElementById('disponibilidad').hidden = true;
-    acciones.replaceWith(bloquePostulacion(mia));
+    acciones.replaceWith(bloquePostulacion(mia, { cancelable: true }));
     document.getElementById('volver').href = '/adopciones/adopciones.html#seccion-mias';
     document.getElementById('volver').textContent = '← Volver a mis postulaciones';
   } else if (disponible(publicacion)) {

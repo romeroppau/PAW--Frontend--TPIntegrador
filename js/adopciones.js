@@ -11,7 +11,7 @@ import { api } from './api.js';
 import { sesion } from './auth.js';
 import { el, limpiarErrores, mostrarErrores } from './ui.js';
 import { textoEspecieMascota } from './etiquetas.js';
-import { bloquePostulacion, edad, fecha, insignia, mensajeDeError, seguimiento } from './etiquetas-adopciones.js';
+import { bloquePostulacion, cancelarPostulacion, edad, fecha, insigniaPostulacion, mensajeDeError, seguimiento } from './etiquetas-adopciones.js';
 import { activarPestanas } from './pestanas.js';
 
 const usuario = await sesion;
@@ -142,14 +142,14 @@ async function cargarMias() {
     document.getElementById('filas-mias').replaceChildren(...postulaciones.map((p) => {
       const tr = el('tr');
       const celdaEstado = el('td');
-      celdaEstado.append(insignia(p.estado));
+      celdaEstado.append(insigniaPostulacion(p.estado, { mira: 'postulante' }));
       // El animal lleva a su publicación (la ve aunque ya no esté disponible: se postuló).
       const animal = el('td');
       animal.append(el('a', p.publicacion.mascota.nombre, {
         href: '/adopciones/publicacion.html?id=' + encodeURIComponent(p.publicacion.id),
         'aria-label': 'Ver la publicación de ' + p.publicacion.mascota.nombre
       }));
-      tr.append(animal, el('td', fecha(p.fecha)), celdaEstado, el('td', seguimiento(p)));
+      tr.append(animal, el('td', fecha(p.fecha)), celdaEstado, el('td', seguimiento(p)), celdaCancelar(p));
       return tr;
     }));
     document.getElementById('tabla-mias').hidden = postulaciones.length === 0;
@@ -157,6 +157,30 @@ async function cargarMias() {
   } catch {
     estadoMias.textContent = 'No se pudieron cargar tus postulaciones.';
   }
+}
+
+// Mientras la rescatista no eligió, el cliente puede cancelar su postulación (24/11).
+function celdaCancelar(p) {
+  const celda = el('td');
+  if (p.estado !== 'PENDIENTE') return celda;
+  const boton = el('button', 'Cancelar', {
+    type: 'button', class: 'boton boton-borde boton-chico',
+    'aria-label': 'Cancelar mi postulación para adoptar a ' + p.publicacion.mascota.nombre
+  });
+  const error = el('span', '', { class: 'campo-error', role: 'alert' });
+  boton.addEventListener('click', async () => {
+    error.textContent = '';
+    boton.disabled = true;
+    try {
+      if (await cancelarPostulacion(p)) await cargarMias();
+    } catch (e) {
+      error.textContent = e?.datos?.error ?? 'No se pudo cancelar. Probá de nuevo.';
+    } finally {
+      boton.disabled = false;
+    }
+  });
+  celda.append(boton, error);
+  return celda;
 }
 
 const cargas = [cargar()];
