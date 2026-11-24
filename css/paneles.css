@@ -131,39 +131,9 @@ body {
   text-decoration: underline;
 }
 
-/* Contactanos (paneles de cliente y rescatista): los datos al costado del mapa. */
+/* Contactanos (paneles de cliente y rescatista). La grilla, los datos y el mapa están en base.css. */
 .panel-contacto {
   margin-top: 1.5rem;
-}
-
-.contacto-grilla {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
-  gap: 1.25rem;
-  align-items: start;
-}
-
-.contacto-datos {
-  display: grid;
-  gap: .6rem;
-  margin: 0 0 1rem;
-}
-
-.contacto-datos dt {
-  color: var(--tinta-suave);
-  font-size: .9rem;
-  font-weight: 700;
-}
-
-.contacto-datos dd {
-  margin: .1rem 0 0;
-}
-
-.contacto-mapa {
-  width: 100%;
-  min-height: 16rem;
-  border: 0;
-  border-radius: var(--radio);
 }
 
 /* Panel del cliente: las secciones de la portada, como bloques del panel (con bordes redondeados
@@ -200,10 +170,6 @@ body {
 /* ---------- Celular ---------- */
 
 @media (max-width: 700px) {
-  .contacto-grilla {
-    grid-template-columns: 1fr;
-  }
-
   .panel-intro {
     grid-template-columns: 1fr;
   }

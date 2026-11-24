@@ -123,6 +123,34 @@
         </div>
       </div>
     </section>
+
+    <!-- Contactanos (24/11), como en el panel del cliente: el horario lo pone js/contacto-panel.js
+         (GET /api/pacientes/horario); la dirección, el teléfono, el email, WhatsApp y el mapa, los que
+         cargó la veterinaria en Configuración (js/contacto.js). "Contactanos" del menú lleva acá. -->
+    <section class="seccion" id="contacto" aria-labelledby="titulo-contacto">
+      <div class="contenedor">
+        <div class="tarjeta">
+          <h2 id="titulo-contacto">Contactanos</h2>
+          <div class="contacto-grilla">
+            <div>
+              <dl class="contacto-datos">
+                <div><dt>Dirección</dt><dd data-contacto="direccion">Av. San Martín 1450, Luján</dd></div>
+                <div><dt>Teléfono</dt><dd><a href="tel:+541139010486" data-contacto-enlace="telefono" data-contacto="telefono">11 3901-0486</a></dd></div>
+                <div data-contacto-caja hidden><dt>Email</dt><dd><a href="#" data-contacto-enlace="email" data-contacto="email"></a></dd></div>
+                <div><dt>Horario de atención</dt><dd id="horario-atencion">De 08:00 a 20:00</dd></div>
+              </dl>
+              <p class="contacto-acciones">
+                <a class="boton boton-borde" href="https://wa.me/5491139010486?text=Hola%2C%20tengo%20una%20consulta" data-contacto-enlace="whatsapp" data-whatsapp-texto="Hola, tengo una consulta" target="_blank" rel="noopener noreferrer">Escribinos por WhatsApp</a>
+                <a class="boton boton-borde" href="https://www.google.com/maps/search/?api=1&amp;query=Av.%20San%20Mart%C3%ADn%201450%2C%20Luj%C3%A1n%2C%20Buenos%20Aires" data-contacto-enlace="mapa" target="_blank" rel="noopener noreferrer">Cómo llegar</a>
+              </p>
+            </div>
+            <iframe class="contacto-mapa" data-contacto-mapa title="Mapa: HuellaVet, Av. San Martín 1450, Luján"
+                    src="https://www.google.com/maps?q=Av.%20San%20Mart%C3%ADn%201450%2C%20Luj%C3%A1n%2C%20Buenos%20Aires&amp;output=embed"
+                    loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+          </div>
+        </div>
+      </div>
+    </section>
   </main>
 
   <footer class="pie">
@@ -157,6 +185,7 @@
   <script type="module" src="/js/contacto.js"></script>
   <script type="module" src="/js/portada.js"></script>
   <script type="module" src="/js/horario-portada.js"></script>
+  <script type="module" src="/js/contacto-panel.js"></script>
   <script type="module" src="/js/resenas-portada.js"></script>
   <script type="module" src="/js/notificaciones.js"></script>
 </body>
