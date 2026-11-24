@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Panel · Productos — HuellaVet</title>
+  <title>Productos | HuellaVet</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Nunito+Sans:wght@400;600;700&display=swap">
@@ -15,10 +15,15 @@
   <script src="/js/layout.js"></script>
   <main id="contenido" class="seccion" hidden>
     <div class="contenedor">
-      <p><a href="/paneles/panel-administrador.html">&larr; Volver al panel de administrador</a></p>
+      <p><a href="/paneles/panel-administrador.html">&larr; Volver a mi panel</a></p>
       <div class="barra-titulo">
         <h1>Productos</h1>
         <a class="boton" href="/panel/producto-form.html">Nuevo producto</a>
+      </div>
+      <!-- Filtra la lista mientras se escribe, sin pedir de nuevo a la API (js/buscar-lista.js). -->
+      <div class="campo campo-buscar">
+        <label for="buscar">Buscar un producto por nombre</label>
+        <input id="buscar" type="search" autocomplete="off" placeholder="Ej.: alimento cachorro">
       </div>
       <p class="estado" id="estado" role="status"></p>
       <div class="tabla-scroll">

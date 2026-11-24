@@ -1,6 +1,6 @@
 // Formularios: los errores se muestran con el estilo del sitio, y el menú lleva a una pantalla útil.
 const { test, expect } = require('@playwright/test');
-const { responderJson, simularSesion } = require('./ayudas');
+const { responderJson, simularSesion, abrirSeccion } = require('./ayudas');
 
 const VETERINARIO = { id: 101, nombre: 'Vet', email: 'v@prueba.huellavet', rol: 'VETERINARIO' };
 
@@ -30,12 +30,13 @@ for (const pagina of ['registro-cliente', 'registro-rescatista']) {
   });
 }
 
-test('"Atender consulta" del menú lleva a la agenda', async ({ page }) => {
+test('"Agenda de turnos" del menú lleva a la agenda', async ({ page }) => {
   await simularSesion(page, VETERINARIO);
   await page.route('**/api/pacientes/turnos**', (route) => responderJson(route, { fecha: '2026-11-09', turnos: [] }));
 
   await page.goto('/paneles/panel-administrador.html');
-  await page.getByRole('link', { name: 'Atender consulta' }).click();
+  await abrirSeccion(page, 'agenda');
+  await page.getByRole('link', { name: 'Agenda de turnos' }).click();
 
   await expect(page).toHaveURL(/\/panel\/agenda\.html$/);
 });

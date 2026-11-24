@@ -15,14 +15,15 @@
        - los scripts menu.js, guardia-panel.js y auth.js: el <main> queda oculto (hidden) hasta que
          guardia-panel.js confirma el rol, y el menú y el botón "Salir" los arma auth.js.
      El cliente ve sus mascotas y las da de alta, edita y da de baja. El veterinario ve todas (con su
-     dueño y un buscador) y no las modifica. Todo con fetch, sin recargar la página. -->
-<body data-rol="CLIENTE,VETERINARIO">
+     dueño y un buscador) y no las modifica. El rescatista (Entrega 5) maneja como el cliente los
+     animales que tiene a cargo, sin calendario ni historial. Todo con fetch, sin recargar la página. -->
+<body data-rol="CLIENTE,VETERINARIO,RESCATISTA">
   <a class="saltar" href="#contenido">Saltar al contenido</a>
   <div id="encabezado-sitio"></div>
   <script src="/js/layout.js"></script>
   <main id="contenido" class="seccion" hidden>
     <div class="contenedor">
-      <p><a href="/index.html">&larr; Volver al inicio</a></p>
+      <p><a href="/index.html" data-volver-panel>&larr; Volver a mi panel</a></p>
       <div class="barra-titulo">
         <h1 id="titulo">Mis mascotas</h1>
         <div class="acciones">
@@ -70,6 +71,15 @@
             <label for="peso_kg">Peso en kg <span class="ayuda">(opcional)</span></label>
             <input id="peso_kg" name="peso_kg" type="number" min="0.01" max="999.99" step="0.01" inputmode="decimal">
             <span class="campo-error" id="error-peso_kg"></span>
+          </div>
+          <div class="campo">
+            <label for="foto">Foto <span class="ayuda">(opcional)</span></label>
+            <!-- La foto actual la muestra mascotas.js (un <img> sin src no pasa el validador del W3C). -->
+            <div id="foto-actual" class="foto-actual" hidden></div>
+            <input id="foto" name="foto" type="file" accept="image/png,image/jpeg,image/webp" aria-describedby="ayuda-foto error-foto">
+            <p class="campo-ayuda" id="ayuda-foto">PNG, JPG o WEBP de hasta 1 MB.</p>
+            <label class="casilla" id="campo-quitar-foto" hidden><input type="checkbox" id="quitar-foto" name="quitar_foto"> Quitar la foto actual</label>
+            <span class="campo-error" id="error-foto"></span>
           </div>
           <p class="campo-error" id="error-general" role="alert" hidden></p>
           <button type="submit" class="boton" id="guardar">Guardar</button>

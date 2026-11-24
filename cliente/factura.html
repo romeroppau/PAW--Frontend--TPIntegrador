@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Factura de la consulta | HuellaVet</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Nunito+Sans:wght@400;600;700&display=swap">
+  <link rel="stylesheet" href="/css/base.css">
+</head>
+<!-- Factura de una consulta finalizada. Se abre con ?consulta=<id>.
+     La ven la veterinaria (cualquiera) y el cliente (solo las de sus mascotas: el backend responde
+     404 si no es suya). Se llega desde "Ver factura" de la consulta y del historial clínico.
+     Mantener:
+       - data-rol del <body>: roles que pueden ver la página.
+       - los scripts menu.js, guardia-panel.js y auth.js: el <main> queda oculto (hidden) hasta que
+         guardia-panel.js confirma el rol, y el menú y el botón "Salir" los arma auth.js. -->
+<body data-rol="CLIENTE,VETERINARIO">
+  <a class="saltar" href="#contenido">Saltar al contenido</a>
+  <div id="encabezado-sitio"></div>
+  <script src="/js/layout.js"></script>
+  <main id="contenido" class="seccion" hidden>
+    <div class="contenedor">
+      <p class="no-imprimir"><a id="volver" href="/index.html">&larr; Volver al historial</a></p>
+      <p class="estado" id="estado" role="status"></p>
+
+      <article id="factura" class="tarjeta factura" hidden>
+        <header class="factura-encabezado">
+          <div>
+            <p class="etiqueta">Veterinaria HuellaVet · Luján</p>
+            <h1 id="titulo">Factura</h1>
+          </div>
+          <p><span id="estado-factura" class="insignia"></span></p>
+        </header>
+
+        <dl class="factura-datos">
+          <div><dt>Fecha</dt><dd id="fecha"></dd></div>
+          <div><dt>Cliente</dt><dd id="cliente"></dd></div>
+          <div><dt>Mascota</dt><dd id="mascota"></dd></div>
+          <div><dt>Atención</dt><dd id="atencion"></dd></div>
+          <div class="factura-diagnostico"><dt>Diagnóstico</dt><dd id="diagnostico"></dd></div>
+        </dl>
+
+        <div class="tabla-scroll">
+          <table class="factura-detalle">
+            <caption class="solo-lectores">Detalle de la factura</caption>
+            <thead>
+              <tr>
+                <th scope="col">Concepto</th>
+                <th scope="col" class="numero">Cantidad</th>
+                <th scope="col" class="numero">Precio unitario</th>
+                <th scope="col" class="numero">Importe</th>
+              </tr>
+            </thead>
+            <tbody id="filas"></tbody>
+            <tfoot>
+              <tr><th scope="row" colspan="3">Consulta</th><td class="numero" id="t-base"></td></tr>
+              <tr><th scope="row" colspan="3">Insumos</th><td class="numero" id="t-insumos"></td></tr>
+              <tr><th scope="row" colspan="3">Productos</th><td class="numero" id="t-productos"></td></tr>
+              <tr class="total"><th scope="row" colspan="3">Total</th><td class="numero" id="t-total"></td></tr>
+            </tfoot>
+          </table>
+        </div>
+
+        <p id="nota-pago" class="ayuda" hidden>Se abona en la veterinaria.</p>
+        <p class="no-imprimir"><button type="button" class="boton boton-borde" id="imprimir">Imprimir</button></p>
+      </article>
+    </div>
+  </main>
+  <div id="pie-sitio"></div>
+
+  <script type="module" src="/js/menu.js"></script>
+  <script type="module" src="/js/guardia-panel.js"></script>
+  <script type="module" src="/js/auth.js"></script>
+  <script type="module" src="/js/factura.js"></script>
+</body>
+</html>

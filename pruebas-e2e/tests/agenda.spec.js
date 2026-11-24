@@ -154,3 +154,36 @@ test('"Nuevo turno" lo carga y muestra su día en la agenda, sin recargar; un ho
   expect(cuerpos.at(-1)).toEqual({ mascota_id: 101, fecha: MANIANA, hora: '10:30', motivo: 'VACUNACION' });
   expect(await page.evaluate(() => window.sinRecargar)).toBe(true);
 });
+
+test('"Reprogramar" usa el mismo formulario solo con fecha y hora, y muestra el día nuevo sin recargar', async ({ page }) => {
+  await simularSesion(page, VETERINARIO);
+  const turnosManiana = [];
+  await simularAgenda(page, { [HOY]: TURNOS_HOY, [MANIANA]: turnosManiana });
+  let cuerpo = null;
+  await page.route('**/api/pacientes/turnos/101/reprogramar', (route) => {
+    cuerpo = route.request().postDataJSON();
+    const movido = turno(101, cuerpo.hora, 'Firulais', 'PROGRAMADO', { fecha: cuerpo.fecha });
+    turnosManiana.push(movido);
+    return responderJson(route, { turno: movido });
+  });
+
+  await page.goto('/panel/agenda.html');
+  await page.evaluate(() => { window.sinRecargar = true; });
+  await page.locator('tr[data-id="101"]').getByRole('button', { name: /Reprogramar/ }).click();
+
+  await expect(page.locator('#titulo-turno')).toHaveText('Reprogramar el turno de Firulais');
+  await expect(page.locator('#mascota_id')).toBeHidden();
+  await expect(page.locator('#motivo')).toBeHidden();
+  await expect(page.locator('#turno-fecha')).toHaveValue(HOY);
+  await expect(page.locator('#hora')).toHaveValue('08:00');
+
+  await page.fill('#turno-fecha', MANIANA);
+  await page.fill('#hora', '10:30');
+  await page.getByRole('button', { name: 'Guardar cambios' }).click();
+
+  await expect(page.locator('#estado')).toContainText('Turno reprogramado: Firulais');
+  await expect(page).toHaveURL(new RegExp('\\?fecha=' + MANIANA + '$'));
+  await expect(page.locator('tr[data-id="101"]')).toContainText('10:30');
+  expect(cuerpo).toEqual({ fecha: MANIANA, hora: '10:30' });
+  expect(await page.evaluate(() => window.sinRecargar)).toBe(true);
+});

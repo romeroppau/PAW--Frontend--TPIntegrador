@@ -1,0 +1,27 @@
+/* Portada (index.html). Lo general del sitio está en base.css. */
+
+/* La foto de la fachada en "¿Dónde nos encontramos?": la foto es vertical y el lugar es más ancho que
+   alto, así que se recorta mostrando el cartel y la vidriera (sin deformarla). */
+.foto-fachada {
+  display: block;
+  width: 100%;
+  height: 260px;
+  object-fit: cover;
+  object-position: center 40%;
+  border-radius: var(--radio);
+}
+
+/* "¿Qué opinan nuestros clientes?": las estrellas de cada reseña y el botón a todas. */
+.burbuja .estrellas {
+  display: block;
+  margin-bottom: .35rem;
+  color: var(--naranja-oscuro);
+  letter-spacing: .1em;
+}
+
+.ver-resenas {
+  grid-column: 1 / -1;
+  justify-self: center;
+  margin: 2.5rem 0 0;
+  text-align: center;
+}

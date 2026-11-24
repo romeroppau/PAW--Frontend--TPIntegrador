@@ -7,6 +7,7 @@
   <meta name="description" content="Panel de administración de HuellaVet.">
   <title>Panel de administrador | HuellaVet</title>
   <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/barra-rol.css">
   <link rel="stylesheet" href="/css/paneles.css">
 </head>
 
@@ -15,100 +16,21 @@
   <header class="panel-cabecera">
     <div class="contenedor"><a class="panel-marca" href="/index.html">HuellaVet</a>
       <p class="panel-usuario">Panel de administrador</p>
-      <!-- js/auth.js lo rellena con el nombre del usuario y el botón "Salir" -->
+      <!-- js/auth.js cambia esta cabecera por la del rol, con su barra de menús (js/barra-rol.js) -->
       <div class="sesion" id="sesion"></div>
     </div>
   </header>
-  <nav class="panel-nav" aria-label="Navegación del administrador">
-    <div class="contenedor">
-      <a href="#agenda">Agenda</a><a href="#pacientes">Mis pacientes</a><a href="#productos">Shop / Productos</a><a
-        href="#insumos">Insumos</a><a href="#reportes">Reportes</a><a href="#rescatistas">Rescatistas</a><a
-        href="#adopcion">Adopción</a><a href="#resenas">Reseñas</a><a href="#notificaciones">Notificaciones</a><a
-        href="#contacto">Contacto</a>
-    </div>
-  </nav>
   <!-- hidden: se muestra recién cuando guardia-panel.js confirma el rol -->
   <main class="panel-principal" hidden>
     <section class="panel-intro">
-      <p class="etiqueta">Gestión del sistema</p>
-      <h1>Panel de administrador</h1>
-      <p>Accesos generales para administrar turnos, pacientes, productos, inventario y adopciones.</p>
+      <div>
+        <p class="etiqueta">Gestión del sistema</p>
+        <h1>Panel de administrador</h1>
+        <p>Accesos generales para administrar turnos, pacientes, productos, inventario y adopciones.</p>
+        <p class="panel-pista"><span aria-hidden="true">↑</span> Elegí una sección en el menú de arriba para ver sus opciones.</p>
+      </div>
+      <div class="panel-intro-huella"><svg viewBox="0 0 64 64" aria-hidden="true" focusable="false"><g fill="currentColor"><ellipse cx="14" cy="27" rx="7" ry="9"/><ellipse cx="29" cy="15" rx="7" ry="10"/><ellipse cx="45" cy="15" rx="7" ry="10"/><ellipse cx="57" cy="29" rx="6" ry="9"/><path d="M32 31c-9 0-18 9-18 17 0 6 5 9 11 8 3-.6 5-1.5 7-1.5s4 .9 7 1.5c6 1 11-2 11-8 0-8-9-17-18-17z"/></g></svg></div>
     </section>
-    <h2 class="panel-seccion-titulo">Secciones de administración</h2>
-    <div class="panel-grilla">
-      <section class="panel-tarjeta" id="agenda">
-        <h2>Agenda</h2>
-        <ul class="panel-opciones">
-          <li><a href="/panel/agenda.html">Registrar turno</a></li>
-          <li><a href="/panel/agenda.html">Turnos del día</a></li>
-          <li><a href="/panel/agenda.html">Atender consulta</a></li>
-        </ul>
-      </section>
-      <section class="panel-tarjeta" id="pacientes">
-        <h2>Mis pacientes</h2>
-        <ul class="panel-opciones">
-          <li>Clientes</li>
-          <li><a href="/cliente/mascotas.html">Ficha de mascotas</a></li>
-          <li><a href="/cliente/historial.html">Historial clínico</a></li>
-          <li><a href="/cliente/calendario.html">Calendario sanitario</a></li>
-        </ul>
-      </section>
-      <section class="panel-tarjeta" id="productos">
-        <h2>Shop / Productos</h2>
-        <ul class="panel-opciones">
-          <li><a href="/panel/productos.html">ABM de productos</a></li>
-          <li><a href="/panel/productos.html">Cargar stock</a></li>
-          <li>Pedidos para retirar</li>
-        </ul>
-      </section>
-      <section class="panel-tarjeta" id="insumos">
-        <h2>Insumos</h2>
-        <ul class="panel-opciones">
-          <li><a href="/panel/insumos.html">ABM de insumos</a></li>
-          <li><a href="/panel/insumos.html">Cargar stock</a></li>
-          <li><a href="/panel/insumo-movimientos.html">Movimientos</a></li>
-        </ul>
-      </section>
-      <section class="panel-tarjeta" id="reportes">
-        <h2>Reportes</h2>
-        <ul class="panel-opciones">
-          <li>Ventas</li>
-          <li>Turnos atendidos</li>
-          <li>Stock / movimientos de inventario</li>
-        </ul>
-      </section>
-      <section class="panel-tarjeta" id="rescatistas">
-        <h2>Rescatistas</h2>
-        <ul class="panel-opciones">
-          <li>Solicitudes pendientes</li>
-          <li>Rescatistas aprobados</li>
-        </ul>
-      </section>
-      <section class="panel-tarjeta" id="adopcion">
-        <h2>Adopción</h2>
-        <ul class="panel-opciones">
-          <li>Moderar publicaciones</li>
-          <li>Adopciones en curso</li>
-          <li>Completar adopción</li>
-        </ul>
-      </section>
-      <section class="panel-tarjeta" id="resenas">
-        <h2>Reseñas</h2>
-        <ul class="panel-opciones">
-          <li>Moderar / eliminar</li>
-        </ul>
-      </section>
-      <section class="panel-tarjeta" id="notificaciones">
-        <h2>Notificaciones</h2>
-        <p>Alertas y novedades administrativas.</p>
-      </section>
-      <section class="panel-tarjeta" id="contacto">
-        <h2>Contacto</h2>
-        <p>Información de contacto y canales de comunicación.</p>
-      </section>
-    </div>
-    <p class="panel-aviso">Estas secciones representan la navegación prevista en el sitemap. Las acciones
-      administrativas reales deben conectarse a sus endpoints y permisos.</p>
   </main>
   <footer class="panel-pie">
     <p>HuellaVet · Administración</p>

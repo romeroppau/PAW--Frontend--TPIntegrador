@@ -171,6 +171,25 @@ th { background: var(--menta); color: var(--pino-oscuro); }
 .producto-destacado h3 { margin: .25rem 0 0; }
 .etiqueta { font-weight: 700; color: var(--naranja-oscuro); margin: 0; }
 .precio { font-weight: 700; font-size: 1.15rem; margin: 0; }
+/* Precio en promoción (js/tienda.js, bloquePrecio): el de siempre tachado, el rebajado, el
+   porcentaje y hasta cuándo. El naranja oscuro cumple contraste AA sobre blanco. */
+.precio-con-promo { display: flex; flex-wrap: wrap; align-items: baseline; gap: .15rem .5rem; }
+.precio-anterior { font-weight: 400; font-size: .95rem; color: var(--tinta-suave); }
+.precio-promo { text-decoration: none; color: var(--naranja-oscuro); }
+.insignia.insignia-promo { background: #fde7d3; color: #7a3d07; font-size: .8rem; }
+.promo-hasta { flex-basis: 100%; font-size: .85rem; font-weight: 400; color: var(--tinta-suave); }
+.item-promo { color: var(--naranja-oscuro); white-space: nowrap; }
+/* Descuentos (js/portada.js y js/descuentos-turnos.js): "¡No te lo pierdas!" y "Ver descuentos". */
+.bloque-descuentos + .bloque-descuentos { margin-top: 2rem; }
+/* Buscador por nombre de los listados de la veterinaria (js/buscar-lista.js). */
+.campo-buscar { max-width: 24rem; }
+.subtitulo-seccion { font-size: 1.35rem; margin-bottom: .75rem; }
+.producto-destacado h4 { font-family: var(--fuente-titulo); font-size: 1.2rem; color: var(--pino-oscuro); margin: 0 0 .5em; }
+.promo-turnos { margin-block: 1rem; }
+.promo-turnos h2, .promo-turnos h3 { margin-bottom: .4rem; }
+.lista-promo-turnos { list-style: none; margin: 0; padding: 0; display: grid; gap: .4rem; }
+.promo-turno strong { color: var(--pino-oscuro); }
+.precio-turno { font-weight: 700; color: var(--tinta); }
 
 @media (max-width: 800px) {
   .encabezado-fila {
@@ -236,6 +255,29 @@ form .boton + .boton { margin-left: .5rem; }
 .resumen .total th, .resumen .total td { font-weight: 700; }
 .historial-lista { display: grid; gap: 1rem; }
 .historial-factura { font-weight: 700; }
+.historial-factura a { font-weight: 600; margin-left: .25rem; }
+.lista-mascotas { display: grid; gap: .5rem; padding-left: 1.2rem; }
+
+/* Factura de la consulta (cliente/factura.html) */
+.factura { display: grid; gap: 1.25rem; }
+.factura-encabezado { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: .5rem 1rem; }
+.factura-encabezado h1 { margin: .2rem 0 0; }
+.factura-datos { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: .75rem 1.5rem; margin: 0; }
+.factura-datos dt { font-weight: 700; color: var(--tinta-suave); font-size: .9rem; }
+.factura-datos dd { margin: .1rem 0 0; }
+.factura-diagnostico { grid-column: 1 / -1; }
+.factura-detalle th, .factura-detalle td { padding: .5rem .6rem; text-align: left; border-bottom: 1px solid #e3e8e5; }
+.factura-detalle .numero { text-align: right; white-space: nowrap; }
+.factura-detalle tfoot th { text-align: right; font-weight: 600; background: transparent; }
+.factura-detalle .total th, .factura-detalle .total td { font-weight: 700; font-size: 1.1rem; border-bottom: 0; }
+
+/* Al imprimir la factura solo sale la factura: sin encabezado, pie, menú ni botones. */
+@media print {
+  /* layout.js cambia los marcadores por <header class="encabezado"> y <footer class="pie">. */
+  .encabezado, .pie, .saltar, .no-imprimir, #estado { display: none !important; }
+  body { background: #fff; }
+  .factura { box-shadow: none; border: 0; padding: 0; }
+}
 
 
 /* Insumos (rol 2): estado con color en el listado, filas dadas de baja y ayudas del formulario.
@@ -243,6 +285,7 @@ form .boton + .boton { margin-left: .5rem; }
 .insignia { display: inline-block; padding: .15rem .6rem; border-radius: 999px; font-size: .9rem; font-weight: 700; background: #e3efe9; color: var(--pino); }
 .insignia-falta { background: #fbe4e2; color: var(--error); }
 .insignia-bajo { background: #fff1c7; color: #7a5300; }
+.insignia-pedido { background: #e1ecf7; color: #1d4f7a; }
 .fila-baja td { color: var(--tinta-suave); }
 .ayuda { display: block; font-size: .9rem; color: var(--tinta-suave); }
 .campo-selector { max-width: 24rem; }
@@ -260,6 +303,13 @@ form .boton + .boton { margin-left: .5rem; }
 .insignia-atendido { background: #d7f0df; color: var(--ok); }
 .insignia-anulado { background: #e9eceb; color: var(--tinta-suave); }
 
+/* Foto de la mascota (cliente/mascotas.html) */
+.miniatura { width: 48px; height: 48px; object-fit: cover; border-radius: 8px; flex: none; }
+.con-foto { display: flex; flex-wrap: wrap; align-items: center; gap: .25rem .6rem; }
+.foto-mascota { width: 120px; height: 120px; object-fit: cover; border-radius: var(--radio); }
+.campo .casilla { display: flex; align-items: center; gap: .5rem; font-weight: 600; }
+.campo .casilla input { width: auto; margin: 0; padding: 0; accent-color: var(--pino); }
+
 /* Cuadro de confirmación (confirmar() en js/ui.js) */
 .dialogo { border: 0; border-radius: var(--radio); padding: 1.5rem; width: min(28rem, calc(100vw - 2rem)); color: var(--tinta); background: var(--blanco); }
 .dialogo::backdrop { background: rgba(27, 42, 39, .55); }
@@ -268,3 +318,30 @@ form .boton + .boton { margin-left: .5rem; }
 
 /* Ítem de la consulta que se dio de baja después de cargarlo */
 .marca-baja { font-size: .85rem; font-weight: 700; color: var(--error); white-space: nowrap; }
+
+/* Pestañas (js/pestanas.js): el mismo diseño que las de reportes, para cualquier pantalla.
+   Hacen scroll horizontal en pantallas angostas en lugar de bajar de renglón. */
+.pestanas {
+  display: flex; gap: .25rem; margin: 1rem 0 1.5rem;
+  border-bottom: 1px solid var(--borde); overflow-x: auto;
+}
+.pestanas [role="tab"] {
+  background: none; border: 0; border-bottom: 3px solid transparent;
+  padding: .6rem 1rem; font: inherit; font-weight: 700; color: var(--tinta-suave);
+  cursor: pointer; white-space: nowrap;
+}
+.pestanas [role="tab"]:hover { color: var(--pino); }
+.pestanas [role="tab"][aria-selected="true"] { color: var(--pino-oscuro); border-bottom-color: var(--pino); }
+.pestanas [role="tab"]:focus-visible { outline: 3px solid var(--pino); outline-offset: 2px; }
+.pestanas .contador { font-weight: 600; color: var(--naranja-oscuro); }
+[role="tabpanel"]:focus-visible { outline: 3px solid var(--pino); outline-offset: 4px; }
+
+/* Anterior / Siguiente de una lista paginada */
+.paginacion { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: .75rem; margin-top: 1rem; }
+.paginacion .estado { min-height: 0; }
+
+/* Filtros de Mis turnos (cliente/turnos.html): en una fila, y uno debajo del otro en celular. */
+.filtros-turnos { display: flex; flex-wrap: wrap; align-items: flex-end; gap: .75rem 1rem; margin: 1rem 0 1.25rem; }
+.filtros-turnos .campo { margin: 0; min-width: 11rem; }
+.filtros-turnos .boton { margin-bottom: .2rem; }
+@media (max-width: 600px) { .filtros-turnos .campo { flex: 1 1 100%; } }

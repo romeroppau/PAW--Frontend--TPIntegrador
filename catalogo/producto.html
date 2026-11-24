@@ -6,29 +6,25 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Detalle de un producto del catálogo de HuellaVet.">
   <title>Detalle del producto | HuellaVet</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Nunito+Sans:wght@400;600;700&display=swap">
   <link rel="stylesheet" href="/css/base.css">
   <link rel="stylesheet" href="/catalogo/catalogo.css">
   <script type="module" src="/js/producto.js"></script>
 </head>
 
 <body>
-  <header class="catalogo-header">
-    <div class="contenedor encabezado-catalogo">
-      <a class="marca-catalogo" href="/index.html">HuellaVet</a>
-      <nav aria-label="Navegación principal">
-        <a href="/index.html">Inicio</a>
-        <a href="/catalogo/catalogo.html" aria-current="page">Tienda</a>
-        <a href="/login/login.html">Ingresar</a>
-      </nav>
-    </div>
-  </header>
+  <a class="saltar" href="#contenido">Saltar al contenido</a>
+  <div id="encabezado-sitio"></div>
+  <script src="/js/layout.js"></script>
 
-  <main class="contenedor detalle-principal">
+  <main id="contenido" class="contenedor detalle-principal">
     <p class="volver-catalogo"><a href="/catalogo/catalogo.html">← Volver al catálogo</a></p>
     <p id="estado-detalle" class="estado" role="status" aria-live="polite">Cargando producto…</p>
     <article id="detalle-producto" class="detalle-producto" hidden>
       <div class="detalle-imagen-wrap">
-        <img id="producto-imagen" class="detalle-imagen" alt="" hidden>
+        <!-- La <img> la crea producto.js solo si el producto tiene imagen: un <img> sin src no es HTML válido. -->
         <div id="producto-sin-imagen" class="imagen-provisoria detalle-sin-imagen" aria-hidden="true">Imagen del
           producto</div>
       </div>
@@ -38,6 +34,16 @@
         <p id="producto-especie" class="detalle-especie"></p>
         <p id="producto-precio" class="precio detalle-precio"></p>
         <p id="producto-descripcion" class="detalle-descripcion"></p>
+        <!-- Comprar: lo ven los clientes, los rescatistas y quien no inició sesión (al agregar, se le pide
+             entrar y vuelve acá). La veterinaria no compra: producto.js oculta el formulario. -->
+        <form id="form-agregar" class="form-agregar" novalidate>
+          <div class="campo campo-cantidad">
+            <label for="cantidad">Cantidad</label>
+            <input id="cantidad" name="cantidad" type="number" min="1" max="99" value="1" inputmode="numeric">
+          </div>
+          <button id="boton-agregar" class="boton" type="submit">Agregar al carrito</button>
+        </form>
+        <p id="aviso-carrito" class="aviso-carrito" role="status"></p>
         <a id="producto-whatsapp" class="boton boton-acento"
           href="https://wa.me/5491139010486?text=Hola%2C%20quiero%20consultar%20por%20un%20producto%20de%20HuellaVet" target="_blank"
           rel="noopener noreferrer">Consultar por WhatsApp</a>
@@ -46,14 +52,10 @@
     <p id="error-detalle" class="mensaje mensaje-error" hidden></p>
   </main>
 
-  <footer class="pie pie-catalogo">
-    <div class="contenedor">
-      <section>
-        <h2>HuellaVet</h2>
-        <p>Productos para acompañar el cuidado y bienestar animal.</p>
-      </section>
-    </div>
-  </footer>
+  <div id="pie-sitio"></div>
+
+  <script type="module" src="/js/menu.js"></script>
+  <script type="module" src="/js/auth.js"></script>
 </body>
 
 </html>

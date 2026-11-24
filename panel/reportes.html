@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Reportes | HuellaVet</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Nunito+Sans:wght@400;600;700&display=swap">
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/reportes.css">
+</head>
+<!-- Panel de reportes y sugerencias (Entrega 5, rol 4). Mantener data-rol y los scripts menu.js,
+     guardia-panel.js y auth.js: el <main> queda oculto hasta que se confirma el rol. -->
+<body data-rol="VETERINARIO">
+  <a class="saltar" href="#contenido">Saltar al contenido</a>
+  <div id="encabezado-sitio"></div>
+  <script src="/js/layout.js"></script>
+  <main id="contenido" class="seccion" hidden>
+    <div class="contenedor">
+      <h1>Reportes y sugerencias</h1>
+
+      <div class="pestanas" role="tablist" aria-label="Secciones de reportes" id="pestanas">
+        <button type="button" role="tab" id="tab-promocionar" aria-selected="true" aria-controls="panel-promocionar" data-vista="promocionar">Qué promocionar</button>
+        <button type="button" role="tab" id="tab-liquidar" aria-selected="false" tabindex="-1" aria-controls="panel-liquidar" data-vista="liquidar">Qué liquidar</button>
+        <button type="button" role="tab" id="tab-promociones" aria-selected="false" tabindex="-1" aria-controls="panel-promociones" data-vista="promociones">Promociones publicadas</button>
+        <button type="button" role="tab" id="tab-turnos-atendidos" aria-selected="false" tabindex="-1" aria-controls="panel-turnos-atendidos" data-vista="turnos-atendidos">Turnos atendidos</button>
+        <button type="button" role="tab" id="tab-stock" aria-selected="false" tabindex="-1" aria-controls="panel-stock" data-vista="stock">Stock y movimientos</button>
+      </div>
+      <p class="estado" id="estado" role="status"></p>
+
+      <!-- Las sugerencias del motor, una pestaña cada una (las tres salen de GET /api/reportes/sugerencias). -->
+      <div id="panel-promocionar" role="tabpanel" aria-labelledby="tab-promocionar" tabindex="0">
+        <section class="tarjeta" aria-labelledby="t-promocionar">
+          <h2 id="t-promocionar">Qué promocionar</h2>
+          <p id="texto-promocionar"></p>
+          <p>Las 5 franjas con menos turnos se pueden <strong>publicitar</strong>: la consulta de los turnos que se saquen en esa franja tiene el descuento que elijas. Precio de la consulta: <span id="precio-consulta">—</span> (se cambia en Configuración).</p>
+          <p class="aviso-ok" id="aviso-franjas" role="status" hidden></p>
+          <div class="tabla-scroll">
+            <table>
+              <caption class="solo-lectores">Turnos por día y franja en las últimas 4 semanas</caption>
+              <thead>
+                <tr><th scope="col">Día</th><th scope="col">Franja</th><th scope="col">Turnos</th><th scope="col">Sugerencia</th><th scope="col">Descuento sugerido</th><th scope="col">Promoción</th></tr>
+              </thead>
+              <tbody id="filas-franjas"></tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+
+      <div id="panel-liquidar" role="tabpanel" aria-labelledby="tab-liquidar" tabindex="0" hidden>
+        <section class="tarjeta" aria-labelledby="t-liquidar">
+          <h2 id="t-liquidar">Qué liquidar</h2>
+          <p>Con <strong>Publicitar</strong> el producto pasa a la sección de promociones de la tienda con el descuento que elijas.</p>
+          <p class="estado" id="vacio-liquidar" hidden>No hay productos por vencer con stock.</p>
+          <p class="aviso-ok" id="aviso-promociones" role="status" hidden></p>
+          <div class="tabla-scroll">
+            <table>
+              <caption class="solo-lectores">Productos por vencer con su descuento sugerido</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Producto</th><th scope="col">Vence</th><th scope="col">Días restantes</th>
+                  <th scope="col">Stock</th><th scope="col">Precio</th><th scope="col">Descuento</th>
+                  <th scope="col">Precio sugerido</th><th scope="col">Promoción</th>
+                </tr>
+              </thead>
+              <tbody id="filas-liquidar"></tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+
+      <!-- Promociones vigentes (GET /api/inventario/promociones de Inventario): se terminan desde acá. -->
+      <div id="panel-promociones" role="tabpanel" aria-labelledby="tab-promociones" tabindex="0" hidden>
+        <section class="tarjeta" aria-labelledby="t-promociones">
+          <h2 id="t-promociones">Promociones publicadas</h2>
+          <p class="aviso-ok" id="aviso-publicadas" role="status" hidden></p>
+          <h3 id="t-promo-productos">Productos</h3>
+          <p class="estado" id="vacio-promociones">No hay productos en promoción.</p>
+          <div class="tabla-scroll" id="tabla-promociones" hidden>
+            <table>
+              <caption class="solo-lectores">Promociones vigentes en la tienda</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Producto</th><th scope="col">Descuento</th><th scope="col">Precio en la tienda</th>
+                  <th scope="col">Hasta</th><th scope="col">Stock</th><th scope="col">Publicada por</th>
+                  <th scope="col">Acción</th>
+                </tr>
+              </thead>
+              <tbody id="filas-promociones"></tbody>
+            </table>
+          </div>
+
+          <!-- Franjas de turnos en promoción (GET /api/pacientes/promociones-turnos de Pacientes). -->
+          <h3 id="t-promo-turnos">Turnos</h3>
+          <p class="estado" id="vacio-promo-turnos">No hay franjas de turnos en promoción.</p>
+          <div class="tabla-scroll" id="tabla-promo-turnos" hidden>
+            <table>
+              <caption class="solo-lectores">Franjas de turnos en promoción</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Franja</th><th scope="col">Descuento</th><th scope="col">Consulta</th>
+                  <th scope="col">Hasta</th><th scope="col">Acción</th>
+                </tr>
+              </thead>
+              <tbody id="filas-promo-turnos"></tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+
+      <!-- Los cuadros de "Publicitar" quedan fuera de las pestañas (un <dialog> dentro de una pestaña
+           oculta no se vería). Se abren desde "Qué promocionar" y "Qué liquidar". -->
+      <!-- "Publicitar" una franja: el descuento a la consulta y hasta cuándo (reportes.js). -->
+      <dialog class="dialogo dialogo-publicitar" id="dialogo-franja" aria-labelledby="titulo-franja">
+        <form id="form-franja" novalidate>
+          <h2 id="titulo-franja">Publicitar una franja</h2>
+          <p id="franja-texto"></p>
+          <div class="campo">
+            <label for="franja-porcentaje">Descuento en la consulta (%)</label>
+            <input id="franja-porcentaje" name="porcentaje" type="number" min="5" max="90" step="1" inputmode="numeric" required aria-describedby="ayuda-franja-porcentaje error-franja-porcentaje">
+            <p class="campo-ayuda" id="ayuda-franja-porcentaje">Entre 5 y 90 por ciento.</p>
+            <span class="campo-error" id="error-franja-porcentaje"></span>
+          </div>
+          <div class="campo">
+            <label for="franja-hasta">Hasta (inclusive)</label>
+            <input id="franja-hasta" name="hasta" type="date" required aria-describedby="ayuda-franja-hasta error-franja-hasta">
+            <p class="campo-ayuda" id="ayuda-franja-hasta">Vale para los turnos de esa franja hasta este día. Como mucho 90 días.</p>
+            <span class="campo-error" id="error-franja-hasta"></span>
+          </div>
+          <p class="precio-previo" id="franja-precio" aria-live="polite"></p>
+          <p class="campo-error" id="error-franja-general" role="alert" hidden></p>
+          <div class="dialogo-botones">
+            <button type="button" class="boton boton-borde" id="franja-cancelar">Cancelar</button>
+            <button type="submit" class="boton" id="franja-enviar">Publicitar</button>
+          </div>
+        </form>
+      </dialog>
+
+      <!-- "Publicitar": elegir el descuento y hasta cuándo dura (reportes.js lo abre con showModal). -->
+      <dialog class="dialogo dialogo-publicitar" id="dialogo-publicitar" aria-labelledby="titulo-publicitar">
+        <form id="form-publicitar" novalidate>
+          <h2 id="titulo-publicitar">Publicitar</h2>
+          <p id="publicitar-producto"></p>
+          <div class="campo">
+            <label for="publicitar-porcentaje">Descuento (%)</label>
+            <input id="publicitar-porcentaje" name="porcentaje" type="number" min="5" max="90" step="1" inputmode="numeric" required aria-describedby="ayuda-porcentaje error-porcentaje">
+            <p class="campo-ayuda" id="ayuda-porcentaje">Entre 5 y 90 por ciento.</p>
+            <span class="campo-error" id="error-porcentaje"></span>
+          </div>
+          <div class="campo">
+            <label for="publicitar-hasta">Hasta (inclusive)</label>
+            <input id="publicitar-hasta" name="hasta" type="date" required aria-describedby="ayuda-hasta error-hasta">
+            <p class="campo-ayuda" id="ayuda-hasta"></p>
+            <span class="campo-error" id="error-hasta"></span>
+          </div>
+          <p class="precio-previo" id="publicitar-precio" aria-live="polite"></p>
+          <p class="campo-error" id="error-general" role="alert" hidden></p>
+          <div class="dialogo-botones">
+            <button type="button" class="boton boton-borde" id="publicitar-cancelar">Cancelar</button>
+            <button type="submit" class="boton" id="publicitar-enviar">Publicitar</button>
+          </div>
+        </form>
+      </dialog>
+
+      <!-- Turnos atendidos -->
+      <div id="panel-turnos-atendidos" role="tabpanel" aria-labelledby="tab-turnos-atendidos" tabindex="0" hidden>
+        <section class="tarjeta" aria-labelledby="t-turnos">
+          <h2 id="t-turnos">Turnos atendidos</h2>
+          <form id="filtro-turnos" class="form-item" novalidate>
+            <div class="campo campo-chico">
+              <label for="turnos-desde">Desde</label>
+              <input id="turnos-desde" name="desde" type="date">
+            </div>
+            <div class="campo campo-chico">
+              <label for="turnos-hasta">Hasta</label>
+              <input id="turnos-hasta" name="hasta" type="date">
+            </div>
+            <button type="submit" class="boton boton-borde">Filtrar</button>
+          </form>
+          <p class="campo-error" id="error-turnos" role="alert" hidden></p>
+          <p class="estado" id="resumen-turnos" role="status"></p>
+          <p class="estado" id="cont-turnos" role="status"></p>
+          <div class="tabla-scroll">
+            <table>
+              <caption class="solo-lectores">Turnos atendidos con su consulta y su factura</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Fecha</th><th scope="col">Mascota</th><th scope="col">Motivo</th>
+                  <th scope="col">Diagnóstico</th><th scope="col">Insumos</th><th scope="col">Productos</th>
+                  <th scope="col">Factura</th><th scope="col">Total</th>
+                </tr>
+              </thead>
+              <tbody id="filas-turnos"></tbody>
+            </table>
+          </div>
+          <p><button type="button" class="boton boton-borde" id="mas-turnos" hidden>Mostrar más</button></p>
+        </section>
+      </div>
+
+      <!-- Stock y movimientos -->
+      <div id="panel-stock" role="tabpanel" aria-labelledby="tab-stock" tabindex="0" hidden>
+        <section class="tarjeta" aria-labelledby="t-stock">
+          <h2 id="t-stock">Stock y movimientos</h2>
+          <p class="estado" id="resumen-stock" role="status"></p>
+
+          <div class="pestanas pestanas-sub" role="tablist" aria-label="Stock y movimientos" id="pestanas-stock">
+            <button type="button" role="tab" id="tab-stock-productos" aria-selected="true" aria-controls="panel-stock-productos" data-vista="productos">Productos</button>
+            <button type="button" role="tab" id="tab-stock-insumos" aria-selected="false" tabindex="-1" aria-controls="panel-stock-insumos" data-vista="insumos">Insumos</button>
+            <button type="button" role="tab" id="tab-stock-movimientos" aria-selected="false" tabindex="-1" aria-controls="panel-stock-movimientos" data-vista="movimientos">Movimientos</button>
+          </div>
+          <p class="campo-ayuda">Productos e insumos muestran el stock de hoy. Para filtrar por fechas lo que entró y salió, abrí <strong>Movimientos</strong>.</p>
+
+          <div id="panel-stock-productos" role="tabpanel" aria-labelledby="tab-stock-productos" tabindex="0">
+            <div class="herramientas">
+              <div class="campo">
+                <label for="buscar-productos">Buscar producto</label>
+                <input id="buscar-productos" type="search" autocomplete="off">
+              </div>
+              <label class="check"><input type="checkbox" id="bajo-productos"> Solo stock bajo (<span class="limite-stock">10</span> o menos)</label>
+            </div>
+            <p class="estado" id="cont-productos" role="status"></p>
+            <div class="tabla-scroll">
+              <table>
+                <caption class="solo-lectores">Stock actual de los productos activos</caption>
+                <thead>
+                  <tr><th scope="col">Producto</th><th scope="col">Stock</th><th scope="col">Vence</th><th scope="col">Aviso</th></tr>
+                </thead>
+                <tbody id="filas-stock-productos"></tbody>
+              </table>
+            </div>
+            <p><button type="button" class="boton boton-borde" id="mas-productos" hidden>Mostrar más</button></p>
+          </div>
+
+          <div id="panel-stock-insumos" role="tabpanel" aria-labelledby="tab-stock-insumos" tabindex="0" hidden>
+            <div class="herramientas">
+              <div class="campo">
+                <label for="buscar-insumos">Buscar insumo</label>
+                <input id="buscar-insumos" type="search" autocomplete="off">
+              </div>
+              <label class="check"><input type="checkbox" id="bajo-insumos"> Solo stock bajo (<span class="limite-stock">10</span> o menos)</label>
+            </div>
+            <p class="estado" id="cont-insumos" role="status"></p>
+            <div class="tabla-scroll">
+              <table>
+                <caption class="solo-lectores">Stock actual de los insumos activos</caption>
+                <thead>
+                  <tr><th scope="col">Insumo</th><th scope="col">Estado</th><th scope="col">Stock</th><th scope="col">Aviso</th></tr>
+                </thead>
+                <tbody id="filas-stock-insumos"></tbody>
+              </table>
+            </div>
+            <p><button type="button" class="boton boton-borde" id="mas-insumos" hidden>Mostrar más</button></p>
+          </div>
+
+          <div id="panel-stock-movimientos" role="tabpanel" aria-labelledby="tab-stock-movimientos" tabindex="0" hidden>
+            <form id="filtro-movimientos" class="form-item" novalidate>
+              <div class="campo campo-chico">
+                <label for="mov-desde">Desde</label>
+                <input id="mov-desde" name="desde" type="date">
+              </div>
+              <div class="campo campo-chico">
+                <label for="mov-hasta">Hasta</label>
+                <input id="mov-hasta" name="hasta" type="date">
+              </div>
+              <button type="submit" class="boton boton-borde">Filtrar</button>
+            </form>
+            <p class="campo-error" id="error-movimientos" role="alert" hidden></p>
+            <p class="estado" id="cont-movimientos" role="status"></p>
+            <div class="tabla-scroll">
+              <table>
+                <caption class="solo-lectores">Movimientos de inventario del período, del más reciente al más antiguo</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Fecha</th><th scope="col">Tipo</th><th scope="col">Motivo</th>
+                    <th scope="col">Ítem</th><th scope="col">Cantidad</th>
+                  </tr>
+                </thead>
+                <tbody id="filas-movimientos"></tbody>
+              </table>
+            </div>
+            <p><button type="button" class="boton boton-borde" id="mas-movimientos" hidden>Mostrar más</button></p>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+  <div id="pie-sitio"></div>
+
+  <script type="module" src="/js/menu.js"></script>
+  <script type="module" src="/js/guardia-panel.js"></script>
+  <script type="module" src="/js/auth.js"></script>
+  <script type="module" src="/js/reportes.js"></script>
+</body>
+</html>

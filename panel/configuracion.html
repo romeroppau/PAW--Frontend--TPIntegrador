@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Configuración | HuellaVet</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Nunito+Sans:wght@400;600;700&display=swap">
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/configuracion.css">
+</head>
+<!-- Configuración de la veterinaria (Entrega 5, rol 3): los valores que usa el sistema para los turnos,
+     los avisos a los clientes y el stock. Los parámetros los arma js/configuracion.js con lo que
+     devuelve GET /api/configuracion (contrato.md de Backend, sección "Configuración"). -->
+<body data-rol="VETERINARIO" data-pagina="formulario">
+  <a class="saltar" href="#contenido">Saltar al contenido</a>
+  <div id="encabezado-sitio"></div>
+  <script src="/js/layout.js"></script>
+  <main id="contenido" class="seccion" hidden>
+    <div class="contenedor contenedor-form">
+      <p><a href="/paneles/panel-administrador.html">&larr; Volver a mi panel</a></p>
+      <h1>Configuración</h1>
+      <p>Los valores que usa HuellaVet para dar turnos, avisar a los clientes, marcar el stock y la
+        tienda, y los datos de contacto de la veterinaria. Elegí qué querés configurar: cada pestaña se
+        guarda por separado. Si no cambiás nada, quedan los de siempre.</p>
+      <p class="estado" id="estado" role="status">Cargando…</p>
+
+      <form id="form-configuracion" novalidate hidden>
+        <p class="mensaje mensaje-error" id="error-general" role="alert" hidden></p>
+        <div id="grupos"></div>
+        <p class="mensaje mensaje-ok" id="guardado" role="status" hidden></p>
+        <div class="acciones-configuracion">
+          <button type="submit" class="boton" id="guardar">Guardar cambios</button>
+          <button type="button" class="boton boton-borde" id="descartar">Descartar cambios</button>
+        </div>
+      </form>
+    </div>
+  </main>
+  <div id="pie-sitio"></div>
+
+  <script type="module" src="/js/menu.js"></script>
+  <script type="module" src="/js/guardia-panel.js"></script>
+  <script type="module" src="/js/auth.js"></script>
+  <script type="module" src="/js/configuracion.js"></script>
+</body>
+</html>

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Factura de la compra | HuellaVet</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Nunito+Sans:wght@400;600;700&display=swap">
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/tienda.css">
+</head>
+<!-- Factura de una compra de la tienda. Se abre con ?numero=V-000123.
+     Solo tienen factura las compras que se pagaron (aunque después se hayan cancelado).
+     La ven el comprador (solo las suyas: el backend responde 404 si no es suya) y la veterinaria
+     (cualquiera). Se llega desde "Ver factura" de Mis compras, de la compra y de Ventas.
+     Mismo diseño que la factura de la consulta (cliente/factura.html, estilos factura-* de base.css).
+     Lo maneja js/factura-compra.js con GET /api/tienda/compras/{numero}/factura
+     (repo Inventario, docs/api/contrato-tienda.md). -->
+<body data-rol="CLIENTE,RESCATISTA,VETERINARIO">
+  <a class="saltar" href="#contenido">Saltar al contenido</a>
+  <div id="encabezado-sitio"></div>
+  <script src="/js/layout.js"></script>
+  <main id="contenido" class="seccion" hidden>
+    <div class="contenedor">
+      <p class="no-imprimir"><a id="volver" href="/tienda/compras.html">&larr; Volver a mis compras</a></p>
+      <p class="estado" id="estado" role="status"></p>
+
+      <article id="factura" class="tarjeta factura" hidden>
+        <header class="factura-encabezado">
+          <div>
+            <p class="etiqueta">Veterinaria HuellaVet · Luján</p>
+            <h1 id="titulo">Factura</h1>
+          </div>
+          <p><span id="estado-factura" class="estado-compra"></span></p>
+        </header>
+
+        <!-- Solo mientras está para retirar: el número que se muestra en el local. -->
+        <p id="para-retirar" class="factura-retiro" hidden>
+          Pedido <strong id="numero-pedido"></strong> · Mostralo al retirar
+        </p>
+
+        <dl class="factura-datos">
+          <div><dt>Fecha</dt><dd id="fecha"></dd></div>
+          <div><dt>Comprador</dt><dd id="comprador"></dd></div>
+          <div><dt>Medio de pago</dt><dd id="medio-pago"></dd></div>
+          <div id="dato-estado"><dt id="titulo-dato-estado">Retirar hasta</dt><dd id="dato-estado-valor"></dd></div>
+          <!-- Cancelada por el comprador después de pagar: cuánto se le devolvió. -->
+          <div id="dato-reintegro" hidden><dt>Reintegro</dt><dd id="reintegro"></dd></div>
+        </dl>
+
+        <div class="tabla-scroll">
+          <table class="factura-detalle">
+            <caption class="solo-lectores">Productos de la factura</caption>
+            <thead>
+              <tr>
+                <th scope="col">Producto</th>
+                <th scope="col" class="numero">Cantidad</th>
+                <th scope="col" class="numero">Precio unitario</th>
+                <th scope="col" class="numero">Importe</th>
+              </tr>
+            </thead>
+            <tbody id="filas"></tbody>
+            <tfoot>
+              <tr class="total"><th scope="row" colspan="3">Total</th><td class="numero" id="total"></td></tr>
+            </tfoot>
+          </table>
+        </div>
+
+        <p class="no-imprimir"><button type="button" class="boton boton-borde" id="imprimir">Imprimir</button></p>
+      </article>
+    </div>
+  </main>
+  <div id="pie-sitio"></div>
+
+  <script type="module" src="/js/menu.js"></script>
+  <script type="module" src="/js/guardia-panel.js"></script>
+  <script type="module" src="/js/auth.js"></script>
+  <script type="module" src="/js/factura-compra.js"></script>
+</body>
+</html>

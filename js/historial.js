@@ -1,7 +1,8 @@
 /**
  * historial.js — Historial clínico de una mascota (cliente/historial.html)
  *
- * Se abre con ?mascota=<id>. El cliente solo ve sus mascotas y el veterinario cualquiera:
+ * Se abre con ?mascota=<id>. Sin ese parámetro muestra la lista de mascotas para elegir una
+ * (desde el panel del cliente se llega así). El cliente solo ve sus mascotas y el veterinario cualquiera:
  * lo decide el backend (404 si la mascota es de otro cliente). La guardia de rol de la página
  * la hace guardia-panel.js. Todo texto que viene de la API se inserta con textContent (el() lo hace).
  * Contrato: docs/api/contrato-consultas.md del repo Pacientes.
@@ -9,7 +10,7 @@
 
 import { api } from './api.js';
 import { el } from './ui.js';
-import { textoEstadoFactura } from './etiquetas.js';
+import { textoEstadoFactura, textoEspecieMascota } from './etiquetas.js';
 
 const estado = document.getElementById('estado');
 const contenedor = document.getElementById('consultas');
@@ -25,7 +26,7 @@ function fecha(valor) {
 
 async function cargar() {
   if (!mascota) {
-    estado.textContent = 'Falta indicar la mascota.';
+    elegirMascota();
     return;
   }
   estado.textContent = 'Cargando…';
@@ -36,6 +37,28 @@ async function cargar() {
     estado.textContent = consultas.length ? '' : 'Esta mascota todavía no tiene consultas finalizadas.';
   } catch (e) {
     estado.textContent = e.estado === 404 ? 'No se encontró la mascota.' : 'No se pudo cargar el historial.';
+  }
+}
+
+// Sin ?mascota=: un enlace al historial de cada mascota (el cliente ve las suyas; el veterinario, todas).
+async function elegirMascota() {
+  estado.textContent = 'Cargando…';
+  try {
+    const { mascotas } = await api('/api/pacientes/mascotas');
+    if (!mascotas.length) {
+      estado.textContent = 'Todavía no hay mascotas cargadas.';
+      return;
+    }
+    const lista = el('ul', '', { class: 'lista-mascotas' });
+    for (const m of mascotas) {
+      const li = el('li');
+      li.append(el('a', `${m.nombre} (${textoEspecieMascota(m.especie)})`, { href: '/cliente/historial.html?mascota=' + m.id }));
+      lista.append(li);
+    }
+    contenedor.replaceChildren(el('p', 'Elegí la mascota para ver sus consultas y facturas:'), lista);
+    estado.textContent = '';
+  } catch {
+    estado.textContent = 'No se pudo cargar la lista de mascotas.';
   }
 }
 
@@ -52,9 +75,13 @@ function tarjeta(c) {
   art.append(detalle('Productos', c.productos, 'precio_unitario'));
 
   if (c.factura) {
-    art.append(el('p', `Factura ${c.factura.numero}: ${dinero(c.factura.total)} (${textoEstadoFactura(c.factura.estado)})`, {
+    const p = el('p', `Factura ${c.factura.numero}: ${dinero(c.factura.total)} (${textoEstadoFactura(c.factura.estado)}) `, {
       class: 'historial-factura'
+    });
+    p.append(el('a', 'Ver factura', {
+      href: '/cliente/factura.html?consulta=' + c.id, 'aria-label': 'Ver factura ' + c.factura.numero
     }));
+    art.append(p);
   }
   return art;
 }

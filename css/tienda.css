@@ -1,0 +1,509 @@
+/* Estilos de las pantallas de la tienda: carrito, mis compras, una compra y las ventas de la
+   veterinaria. Los colores y medidas de marca vienen de base.css. */
+
+/* ---------- Carrito ---------- */
+.input-cantidad {
+  width: 5rem;
+  font: inherit;
+  padding: .35rem .5rem;
+  border: 1px solid var(--borde);
+  border-radius: 8px;
+}
+
+.input-cantidad:focus {
+  border-color: var(--pino);
+  outline: 2px solid var(--pino);
+  outline-offset: 1px;
+}
+
+.nota-item {
+  display: block;
+  font-size: .9rem;
+  font-weight: 600;
+}
+
+.nota-error {
+  color: var(--error);
+}
+
+.total {
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+tfoot th,
+tfoot td {
+  border-bottom: 0;
+}
+
+.caja-pago {
+  padding: 1.5rem;
+  background: var(--blanco);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+}
+
+.caja-pago h2 {
+  font-size: 1.35rem;
+}
+
+.casilla {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  margin: 1rem 0;
+  font-weight: 700;
+}
+
+.casilla input {
+  width: 1.2rem;
+  height: 1.2rem;
+  margin: 0;
+  accent-color: var(--pino);
+}
+
+/* ---------- Una compra ---------- */
+.caja-aviso {
+  max-width: none;
+  margin: 1.25rem 0;
+  padding: 1.25rem 1.5rem;
+  background: var(--menta);
+  border-radius: var(--radio);
+  font-weight: 600;
+}
+
+.caja-aviso[hidden] {
+  display: none;
+}
+
+.caja-aviso h2 {
+  font-size: 1.35rem;
+}
+
+.cuenta-regresiva {
+  font-size: 1.2rem;
+}
+
+.cuenta-regresiva [role="timer"] {
+  font-family: var(--fuente-titulo);
+  font-size: 1.6rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--pino-oscuro);
+}
+
+/* Estado de una compra, como etiqueta de color. */
+.estado-compra {
+  display: inline-block;
+  padding: .15rem .6rem;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: .9rem;
+  background: var(--menta);
+  color: var(--pino-oscuro);
+}
+
+.estado-pendiente_pago { background: #fdecd6; color: #7a4100; }
+.estado-pagada { background: var(--menta); color: var(--pino-oscuro); }
+.estado-entregada { background: #e3ecf7; color: #1f3d66; }
+.estado-cancelada { background: #f6dedd; color: var(--error); }
+
+/* ---------- Ventas de la veterinaria ---------- */
+.campo-buscador {
+  max-width: 28rem;
+}
+
+.pestanias {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .25rem;
+  margin: 1rem 0;
+  border-bottom: 2px solid var(--borde);
+}
+
+.pestanias [role="tab"] {
+  font: inherit;
+  font-weight: 700;
+  padding: .6rem 1.1rem;
+  background: transparent;
+  color: var(--tinta-suave);
+  border: 0;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  cursor: pointer;
+}
+
+.pestanias [role="tab"][aria-selected="true"] {
+  color: var(--pino-oscuro);
+  border-bottom-color: var(--pino);
+}
+
+.pestanias [role="tab"]:focus-visible {
+  outline: 2px solid var(--pino);
+  outline-offset: 2px;
+}
+
+.lista-items {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+.ultimo-dia {
+  color: var(--naranja-oscuro);
+  font-weight: 700;
+}
+
+/* El número de pedido no se corta en dos renglones ("V-" / "000101"). */
+#filas th[scope="row"] {
+  white-space: nowrap;
+}
+
+/* ---------- Carrito descriptivo: lista de productos y resumen al costado ---------- */
+.carrito-grilla {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 20rem;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.carrito-grilla[hidden] {
+  display: none;
+}
+
+.carrito-lista {
+  background: var(--blanco);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+}
+
+/* Columnas de cada fila: foto | producto | cantidad | precio | quitar */
+.carrito-encabezado,
+.item-carrito {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr) 8.5rem 7.5rem 2.5rem;
+  gap: 1rem;
+  align-items: center;
+  padding: .9rem 1.1rem;
+}
+
+.carrito-encabezado {
+  font-size: .8rem;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--tinta-suave);
+  border-bottom: 1px solid var(--borde);
+}
+
+.carrito-encabezado span:nth-child(1) {
+  grid-column: 1 / 3;
+}
+
+.lista-carrito {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.item-carrito + .item-carrito {
+  border-top: 1px solid var(--borde);
+}
+
+.item-foto {
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  border-radius: 10px;
+  background: var(--menta);
+  color: var(--pino);
+  overflow: hidden;
+}
+
+.item-foto img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: var(--blanco);
+}
+
+.item-foto svg {
+  width: 34px;
+  height: 34px;
+  opacity: .55;
+}
+
+.item-datos {
+  display: grid;
+  gap: .2rem;
+  min-width: 0;
+}
+
+.item-nombre {
+  font-weight: 700;
+  color: var(--tinta);
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.item-nombre:hover {
+  color: var(--pino);
+  text-decoration: underline;
+}
+
+.item-unitario {
+  font-size: .9rem;
+  color: var(--tinta-suave);
+}
+
+/* − 2 + */
+.selector-cantidad {
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+  border: 1px solid var(--borde);
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--blanco);
+}
+
+.selector-cantidad button {
+  width: 2.3rem;
+  height: 2.3rem;
+  font: inherit;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--pino-oscuro);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+
+.selector-cantidad button:hover:not([disabled]) {
+  background: var(--menta);
+}
+
+.selector-cantidad button[disabled] {
+  color: var(--borde);
+  cursor: not-allowed;
+}
+
+.selector-cantidad .input-cantidad {
+  width: 2.8rem;
+  border: 0;
+  border-radius: 0;
+  padding: .3rem 0;
+  text-align: center;
+  font-weight: 700;
+  -moz-appearance: textfield;
+}
+
+.selector-cantidad .input-cantidad::-webkit-outer-spin-button,
+.selector-cantidad .input-cantidad::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.item-subtotal {
+  font-size: 1.1rem;
+  white-space: nowrap;
+}
+
+.boton-quitar {
+  display: grid;
+  place-items: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  color: var(--tinta-suave);
+  background: transparent;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.boton-quitar:hover:not([disabled]) {
+  color: var(--error);
+  background: #f6dedd;
+}
+
+.boton-quitar svg {
+  width: 1.4rem;
+  height: 1.4rem;
+}
+
+.selector-cantidad button:focus-visible,
+.boton-quitar:focus-visible {
+  outline: 2px solid var(--pino);
+  outline-offset: 2px;
+}
+
+/* Resumen */
+.resumen-carrito {
+  position: sticky;
+  top: 1rem;
+  padding: 1.4rem;
+  background: var(--blanco);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+}
+
+.resumen-carrito h2 {
+  font-size: 1.35rem;
+  margin-bottom: .35rem;
+}
+
+.resumen-carrito h3 {
+  font-size: 1.05rem;
+  margin: 1.1rem 0 .4rem;
+}
+
+.resumen-unidades {
+  margin: 0;
+  color: var(--tinta-suave);
+}
+
+.resumen-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin: .6rem 0 0;
+  padding-top: .6rem;
+  border-top: 1px solid var(--borde);
+  font-weight: 700;
+}
+
+.resumen-total strong {
+  font-family: var(--fuente-titulo);
+  font-size: 1.7rem;
+  color: var(--pino-oscuro);
+}
+
+.pasos-compra {
+  margin: 0;
+  padding-left: 1.2rem;
+  font-size: .95rem;
+}
+
+.pasos-compra li + li {
+  margin-top: .35rem;
+}
+
+.politica-linea {
+  margin: .9rem 0 0;
+  font-size: .9rem;
+  color: var(--tinta-suave);
+}
+
+.boton-pagar {
+  width: 100%;
+}
+
+/* Celular: el resumen va debajo; cada fila en dos renglones (foto y datos / cantidad, precio y quitar). */
+@media (max-width: 860px) {
+  .carrito-grilla {
+    grid-template-columns: 1fr;
+  }
+
+  .resumen-carrito {
+    position: static;
+  }
+
+  .carrito-encabezado {
+    display: none;
+  }
+
+  .item-carrito {
+    grid-template-columns: 64px minmax(0, 1fr) auto;
+    grid-template-areas:
+      "foto datos datos"
+      "foto cantidad quitar"
+      "foto subtotal subtotal";
+    gap: .4rem .8rem;
+  }
+
+  .item-foto { grid-area: foto; width: 64px; height: 64px; align-self: start; }
+  .item-datos { grid-area: datos; }
+  .selector-cantidad { grid-area: cantidad; }
+  .item-subtotal { grid-area: subtotal; }
+  .boton-quitar { grid-area: quitar; justify-self: end; }
+}
+
+/* ---------- Facturas, filtros por fecha y "Ver más" (mis compras y ventas) ---------- */
+/* Desde / Hasta y los botones en un renglón (en celular se acomodan solos). */
+.filtro-fechas {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: .75rem 1rem;
+  margin: 1rem 0 1.25rem;
+}
+
+.filtro-fechas[hidden] {
+  display: none;
+}
+
+.filtro-fechas .campo {
+  margin: 0;
+}
+
+/* Para retirar, sin la lista: cuántos vencen hoy y "Ver todos". */
+.resumen-retirar {
+  margin: 1rem 0 1.25rem;
+  padding: 1rem 1.25rem;
+  background: var(--menta);
+  border-radius: var(--radio);
+}
+
+.resumen-retirar[hidden] {
+  display: none;
+}
+
+.resumen-retirar p {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .5rem 1rem;
+  margin: 0;
+  font-weight: 600;
+}
+
+.resumen-retirar p + p {
+  margin-top: .75rem;
+}
+
+/* El botón de lo que se está viendo (vencen hoy / todos) queda marcado. */
+.resumen-retirar [aria-pressed="true"] {
+  outline: 2px solid var(--pino-oscuro);
+  outline-offset: 2px;
+}
+
+.enlace-factura {
+  display: block;
+  margin-top: .2rem;
+  font-size: .9rem;
+  font-weight: 600;
+}
+
+.numero-pedido {
+  white-space: nowrap;
+}
+
+/* Factura: el número de pedido, bien visible, para mostrarlo en el local. */
+.factura-retiro {
+  margin: 0;
+  padding: .75rem 1rem;
+  background: var(--menta);
+  border-radius: var(--radio);
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+
+.factura-retiro strong {
+  font-size: 1.35rem;
+}
+
+@media print {
+  .factura-retiro {
+    border: 1px solid #000;
+    background: #fff;
+  }
+}

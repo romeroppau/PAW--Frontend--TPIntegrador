@@ -19,6 +19,7 @@ import { api } from './api.js';                                  // fetch común
 import { exigirRol } from './auth.js';                          // guardia de acceso compartida (ver auth.js)
 import { confirmar, el, limpiarErrores, mostrarErrores } from './ui.js';    // utilidades de interfaz
 import { textoCategoria } from './etiquetas.js';                // texto de cada código de categoría
+import { filtrarPorNombre } from './buscar-lista.js';           // buscador por nombre del listado
 
 /* ------------------------------------------------------------------ */
 /* Guardia de acceso                                                   */
@@ -69,8 +70,12 @@ async function listado() {
   estado.textContent = 'Cargando…';
   try {
     const productos = lista(await api(base));       // GET /api/inventario/productos
-    filas.replaceChildren(...productos.map(fila));  // una fila por producto; reemplaza el contenido anterior
-    estado.textContent = productos.length ? '' : 'No hay productos cargados.';
+    // El buscador filtra por nombre lo que ya se trajo (la lista incluye los dados de baja).
+    filtrarPorNombre(document.getElementById('buscar'), productos, (visibles, texto) => {
+      filas.replaceChildren(...visibles.map(fila));  // una fila por producto; reemplaza el contenido anterior
+      estado.textContent = productos.length === 0 ? 'No hay productos cargados.'
+        : visibles.length === 0 ? `Ningún producto se llama "${texto}".` : '';
+    });
   } catch {
     estado.textContent = 'No se pudo cargar el listado.';
   }
@@ -95,7 +100,8 @@ function fila(p) {
 
   // Celda de acciones. Cada control lleva aria-label con el nombre del producto
   // para que un lector de pantalla distinga "Editar Collar" de "Editar Alimento".
-  const acc = el('td', '', { class: 'acciones' });
+  // La caja con display:flex va adentro de la celda (una celda flex se sale de la tabla).
+  const acc = el('div', '', { class: 'acciones' });
   acc.append(
     el('a', 'Editar', { href: '/panel/producto-form.html?id=' + p.id, 'aria-label': 'Editar ' + p.nombre }),
     el('a', 'Movimientos', { href: '/panel/movimientos.html?id=' + p.id, 'aria-label': 'Movimientos de ' + p.nombre })
@@ -119,7 +125,24 @@ function fila(p) {
       estado.textContent = e.datos?.campos?.cantidad ?? e.datos?.error ?? 'No se pudo cargar el stock.';
     }
   });
-  acc.append(f);
+  // A un producto dado de baja no se le carga stock (la API responde 409): solo se reactiva.
+  if (p.activo) acc.append(f);
+
+  // --- Reactivar: deshace la baja y el producto vuelve a la tienda con su stock e historial ---
+  if (!p.activo) {
+    const reactivar = el('button', 'Reactivar', {
+      type: 'button', class: 'boton boton-borde boton-chico', 'aria-label': 'Reactivar ' + p.nombre
+    });
+    reactivar.addEventListener('click', async () => {
+      try {
+        await api(`${base}/${p.id}/reactivar`, { metodo: 'POST' });
+        listado();
+      } catch {
+        estado.textContent = 'No se pudo reactivar el producto.';
+      }
+    });
+    acc.append(reactivar);
+  }
 
   // --- Baja lógica: solo para productos activos ---
   if (p.activo) {
@@ -139,7 +162,9 @@ function fila(p) {
     acc.append(baja);
   }
 
-  tr.append(acc);
+  const celda = el('td');
+  celda.append(acc);
+  tr.append(celda);
   return tr;
 }
 

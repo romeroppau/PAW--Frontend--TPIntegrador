@@ -1,0 +1,47 @@
+/* "Publicitar" (Entrega 5): el cuadro para elegir el descuento y el aviso de que se publicó. */
+.dialogo-publicitar h2 { margin-bottom: .25rem; }
+.dialogo-publicitar .campo { margin-bottom: .9rem; }
+.precio-previo { font-weight: 700; }
+.aviso-ok { color: var(--ok); font-weight: 700; }
+.celda-promo { white-space: nowrap; }
+
+/* Pestañas del panel de reportes (Entrega 5, rol 4). Usan el color del texto de la página. */
+.pestanas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 1rem 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.25);
+}
+.pestanas [role="tab"] {
+  background: none;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  padding: 0.6rem 1rem;
+  font: inherit;
+  font-weight: 600;
+  color: inherit;
+  cursor: pointer;
+}
+.pestanas [role="tab"][aria-selected="true"] { border-bottom-color: currentColor; }
+.pestanas [role="tab"]:focus-visible { outline: 3px solid currentColor; outline-offset: 2px; }
+
+.pestanas-sub { border-bottom: 0; margin-top: 0.5rem; }
+.pestanas-sub [role="tab"] {
+  border: 1px solid rgba(0, 0, 0, 0.35);
+  border-radius: 999px;
+  padding: 0.4rem 0.9rem;
+}
+.pestanas-sub [role="tab"][aria-selected="true"] {
+  border-color: currentColor;
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.herramientas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: flex-end;
+  margin: 0.5rem 0 1rem;
+}
+.herramientas .check { display: flex; align-items: center; gap: 0.4rem; }

@@ -104,9 +104,13 @@ function pintarDatos() {
   form.elements.diagnostico.value = consulta.diagnostico ?? '';
   form.elements.observaciones.value = consulta.observaciones ?? '';
   form.elements.valor_base.value = consulta.valor_base ?? '';
+  // El valor sale del precio que guardó el turno al sacarse (con el descuento de su franja): no se edita.
+  document.getElementById('ayuda-valor-base').textContent = consulta.descuento
+    ? `Es el precio del turno con el ${consulta.descuento} % de descuento de su franja (sin descuento: ${dinero(aCentavos(consulta.precio_lista))}). No se cambia.`
+    : 'Es el precio del turno (Configuración → Precio de la consulta): no se cambia.';
 
   const bloqueada = cerrada();
-  for (const campo of ['diagnostico', 'observaciones', 'valor_base']) {
+  for (const campo of ['diagnostico', 'observaciones']) {
     form.elements[campo].disabled = bloqueada;
   }
   document.getElementById('guardar').hidden = bloqueada;
@@ -140,7 +144,8 @@ function filaItem(tipo, cfg, it) {
     el('td', dinero(unitario * it.cantidad))
   );
 
-  const acciones = el('td', '', { class: 'acciones' });
+  // La caja con display:flex va adentro de la celda (una celda flex se sale de la tabla).
+  const acciones = el('div', '', { class: 'acciones' });
   if (!cerrada()) {
     const quitar = el('button', 'Quitar', {
       type: 'button', class: 'boton boton-peligro boton-chico', 'aria-label': 'Quitar ' + it.nombre
@@ -159,7 +164,9 @@ function filaItem(tipo, cfg, it) {
     });
     acciones.append(quitar);
   }
-  tr.append(acciones);
+  const celda = el('td');
+  celda.append(acciones);
+  tr.append(celda);
   return tr;
 }
 
@@ -246,11 +253,10 @@ for (const [tipo, cfg] of Object.entries(TIPOS)) {
 // PUT con lo que hay en el formulario. Lo usan "Guardar cambios" y "Finalizar consulta".
 async function guardar() {
   limpiarErrores(form);
-  const valor = form.elements.valor_base.value;
+  // El valor de la consulta no se manda: sale del precio del turno.
   const cuerpo = {
     diagnostico: form.elements.diagnostico.value,
-    observaciones: form.elements.observaciones.value,
-    valor_base: valor === '' ? null : Number(valor)
+    observaciones: form.elements.observaciones.value
   };
   consulta = desenvolver(await api(`${API}/consultas/${consulta.id}`, { metodo: 'PUT', cuerpo }));
 }
@@ -311,6 +317,12 @@ function mensajeFinalizar(e) {
     const bajas = (e.datos.items ?? []).map((i) => nombreItem(i));
     return 'Estos ítems están dados de baja: ' + bajas.join(', ') + '. Quitalos de la consulta para poder finalizar.';
   }
+  // Un intento anterior ya descontó otra cantidad de esos ítems: hay que volver a esa cantidad.
+  if (e.estado === 409 && e.datos?.motivo === 'OPERACION_DISTINTA') {
+    const items = (e.datos.items ?? []).map((i) => `${nombreItem(i)} (ya se descontaron ${i.cantidad_aplicada})`);
+    return 'Un intento anterior de finalizar ya descontó del stock otra cantidad de: ' + items.join(', ')
+      + '. Volvé a dejar esa cantidad y finalizá de nuevo.';
+  }
   if (e.estado === 409 && Array.isArray(e.datos?.items)) {
     const faltan = e.datos.items.map((i) => `${nombreItem(i)} (stock disponible: ${i.stock})`);
     return 'No hay stock suficiente de: ' + faltan.join(', ') + '.';
@@ -340,8 +352,29 @@ function nombreItem(i) {
 function mostrarFactura(f) {
   if (!f) return;
   const p = document.getElementById('factura');
-  p.textContent = `Factura ${f.numero} · ${textoEstadoFactura(f.estado)}`;
+  p.textContent = `Factura ${f.numero} · ${textoEstadoFactura(f.estado)} · `;
+  p.append(el('a', 'Ver factura', { href: '/cliente/factura.html?consulta=' + consulta.id }));
   p.hidden = false;
+  enlaceAdopcion();
+}
+
+// Chequeo de adopción (Entrega 5, rol 3): ya atendido, lo que sigue es completar la adopción, que la
+// veterinaria decide en el panel de adopciones (no se completa sola: el chequeo puede salir mal).
+// Solo si la adopción de este chequeo sigue en curso: completada o cancelada, no queda nada por hacer.
+async function enlaceAdopcion() {
+  if (consulta.motivo !== 'CHEQUEO_ADOPCION' || document.getElementById('ir-adopcion')) return;
+  let enCurso = false;
+  try {
+    // Sin estado, la API devuelve las que no terminaron (hasta 100: alcanza de sobra).
+    const { adopciones } = await api('/api/adopciones?por_pagina=100');
+    enCurso = adopciones.some((a) => a.turno_chequeo?.id === consulta.turno_id);
+  } catch {
+    return; // sin el botón, la veterinaria igual llega desde el panel de adopciones
+  }
+  if (!enCurso || document.getElementById('ir-adopcion')) return;
+  const p = el('p', '', { id: 'ir-adopcion' });
+  p.append(el('a', 'Ir a completar la adopción', { href: '/panel/adopciones.html#en-curso', class: 'boton' }));
+  document.getElementById('factura').after(p);
 }
 
 // Consulta ya finalizada al abrir la página: se muestra su factura.

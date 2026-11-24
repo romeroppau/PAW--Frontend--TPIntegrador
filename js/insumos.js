@@ -15,6 +15,7 @@ import { api } from './api.js';                              // fetch común (co
 import { exigirRol } from './auth.js';                       // guardia compartida
 import { confirmar, el, limpiarErrores, mostrarErrores } from './ui.js'; // utilidades de interfaz
 import { textoEstadoInsumo } from './etiquetas.js';          // "DISPONIBLE" -> "Disponible"
+import { filtrarPorNombre } from './buscar-lista.js';         // buscador por nombre del listado
 
 // Espera a confirmar que es veterinario (y a tener el token CSRF). Si no, redirige al login
 // y el resto del archivo no corre.
@@ -48,8 +49,12 @@ async function listado() {
   estado.textContent = 'Cargando…';
   try {
     const { datos } = await api(base);                       // GET /api/inventario/insumos
-    filas.replaceChildren(...datos.map(fila));
-    estado.textContent = datos.length ? '' : 'No hay insumos cargados.';
+    // El buscador filtra por nombre lo que ya se trajo.
+    filtrarPorNombre(document.getElementById('buscar'), datos, (visibles, texto) => {
+      filas.replaceChildren(...visibles.map(fila));
+      estado.textContent = datos.length === 0 ? 'No hay insumos cargados.'
+        : visibles.length === 0 ? `Ningún insumo se llama "${texto}".` : '';
+    });
   } catch {
     estado.textContent = 'No se pudo cargar el listado.';
   }
@@ -67,7 +72,9 @@ function fila(insumo) {
 
   // Cada acción lleva aria-label con el nombre, así el lector de pantalla distingue
   // "Editar Gasa" de "Editar Jeringa".
-  const acciones = el('td', '', { class: 'acciones' });
+  // La caja con display:flex va adentro de la celda: si la celda misma fuera flex, dejaría de ser
+  // celda de tabla y se saldría de la tabla.
+  const acciones = el('div', '', { class: 'acciones' });
   acciones.append(
     el('a', 'Editar', { href: '/panel/insumo-form.html?id=' + insumo.id, 'aria-label': 'Editar ' + insumo.nombre }),
     el('a', 'Movimientos', { href: '/panel/insumo-movimientos.html?id=' + insumo.id, 'aria-label': 'Movimientos de ' + insumo.nombre })
@@ -76,12 +83,20 @@ function fila(insumo) {
   // Cargar, retirar y dar de baja: solo para insumos activos.
   // El error de cargar o retirar va al final de la celda, en su propia línea (no adentro del
   // formulario), así los botones no se mueven cuando aparece. role="alert": se anuncia solo.
+  // Un insumo dado de baja solo se puede reactivar.
+  const error = el('span', '', { class: 'campo-error', role: 'alert' });
   if (insumo.activo) {
-    const error = el('span', '', { class: 'campo-error', role: 'alert' });
-    acciones.append(formularioStock(insumo, tr, error), botonBaja(insumo), error);
+    acciones.append(formularioStock(insumo, tr, error));
+    // Con stock bajo se puede marcar que ya se pidió al proveedor (o desmarcarlo).
+    if (insumo.stock_bajo) acciones.append(botonPedido(insumo, tr, error));
+    acciones.append(botonBaja(insumo), error);
+  } else {
+    acciones.append(botonReactivar(insumo, error), error);
   }
 
-  tr.append(acciones);
+  const celda = el('td');
+  celda.append(acciones);
+  tr.append(celda);
   return tr;
 }
 
@@ -93,7 +108,10 @@ function celdaEstado(insumo) {
   }
 
   const td = el('td');
-  if (insumo.estado === 'EN_FALTA') {
+  if (insumo.estado === 'YA_PEDIDO') {
+    // Ya se pidió al proveedor: el faltante está resuelto, se muestra aparte del "Stock bajo".
+    td.append(el('span', textoEstadoInsumo(insumo.estado), { class: 'insignia insignia-pedido' }));
+  } else if (insumo.estado === 'EN_FALTA') {
     td.append(el('span', textoEstadoInsumo(insumo.estado), { class: 'insignia insignia-falta' }));
   } else if (insumo.stock_bajo) {
     td.append(el('span', 'Stock bajo', { class: 'insignia insignia-bajo' }));
@@ -139,6 +157,43 @@ function formularioStock(insumo, tr, error) {
     }
   });
   return form;
+}
+
+// "Ya pedido": POST .../{id}/pedido lo marca y DELETE lo desmarca. Responde { id, stock, estado, stock_bajo }.
+// Al cargar stock (llegó el pedido) la API lo vuelve a DISPONIBLE sola.
+function botonPedido(insumo, tr, error) {
+  const pedido = insumo.estado === 'YA_PEDIDO';
+  const boton = el('button', pedido ? 'Quitar "Ya pedido"' : 'Marcar "Ya pedido"', {
+    type: 'button', class: 'boton boton-borde boton-chico',
+    'aria-label': (pedido ? 'Quitar "Ya pedido" de ' : 'Marcar "Ya pedido" ') + insumo.nombre
+  });
+  boton.addEventListener('click', async () => {
+    error.textContent = '';
+    try {
+      const nuevo = await api(`${base}/${insumo.id}/pedido`, { metodo: pedido ? 'DELETE' : 'POST' });
+      tr.replaceWith(fila({ ...insumo, ...nuevo }));
+    } catch (e) {
+      error.textContent = e.datos?.error ?? 'No se pudo cambiar el estado';
+    }
+  });
+  return boton;
+}
+
+// Deshace la baja: el insumo vuelve con su stock y su historial.
+function botonReactivar(insumo, error) {
+  const boton = el('button', 'Reactivar', {
+    type: 'button', class: 'boton boton-borde boton-chico', 'aria-label': 'Reactivar ' + insumo.nombre
+  });
+  boton.addEventListener('click', async () => {
+    error.textContent = '';
+    try {
+      await api(`${base}/${insumo.id}/reactivar`, { metodo: 'POST' });
+      listado();
+    } catch (e) {
+      error.textContent = e.datos?.error ?? 'No se pudo reactivar el insumo';
+    }
+  });
+  return boton;
 }
 
 // Baja lógica, con confirmación.

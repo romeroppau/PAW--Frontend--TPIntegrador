@@ -7,6 +7,7 @@
   <meta name="description" content="Panel de rescatista de HuellaVet.">
   <title>Panel de rescatista | HuellaVet</title>
   <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/barra-rol.css">
   <link rel="stylesheet" href="/css/paneles.css">
 </head>
 
@@ -15,68 +16,44 @@
   <header class="panel-cabecera">
     <div class="contenedor"><a class="panel-marca" href="/index.html">HuellaVet</a>
       <p class="panel-usuario">Panel de rescatista</p>
-      <!-- js/auth.js lo rellena con el nombre del usuario y el botón "Salir" -->
+      <!-- js/auth.js cambia esta cabecera por la del rol, con su barra de menús (js/barra-rol.js) -->
       <div class="sesion" id="sesion"></div>
     </div>
   </header>
-  <nav class="panel-nav" aria-label="Navegación del rescatista">
-    <div class="contenedor">
-      <a href="#cuenta">Mi cuenta</a><a href="#publicaciones">Mis publicaciones</a><a
-        href="#postulaciones">Postulaciones</a><a href="#seguimiento">Seguimiento de adopciones</a><a
-        href="#notificaciones">Notificaciones</a><a href="#contacto">Contactanos</a>
-    </div>
-  </nav>
   <!-- hidden: se muestra recién cuando guardia-panel.js confirma el rol -->
   <main class="panel-principal" hidden>
     <section class="panel-intro">
-      <p class="etiqueta">Adopciones responsables</p>
-      <h1>Panel de rescatista</h1>
-      <p>Administrá tus publicaciones y acompañá las postulaciones y procesos de adopción.</p>
+      <div>
+        <p class="etiqueta">Adopciones responsables</p>
+        <h1>Panel de rescatista</h1>
+        <p>Administrá tus publicaciones y acompañá las postulaciones y procesos de adopción.</p>
+        <p class="panel-pista"><span aria-hidden="true">↑</span> Elegí una sección en el menú de arriba para ver sus opciones.</p>
+      </div>
+      <div class="panel-intro-huella"><svg viewBox="0 0 64 64" aria-hidden="true" focusable="false"><g fill="currentColor"><ellipse cx="14" cy="27" rx="7" ry="9"/><ellipse cx="29" cy="15" rx="7" ry="10"/><ellipse cx="45" cy="15" rx="7" ry="10"/><ellipse cx="57" cy="29" rx="6" ry="9"/><path d="M32 31c-9 0-18 9-18 17 0 6 5 9 11 8 3-.6 5-1.5 7-1.5s4 .9 7 1.5c6 1 11-2 11-8 0-8-9-17-18-17z"/></g></svg></div>
     </section>
-    <h2 class="panel-seccion-titulo">Tus secciones</h2>
-    <div class="panel-grilla">
-      <section class="panel-tarjeta" id="cuenta">
-        <h2>Mi cuenta (perfil)</h2>
-        <ul class="panel-opciones">
-          <li>Datos personales</li>
-          <li>Estado de validación</li>
-        </ul>
-      </section>
-      <section class="panel-tarjeta" id="publicaciones">
-        <h2>Mis publicaciones</h2>
-        <ul class="panel-opciones">
-          <li>Nueva publicación</li>
-          <li>Editar / dar de baja</li>
-          <li>Ver publicación</li>
-          <li>Ficha del animal</li>
-        </ul>
-      </section>
-      <section class="panel-tarjeta" id="postulaciones">
-        <h2>Postulaciones</h2>
-        <ul class="panel-opciones">
-          <li>Postulantes por animal</li>
-          <li>Ver formulario</li>
-          <li>Elegir adoptante</li>
-        </ul>
-      </section>
-      <section class="panel-tarjeta" id="seguimiento">
-        <h2>Seguimiento de adopciones</h2>
-        <ul class="panel-opciones">
-          <li>Chequeo pendiente</li>
-          <li>Adopciones finalizadas</li>
-        </ul>
-      </section>
-      <section class="panel-tarjeta" id="notificaciones">
-        <h2>Notificaciones</h2>
-        <p>Avisos sobre publicaciones, postulaciones y adopciones.</p>
-      </section>
-      <section class="panel-tarjeta" id="contacto">
-        <h2>Contactanos</h2>
-        <p>Encontrá aquí las vías de contacto con HuellaVet.</p>
-      </section>
-    </div>
-    <p class="panel-aviso">Estas secciones representan la navegación prevista en el sitemap. Las operaciones de
-      publicación y adopción se conectarán cuando estén implementadas.</p>
+    <!-- Contactanos: los datos de la veterinaria y el mapa. El horario es el que configura la
+         veterinaria (GET /api/pacientes/horario, lo pone js/contacto-panel.js); la dirección, el teléfono,
+         el email, WhatsApp y el mapa, los que cargó en Configuración (js/contacto.js). -->
+    <section class="panel-tarjeta panel-contacto" id="contacto">
+      <h2>Contactanos</h2>
+      <div class="contacto-grilla">
+        <div>
+          <dl class="contacto-datos">
+            <div><dt>Dirección</dt><dd data-contacto="direccion">Av. San Martín 1450, Luján</dd></div>
+            <div><dt>Teléfono</dt><dd><a href="tel:+541139010486" data-contacto-enlace="telefono" data-contacto="telefono">11 3901-0486</a></dd></div>
+            <div data-contacto-caja hidden><dt>Email</dt><dd><a href="#" data-contacto-enlace="email" data-contacto="email"></a></dd></div>
+            <div><dt>Horario de atención</dt><dd id="horario-atencion">De 08:00 a 20:00</dd></div>
+          </dl>
+          <ul class="panel-opciones">
+            <li><a href="https://wa.me/5491139010486?text=Hola%2C%20tengo%20una%20consulta" data-contacto-enlace="whatsapp" data-whatsapp-texto="Hola, tengo una consulta" target="_blank" rel="noopener noreferrer">Escribinos por WhatsApp</a></li>
+            <li><a href="https://www.google.com/maps/search/?api=1&amp;query=Av.%20San%20Mart%C3%ADn%201450%2C%20Luj%C3%A1n%2C%20Buenos%20Aires" data-contacto-enlace="mapa" target="_blank" rel="noopener noreferrer">Cómo llegar</a></li>
+          </ul>
+        </div>
+        <iframe class="contacto-mapa" data-contacto-mapa title="Mapa: HuellaVet, Av. San Martín 1450, Luján"
+                src="https://www.google.com/maps?q=Av.%20San%20Mart%C3%ADn%201450%2C%20Luj%C3%A1n%2C%20Buenos%20Aires&amp;output=embed"
+                loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+      </div>
+    </section>
   </main>
   <footer class="panel-pie">
     <p>HuellaVet · Cuidado y bienestar animal</p>
@@ -84,6 +61,8 @@
 
   <script type="module" src="/js/guardia-panel.js"></script>
   <script type="module" src="/js/auth.js"></script>
+  <script type="module" src="/js/contacto-panel.js"></script>
+  <script type="module" src="/js/contacto.js"></script>
 </body>
 
 </html>
