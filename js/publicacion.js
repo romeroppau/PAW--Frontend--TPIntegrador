@@ -2,8 +2,9 @@
  * publicacion.js — Una publicación de adopción (adopciones/publicacion.html?id=…), rol 3, Entrega 5.
  *
  * Se llega desde "Mis postulaciones": el cliente ve el animal al que se postuló, aunque ya no esté
- * disponible (la rescatista eligió adoptante o la adopción terminó). Si sigue disponible y quien mira
- * es un cliente, "Quiero adoptarlo" abre el formulario en adopciones.html.
+ * disponible (la rescatista eligió adoptante o la adopción terminó), con el estado de su postulación
+ * (24/11). Si no se postuló, sigue disponible y quien mira es un cliente, "Quiero adoptarlo" abre el
+ * formulario en adopciones.html.
  * Contrato: GET /api/adopciones/publicaciones/{id} (docs/api/contrato-adopciones.md del repo
  * Adopciones). Todo texto de la API va con el() o textContent.
  */
@@ -11,7 +12,7 @@ import { api } from './api.js';
 import { sesion } from './auth.js';
 import { el } from './ui.js';
 import { textoEspecieMascota } from './etiquetas.js';
-import { edad } from './etiquetas-adopciones.js';
+import { bloquePostulacion, edad } from './etiquetas-adopciones.js';
 
 const estado = document.getElementById('estado');
 const id = new URLSearchParams(location.search).get('id');
@@ -53,18 +54,33 @@ async function cargar() {
 
   const usuario = await sesion;
   const acciones = document.getElementById('acciones');
-  if (disponible(publicacion)) {
+  const esCliente = usuario?.rol === 'CLIENTE';
+
+  // Si el cliente ya se postuló por este animal, ve el estado de su postulación (y no puede volver a postularse).
+  let mia = null;
+  if (esCliente) {
+    try {
+      const { postulaciones } = await api('/api/adopciones/mis-postulaciones');
+      mia = postulaciones.find((p) => p.publicacion.id === publicacion.id) ?? null;
+    } catch {
+      mia = null;
+    }
+  }
+
+  if (mia) {
+    document.getElementById('disponibilidad').hidden = true;
+    acciones.replaceWith(bloquePostulacion(mia));
+    document.getElementById('volver').href = '/adopciones/adopciones.html#seccion-mias';
+    document.getElementById('volver').textContent = '← Volver a mis postulaciones';
+  } else if (disponible(publicacion)) {
     poner('disponibilidad', 'Busca familia.');
-    if (usuario?.rol === 'CLIENTE') {
+    if (esCliente) {
       acciones.append(el('a', 'Quiero adoptarlo', {
         class: 'boton', href: '/adopciones/adopciones.html?postular=' + encodeURIComponent(publicacion.id)
       }));
     }
   } else {
     poner('disponibilidad', 'Ya no recibe postulaciones nuevas.');
-  }
-  if (usuario?.rol === 'CLIENTE') {
-    acciones.append(el('a', 'Ver mis postulaciones', { class: 'boton boton-borde', href: '/adopciones/adopciones.html#seccion-mias' }));
   }
 
   estado.textContent = '';

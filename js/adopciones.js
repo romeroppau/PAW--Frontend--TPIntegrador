@@ -11,7 +11,7 @@ import { api } from './api.js';
 import { sesion } from './auth.js';
 import { el, limpiarErrores, mostrarErrores } from './ui.js';
 import { textoEspecieMascota } from './etiquetas.js';
-import { edad, fecha, insignia, mensajeDeError } from './etiquetas-adopciones.js';
+import { bloquePostulacion, edad, fecha, insignia, mensajeDeError, seguimiento } from './etiquetas-adopciones.js';
 import { activarPestanas } from './pestanas.js';
 
 const usuario = await sesion;
@@ -32,6 +32,9 @@ if (usuario) document.getElementById('invitacion').hidden = true;
 
 let especie = '';
 let ultimasPublicaciones = [];
+// Las postulaciones del cliente, por publicación: esos animales muestran el estado en lugar de
+// "Quiero adoptarlo" (no se puede postular dos veces por el mismo).
+let misPostulaciones = new Map();
 
 async function cargar() {
   estado.textContent = 'Cargando…';
@@ -62,7 +65,10 @@ function tarjeta(publicacion) {
     el('p', 'Lo cuida: ' + (rescatista.organizacion || rescatista.nombre), { class: 'datos' })
   );
 
-  if (esCliente) {
+  const mia = misPostulaciones.get(publicacion.id);
+  if (esCliente && mia) {
+    cuerpo.append(bloquePostulacion(mia));
+  } else if (esCliente) {
     const acciones = el('div', '', { class: 'acciones' });
     const boton = el('button', 'Quiero adoptarlo', { type: 'button', class: 'boton', 'aria-label': 'Postularme para adoptar a ' + mascota.nombre });
     boton.addEventListener('click', () => abrirFormulario(publicacion));
@@ -126,30 +132,13 @@ form.addEventListener('submit', async (ev) => {
 
 /* ---------- Mis postulaciones (cliente) ---------- */
 
-// "2026-11-26" → "jue 26/11" (al mediodía UTC, para que la zona horaria no corra el día).
-const DIAS = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
-function diaCorto(f) {
-  const [, mes, dia] = f.split('-');
-  return `${DIAS[new Date(f + 'T12:00:00Z').getUTCDay()]} ${dia}/${mes}`;
-}
-
-// En qué paso está la postulación: para la elegida, el de la adopción y el turno del chequeo.
-function seguimiento(p) {
-  if (p.estado === 'PENDIENTE') return 'La rescatista todavía está eligiendo.';
-  if (p.estado !== 'ELEGIDA') return '';
-  const { estado: estadoAdopcion, turno_chequeo: turno } = p.adopcion;
-  if (estadoAdopcion === 'FINALIZADA') return '¡Adopción completa! Ya está en Mis mascotas.';
-  if (estadoAdopcion === 'CANCELADA') return 'La adopción se canceló.';
-  if (turno?.estado === 'PROGRAMADO' || turno?.estado === 'EN_ATENCION') return `Turno de chequeo: ${diaCorto(turno.fecha)} a las ${turno.hora}.`;
-  if (turno?.estado === 'ATENDIDO') return 'Chequeo hecho: falta que la veterinaria cierre la adopción.';
-  if (turno) return 'El turno del chequeo se canceló: te vamos a dar otro.';
-  return 'Esperando el turno del chequeo: te avisamos cuando esté.';
-}
 
 async function cargarMias() {
   const estadoMias = document.getElementById('estado-mias');
   try {
     const { postulaciones } = await api('/api/adopciones/mis-postulaciones');
+    misPostulaciones = new Map(postulaciones.map((p) => [p.publicacion.id, p]));
+    grilla.replaceChildren(...ultimasPublicaciones.map(tarjeta));
     document.getElementById('filas-mias').replaceChildren(...postulaciones.map((p) => {
       const tr = el('tr');
       const celdaEstado = el('td');
@@ -187,6 +176,7 @@ if (esCliente) {
 const postular = new URLSearchParams(location.search).get('postular');
 if (esCliente && postular) {
   await cargas[0];
+  await cargas[1];
   const publicacion = ultimasPublicaciones.find((p) => String(p.id) === postular);
-  if (publicacion) abrirFormulario(publicacion);
+  if (publicacion && !misPostulaciones.has(publicacion.id)) abrirFormulario(publicacion);
 }

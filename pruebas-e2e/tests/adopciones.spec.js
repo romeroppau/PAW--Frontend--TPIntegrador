@@ -100,6 +100,8 @@ test('el cliente se postula: los errores van a cada campo y, al corregir, ve su 
   await expect(page.locator('#aviso')).toContainText('Te postulaste para adoptar a Pipa');
   await expect(page.locator('#seccion-postulacion')).toBeHidden();
   await expect(page.locator('#filas-mias tr')).toContainText(['Pipa']);
+  // La tarjeta de Pipa ya no ofrece postularse: dice el estado.
+  await expect(page.locator('.tarjeta-adopcion', { hasText: 'Pipa' }).locator('.tu-postulacion')).toContainText('Tu postulación: Esperando revisión');
   expect(cuerpos.at(-1)).toEqual({ tipo_vivienda: 'Casa con patio', otras_mascotas: 'Ninguna', tiempo_disponible: 'Toda la tarde' });
   expect(await page.evaluate(() => window.sinRecargar)).toBe(true);
 });
@@ -174,9 +176,42 @@ test('mis postulaciones: el animal lleva a su publicación, aunque ya no esté d
   await expect(page).toHaveURL(/\/adopciones\/publicacion\.html\?id=1$/);
   await expect(page.getByRole('heading', { level: 1, name: 'Pipa' })).toBeVisible();
   await expect(page.locator('#descripcion')).toHaveText('Pipa es muy cariñoso y está vacunado.');
-  await expect(page.locator('#disponibilidad')).toHaveText('Ya no recibe postulaciones nuevas.');
+  // Ya se postuló: ve el estado de su postulación en lugar de los botones.
+  await expect(page.locator('.tu-postulacion')).toContainText('Tu postulación: Rechazada');
   await expect(page.getByRole('link', { name: 'Quiero adoptarlo' })).toHaveCount(0);
-  await expect(page.getByRole('link', { name: 'Ver mis postulaciones' })).toHaveAttribute('href', '/adopciones/adopciones.html#seccion-mias');
+  await expect(page.getByRole('link', { name: 'Ver mis postulaciones' })).toHaveCount(0);
+  await expect(page.locator('#volver')).toHaveText('← Volver a mis postulaciones');
+  await expect(page.locator('#volver')).toHaveAttribute('href', '/adopciones/adopciones.html#seccion-mias');
+});
+
+test('la publicación de un animal al que se postuló y sigue disponible muestra el estado, no "Quiero adoptarlo"', async ({ page }) => {
+  await simularSesion(page, CLIENTE);
+  await page.route('**/api/adopciones/publicaciones/1', (route) => responderJson(route, { publicacion: publicacion(1, 'Pipa') }));
+  await page.route('**/api/adopciones/mis-postulaciones', (route) => responderJson(route, { postulaciones: [postulacion(7, 'Cliente Dos')] }));
+
+  await page.goto('/adopciones/publicacion.html?id=1');
+  await expect(page.locator('.tu-postulacion')).toContainText('Tu postulación: Esperando revisión');
+  await expect(page.locator('.tu-postulacion')).toContainText('La rescatista todavía está eligiendo.');
+  await expect(page.locator('#disponibilidad')).toBeHidden();
+  await expect(page.getByRole('link', { name: 'Quiero adoptarlo' })).toHaveCount(0);
+});
+
+test('en "Animales que buscan familia", los animales a los que se postuló muestran el estado en lugar de "Quiero adoptarlo"', async ({ page }) => {
+  await simularSesion(page, CLIENTE);
+  await page.route(/\/api\/adopciones\/publicaciones(\?.*)?$/, (route) => responderJson(route, { publicaciones: [publicacion(1, 'Pipa'), publicacion(2, 'Toby')] }));
+  await page.route('**/api/adopciones/mis-postulaciones', (route) => responderJson(route, { postulaciones: [postulacion(7, 'Cliente Dos')] }));
+
+  await page.goto('/adopciones/adopciones.html');
+  const pipa = page.locator('.tarjeta-adopcion', { hasText: 'Pipa' });
+  const toby = page.locator('.tarjeta-adopcion', { hasText: 'Toby' });
+  await expect(pipa.locator('.tu-postulacion')).toContainText('Tu postulación: Esperando revisión');
+  await expect(pipa.getByRole('button', { name: /Postularme/ })).toHaveCount(0);
+  await expect(toby.getByRole('button', { name: 'Postularme para adoptar a Toby' })).toBeVisible();
+
+  // Y con ?postular= de un animal al que ya se postuló, no se abre el formulario.
+  await page.goto('/adopciones/adopciones.html?postular=1');
+  await expect(pipa.locator('.tu-postulacion')).toBeVisible();
+  await expect(page.locator('#seccion-postulacion')).toBeHidden();
 });
 
 test('la publicación de un animal disponible ofrece "Quiero adoptarlo", que abre el formulario', async ({ page }) => {

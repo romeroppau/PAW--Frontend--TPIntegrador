@@ -10,6 +10,10 @@
 .tarjeta-adopcion p { margin: 0; }
 .tarjeta-adopcion .datos { color: var(--tinta-suave); font-size: .95rem; }
 .tarjeta-adopcion .acciones { margin-top: auto; }
+/* "Tu postulación: …" (js/etiquetas-adopciones.js): en lugar de "Quiero adoptarlo", abajo de la tarjeta. */
+.tu-postulacion { display: flex; flex-direction: column; gap: .25rem; }
+.tu-postulacion p { margin: 0; }
+.tarjeta-adopcion .tu-postulacion { margin-top: auto; }
 
 .filtro-especie { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: 1.25rem; }
 .filtro-especie button[aria-pressed="true"] { background: var(--pino); color: var(--blanco); }

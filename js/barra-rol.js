@@ -74,9 +74,8 @@ export const MENUS = {
     carrito: true,
     contacto: true,
     secciones: [
-      ['cuenta', 'Mi cuenta', 'Tus datos y tus compras.', [
-        ['Datos personales', '/cuenta/mis-datos.html'],
-        ['Mis compras', '/tienda/compras.html']]],
+      ['cuenta', 'Mi cuenta', 'Tus datos personales.', [
+        ['Datos personales', '/cuenta/mis-datos.html']]],
       ['mascotas', 'Mis mascotas', 'Fichas, historia clínica, facturas y vacunas.', [
         ['Fichas de mis mascotas', '/cliente/mascotas.html'],
         ['Historial clínico y facturas', '/cliente/historial.html'],
@@ -85,12 +84,14 @@ export const MENUS = {
         ['Mis turnos', '/cliente/turnos.html'],
         ['Ver descuentos', '/cliente/descuentos.html'],
         ['Pedir turno por WhatsApp', WA_TURNO, true]]],
-      ['tienda', 'Tienda', 'Productos para tu mascota.', [
-        ['Promociones', '/catalogo/catalogo.html#promociones'],
+      // Tienda (24/11): promociones, catálogo y Mis compras (antes estaba en Mi cuenta).
+      ['tienda', 'Tienda', 'Productos para tu mascota y tus compras.', [
+        ['Promociones', '/catalogo/promociones.html'],
         ['Ver catálogo de productos', '/catalogo/catalogo.html', false, [
           ['Medicamentos', '/catalogo/catalogo.html?categoria=MEDICAMENTO'],
           ['Alimento balanceado', '/catalogo/catalogo.html?categoria=ALIMENTO'],
-          ['Accesorios', '/catalogo/catalogo.html?categoria=ACCESORIO']]]]],
+          ['Accesorios', '/catalogo/catalogo.html?categoria=ACCESORIO']]],
+        ['Mis compras', '/tienda/compras.html']]],
       ['adopcion', 'Adopción', 'Animales que buscan familia.', [
         ['Animales disponibles', '/adopciones/adopciones.html'],
         ['Mis postulaciones', '/adopciones/adopciones.html#seccion-mias']]],
@@ -113,6 +114,7 @@ export const MENUS = {
         ['Publicaciones, postulantes y adopciones', '/rescatista/publicaciones.html'],
         ['Mis mascotas', '/cliente/mascotas.html']]],
       ['tienda', 'Tienda', 'También podés comprar en la tienda.', [
+        ['Promociones', '/catalogo/promociones.html'],
         ['Ver catálogo de productos', '/catalogo/catalogo.html'],
         ['Mis compras', '/tienda/compras.html']]],
       ['notificaciones', 'Notificaciones', 'Publicaciones, postulaciones y adopciones.', [

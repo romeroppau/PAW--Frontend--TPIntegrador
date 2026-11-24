@@ -75,11 +75,12 @@ test('el panel del cliente enlaza el historial clínico, donde están las factur
   await expect(page.getByRole('link', { name: 'Historial clínico y facturas' })).toHaveAttribute('href', '/cliente/historial.html');
 });
 
-test('en el panel del cliente, "Mis compras" de la tarjeta Mi cuenta es un enlace', async ({ page }) => {
+test('en el panel del cliente, "Mis compras" está en Tienda (ya no en Mi cuenta)', async ({ page }) => {
   await simularSesion(page, CLIENTE);
   await page.goto('/paneles/panel-cliente.html');
-  await abrirSeccion(page, 'cuenta');
-  await expect(page.locator('#menu-cuenta').getByRole('link', { name: 'Mis compras' })).toHaveAttribute('href', '/tienda/compras.html');
+  await abrirSeccion(page, 'tienda');
+  await expect(page.locator('#menu-tienda').getByRole('link', { name: 'Mis compras' })).toHaveAttribute('href', '/tienda/compras.html');
+  await expect(page.locator('#menu-cuenta').getByRole('link', { name: 'Mis compras' })).toHaveCount(0);
 });
 
 test('Contactanos del panel del cliente: datos, el horario que configuró la veterinaria, WhatsApp y mapa', async ({ page }) => {
@@ -99,7 +100,8 @@ test('en el panel del cliente, el Shop lleva a promociones, a cada categoría y 
   await page.goto('/paneles/panel-cliente.html');
   await abrirSeccion(page, 'tienda');
   const shop = page.locator('#menu-tienda');
-  await expect(shop.locator('.panel-opciones').getByRole('link')).toHaveText(['Promociones', 'Ver catálogo de productos', 'Medicamentos', 'Alimento balanceado', 'Accesorios']);  await expect(shop.getByRole('link', { name: 'Promociones' })).toHaveAttribute('href', '/catalogo/catalogo.html#promociones');
+  await expect(shop.locator('.panel-opciones').getByRole('link')).toHaveText(['Promociones', 'Ver catálogo de productos', 'Medicamentos', 'Alimento balanceado', 'Accesorios', 'Mis compras']);
+  await expect(shop.getByRole('link', { name: 'Promociones' })).toHaveAttribute('href', '/catalogo/promociones.html');
   await expect(shop.getByRole('link', { name: 'Medicamentos' })).toHaveAttribute('href', '/catalogo/catalogo.html?categoria=MEDICAMENTO');
   await expect(shop.getByRole('link', { name: 'Alimento balanceado' })).toHaveAttribute('href', '/catalogo/catalogo.html?categoria=ALIMENTO');
   await expect(shop.getByRole('link', { name: 'Accesorios' })).toHaveAttribute('href', '/catalogo/catalogo.html?categoria=ACCESORIO');
