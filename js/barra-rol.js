@@ -37,7 +37,7 @@ export const MENUS = {
       ['pacientes', 'Mis pacientes', 'Clientes, mascotas y su historia clínica.', [
         ['Clientes', '/panel/clientes.html'],
         ['Ficha de mascotas', '/cliente/mascotas.html'],
-        ['Historial clínico', '/cliente/historial.html'],
+        ['Historial clínico', '/panel/historial-clinico.html'],
         ['Calendario sanitario', '/cliente/calendario.html']]],
       ['productos', 'Tienda', 'Productos, stock y pedidos de la tienda.', [
         ['Productos y stock', '/panel/productos.html'],
