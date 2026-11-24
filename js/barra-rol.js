@@ -198,7 +198,42 @@ export function dibujarBarra(usuario) {
 
   activarDesplegables();
   aplicarContacto(barra);
+  pestanasDeSeccion(menu);
   return true;
+}
+
+/**
+ * Pestañas de la sección: si la página es una de las opciones de una sección del menú que tiene
+ * varias páginas (por ejemplo Productos: "Productos y stock" y "Movimientos"), arriba del contenido
+ * aparecen todas como pestañas, con la actual marcada. Salen del mismo MENUS, así nunca se
+ * desincronizan del desplegable. Las secciones cuyas opciones son partes de una misma página
+ * (Reportes, Adopción: #liquidar, #en-curso…) no las necesitan: esa página ya tiene sus pestañas.
+ * Los enlaces externos (WhatsApp) no son pestañas.
+ */
+function pestanasDeSeccion(menu) {
+  const contenedor = document.querySelector('main .contenedor') ?? document.querySelector('main');
+  if (!contenedor) return;
+
+  for (const [, titulo, , enlaces] of menu.secciones) {
+    const internos = enlaces.filter(([, destino, externo]) => !externo)
+      .map(([texto, destino]) => ({ texto, url: new URL(destino, location.origin) }));
+    const paginas = new Set(internos.map((e) => e.url.pathname));
+    if (paginas.size < 2) continue;
+    const actual = internos.find((e) => e.url.pathname === location.pathname);
+    if (!actual) continue;
+
+    const nav = el('nav', '', { class: 'pestanas pestanas-seccion', 'aria-label': `Secciones de ${titulo}` });
+    for (const e of internos) {
+      const a = el('a', e.texto, { href: e.url.pathname + e.url.search + e.url.hash });
+      if (e === actual) a.setAttribute('aria-current', 'page');
+      nav.append(a);
+    }
+    // Después del "← Volver a mi panel" del principio, si lo hay; si no, al principio.
+    const primero = contenedor.firstElementChild;
+    const esVolver = primero?.tagName === 'P' && primero.children.length === 1 && primero.firstElementChild.tagName === 'A';
+    if (esVolver) primero.after(nav); else contenedor.prepend(nav);
+    return;
+  }
 }
 
 /**
