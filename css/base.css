@@ -335,6 +335,14 @@ form .boton + .boton { margin-left: .5rem; }
 .pestanas [role="tab"]:focus-visible { outline: 3px solid var(--pino); outline-offset: 2px; }
 .pestanas .contador { font-weight: 600; color: var(--naranja-oscuro); }
 [role="tabpanel"]:focus-visible { outline: 3px solid var(--pino); outline-offset: 4px; }
+/* Pestañas de una sección del menú (js/barra-rol.js): son enlaces a otras páginas, con el mismo aspecto. */
+.pestanas-seccion a {
+  border-bottom: 3px solid transparent; padding: .6rem 1rem; font-weight: 700;
+  color: var(--tinta-suave); text-decoration: none; white-space: nowrap;
+}
+.pestanas-seccion a:hover { color: var(--pino); }
+.pestanas-seccion a[aria-current="page"] { color: var(--pino-oscuro); border-bottom-color: var(--pino); }
+.pestanas-seccion a:focus-visible { outline: 3px solid var(--pino); outline-offset: 2px; }
 
 /* Anterior / Siguiente de una lista paginada */
 .paginacion { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: .75rem; margin-top: 1rem; }

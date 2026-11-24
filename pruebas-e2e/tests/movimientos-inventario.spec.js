@@ -137,3 +137,24 @@ test('desde la factura de una venta se vuelve a los movimientos, con el mismo fi
   await expect(page.locator('#volver')).toHaveText('← Volver a movimientos');
   await expect(page.locator('#volver')).toHaveAttribute('href', '/panel/productos-movimientos.html?producto=7');
 });
+
+test('desde "Usado en una consulta" se entra a la consulta y "Volver" lleva a los movimientos', async ({ page }) => {
+  await simularSesion(page, VETERINARIO);
+  await page.route('**/api/inventario/productos', (route) => responderJson(route, { datos: PRODUCTOS }));
+  await page.route(/\/api\/inventario\/productos\/movimientos(\?.*)?$/, (route) => responderJson(route, { datos: MOV_PRODUCTOS }));
+  await page.route(/\/api\/pacientes\/consultas\/57$/, (route) => responderJson(route, { error: 'Consulta no encontrada' }, 404));
+
+  await page.goto('/panel/productos-movimientos.html?producto=8');
+  await page.getByRole('link', { name: /Usado en una consulta: ver la consulta/ }).click();
+  await expect(page).toHaveURL(/\/panel\/consulta\.html\?id=57$/);
+  await expect(page.locator('#volver')).toHaveText('← Volver a movimientos');
+  await expect(page.locator('#volver')).toHaveAttribute('href', '/panel/productos-movimientos.html?producto=8');
+});
+
+test('abierta desde otro lado, la consulta vuelve a la agenda', async ({ page }) => {
+  await simularSesion(page, VETERINARIO);
+  await page.route(/\/api\/pacientes\/consultas\/57$/, (route) => responderJson(route, { error: 'Consulta no encontrada' }, 404));
+  await page.goto('/panel/consulta.html?id=57');
+  await expect(page.locator('#volver')).toHaveText('← Volver a la agenda');
+  await expect(page.locator('#volver')).toHaveAttribute('href', '/panel/agenda.html');
+});

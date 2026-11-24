@@ -18,6 +18,24 @@ await exigirRol('VETERINARIO');
 const API = '/api/pacientes';
 const params = new URLSearchParams(location.search);
 
+// "Volver": a la agenda, salvo que se haya llegado desde los movimientos de productos o de insumos
+// ("Usado en una consulta"): entonces vuelve ahí, con los mismos filtros.
+const VUELTAS = {
+  '/panel/productos-movimientos.html': '← Volver a movimientos',
+  '/panel/insumo-movimientos.html': '← Volver a movimientos',
+};
+try {
+  const anterior = new URL(document.referrer);
+  const texto = anterior.origin === location.origin ? VUELTAS[anterior.pathname] : null;
+  if (texto) {
+    const volver = document.getElementById('volver');
+    volver.href = anterior.pathname + anterior.search;
+    volver.textContent = texto;
+  }
+} catch {
+  // Sin página anterior (se abrió el enlace directo): queda "Volver a la agenda".
+}
+
 const estado = document.getElementById('estado');
 const ficha = document.getElementById('ficha');
 const form = document.getElementById('form-consulta');
