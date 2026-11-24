@@ -17,12 +17,13 @@ function cerrarMenu() {
   boton.focus();
 }
 
-boton.addEventListener('click', abrir);
-cerrar.addEventListener('click', cerrarMenu);
+// Con la barra de barra-rol.js (con o sin sesión) este encabezado ya no está: no hay nada que hacer.
+boton?.addEventListener('click', abrir);
+cerrar?.addEventListener('click', cerrarMenu);
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && panel.classList.contains('abierto')) cerrarMenu();
+  if (e.key === 'Escape' && panel?.classList.contains('abierto')) cerrarMenu();
 });
 // Si se agranda la ventana con el panel abierto, se restablece
 window.matchMedia('(min-width: 801px)').addEventListener('change', (e) => {
-  if (e.matches && panel.classList.contains('abierto')) cerrarMenu();
+  if (e.matches && panel?.classList.contains('abierto')) cerrarMenu();
 });

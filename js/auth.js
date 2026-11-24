@@ -2,7 +2,8 @@
  * auth.js — Estado de sesión en todas las páginas.
  *
  * Al cargarse, consulta al backend quién es el usuario actual (GET /api/auth/yo) y:
- *   - sin sesión: deja el encabezado público, con "Inicia sesión" y "Registro";
+ *   - sin sesión: la barra pública (barra-rol.js, MENU_PUBLICO), con el mismo diseño que la de un
+ *     rol, y "Inicia sesión" y "Registro";
  *   - con sesión: pone la barra de "Mi panel" de su rol (barra-rol.js) en lugar del menú público,
  *     con el nombre del usuario, la campana y un botón "Salir".
  *
@@ -19,7 +20,7 @@
  */
 import { api, setCsrf } from './api.js';
 import { el } from './ui.js';
-import { dibujarBarra } from './barra-rol.js';
+import { dibujarBarra, dibujarBarraPublica } from './barra-rol.js';
 
 // Usuario actual en memoria. null = sin sesión.
 let usuario = null;
@@ -91,7 +92,11 @@ function recordarRol(rol) {
  */
 function pintar() {
   recordarRol(usuario?.rol);
-  if (!usuario) return;                           // sin sesión queda el encabezado público
+  if (!usuario) {                                 // sin sesión: el menú público, con el mismo diseño
+    estilos('/css/barra-rol.css');
+    dibujarBarraPublica();
+    return;
+  }
 
   estilos('/css/barra-rol.css');
   if (dibujarBarra(usuario)) {

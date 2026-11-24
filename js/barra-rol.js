@@ -126,6 +126,33 @@ export const MENUS = {
   },
 };
 
+// Lo que pide iniciar sesión lleva al login, que después vuelve a esa pantalla (?volver=).
+const conSesion = (destino) => '/login/login.html?volver=' + encodeURIComponent(destino);
+
+/**
+ * Menú de quien no inició sesión (24/11): las mismas secciones y el mismo diseño que el del cliente,
+ * sin lo que es de una cuenta (Mis compras, Mi cuenta, Mis mascotas…). "Mis postulaciones" y
+ * "Escribir reseña" piden iniciar sesión. "Contactanos" lleva a esa sección de la portada.
+ */
+export const MENU_PUBLICO = {
+  inicio: '/index.html',
+  contacto: true,
+  secciones: [
+    ['tienda', 'Tienda', 'Productos para tu mascota.', [
+      ['Promociones', '/catalogo/promociones.html'],
+      ['Ver catálogo de productos', '/catalogo/catalogo.html', false, [
+        ['Medicamentos', '/catalogo/catalogo.html?categoria=MEDICAMENTO'],
+        ['Alimento balanceado', '/catalogo/catalogo.html?categoria=ALIMENTO'],
+        ['Accesorios', '/catalogo/catalogo.html?categoria=ACCESORIO']]]]],
+    ['adopcion', 'Adopción', 'Animales que buscan familia.', [
+      ['Animales disponibles', '/adopciones/adopciones.html'],
+      ['Mis postulaciones', conSesion('/adopciones/adopciones.html#seccion-mias')]]],
+    ['resenas', 'Reseñas', 'Lo que opinan nuestros clientes.', [
+      ['Escribir reseña', conSesion('/resenas/escribir.html')],
+      ['Ver reseñas', '/resenas/resenas.html']]],
+  ],
+};
+
 /** Página de inicio ("Mi panel") de un rol, o null si no tiene. */
 export function inicioDe(rol) {
   return MENUS[rol]?.inicio ?? null;
@@ -169,16 +196,37 @@ function seccion([id, titulo, descripcion, enlaces]) {
  */
 export function dibujarBarra(usuario) {
   const menu = MENUS[usuario?.rol];
+  if (!menu) return false;
+  return dibujar(menu, [
+    el('a', 'HuellaVet', { class: 'panel-marca', href: menu.inicio, title: 'Mi panel' }),
+    el('a', menu.nombre, { class: 'panel-usuario', href: menu.inicio }),
+    // auth.js lo rellena con el nombre del usuario y "Salir"; notificaciones.js agrega la campana.
+    el('div', '', { class: 'sesion', id: 'sesion' }),
+  ]);
+}
+
+/**
+ * Sin sesión (24/11): la misma cabecera y la misma barra que con sesión, con el menú público
+ * (MENU_PUBLICO) y los botones "Inicia sesión" y "Registro". Si después resulta que hay sesión,
+ * dibujarBarra() la reemplaza por la del rol.
+ */
+export function dibujarBarraPublica() {
+  const sesion = h('div', '', { class: 'sesion', id: 'sesion' }, [
+    el('a', 'Inicia sesión', { class: 'boton boton-borde', href: '/login/login.html' }),
+    el('a', 'Registro', { class: 'boton', href: '/registros/registro.html' }),
+  ]);
+  return dibujar(MENU_PUBLICO, [
+    el('a', 'HuellaVet', { class: 'panel-marca', href: '/index.html', title: 'Inicio' }),
+    sesion,
+  ]);
+}
+
+function dibujar(menu, contenidoCabecera) {
   const actual = document.querySelector('header.encabezado, header.panel-cabecera');
-  if (!menu || !actual) return false;
+  if (!actual) return false;
 
   const cabecera = h('header', '', { class: 'panel-cabecera' }, [
-    h('div', '', { class: 'contenedor' }, [
-      el('a', 'HuellaVet', { class: 'panel-marca', href: menu.inicio, title: 'Mi panel' }),
-      el('a', menu.nombre, { class: 'panel-usuario', href: menu.inicio }),
-      // auth.js lo rellena con el nombre del usuario y "Salir"; notificaciones.js agrega la campana.
-      el('div', '', { class: 'sesion', id: 'sesion' }),
-    ]),
+    h('div', '', { class: 'contenedor' }, contenidoCabecera),
   ]);
 
   // id="menu": las pruebas y otras pantallas buscan acá los enlaces del rol.
@@ -190,7 +238,7 @@ export function dibujarBarra(usuario) {
   if (menu.contacto) {
     lista.append(h('li', '', {}, [el('a', 'Contactanos', { class: 'panel-menu-enlace', href: `${menu.inicio}#contacto` })]));
   }
-  const barra = h('nav', '', { class: 'panel-nav', 'aria-label': `Menú: ${menu.nombre}` }, [lista]);
+  const barra = h('nav', '', { class: 'panel-nav', 'aria-label': menu.nombre ? `Menú: ${menu.nombre}` : 'Menú principal' }, [lista]);
 
   document.querySelector('nav.panel-nav')?.remove();   // la de un panel, si la página ya traía una
   actual.replaceWith(cabecera, barra);
@@ -200,6 +248,7 @@ export function dibujarBarra(usuario) {
 
   activarDesplegables();
   aplicarContacto(barra);
+  document.querySelectorAll('.pestanas-seccion').forEach((n) => n.remove());   // si se redibuja
   pestanasDeSeccion(menu);
   return true;
 }
@@ -217,8 +266,10 @@ function pestanasDeSeccion(menu) {
   if (!contenedor) return;
 
   for (const [, titulo, , enlaces] of menu.secciones) {
+    // Ni los externos (WhatsApp) ni los que piden iniciar sesión (llevan al login) son pestañas.
     const internos = enlaces.filter(([, destino, externo]) => !externo)
-      .map(([texto, destino]) => ({ texto, url: new URL(destino, location.origin) }));
+      .map(([texto, destino]) => ({ texto, url: new URL(destino, location.origin) }))
+      .filter((e) => e.url.pathname !== '/login/login.html');
     const paginas = new Set(internos.map((e) => e.url.pathname));
     if (paginas.size < 2) continue;
     const actual = internos.find((e) => e.url.pathname === location.pathname);
