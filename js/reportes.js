@@ -1,10 +1,11 @@
 /**
  * reportes.js — Panel de reportes (panel/reportes.html)
  *
- * Cinco pestañas (qué promocionar, qué liquidar, promociones publicadas, turnos atendidos, stock y
- * movimientos) y, dentro de stock, tres sub-pestañas. Cada una pide sus datos la primera vez que se
- * abre (las tres primeras, un solo pedido). La pestaña activa viaja en el hash de la URL
- * (#liquidar, #turnos-atendidos, #stock-insumos), así los enlaces de los paneles caen en la correcta.
+ * Cuatro pestañas (qué promocionar, qué liquidar, promociones publicadas y turnos atendidos). Cada una
+ * pide sus datos la primera vez que se abre (las tres primeras, un solo pedido). La pestaña activa
+ * viaja en el hash de la URL (#liquidar, #turnos-atendidos), así los enlaces de los paneles caen en la
+ * correcta. El stock y los movimientos ya no están acá (24/11): son "Productos" e "Insumos" del menú;
+ * los enlaces viejos a #stock… llevan ahí.
  * Contrato: docs/api/contrato-reportes.md del repo Reportes. "Publicitar" y las promociones usan la
  * API de Inventario (docs/api/contrato-tienda.md, sección "Promociones").
  * La guardia de rol es solo comodidad de interfaz; la autorización real la hace el backend.
@@ -14,14 +15,10 @@
 import { api } from './api.js';
 import { exigirRol } from './auth.js';
 import { confirmar, el, limpiarErrores, mostrarErrores } from './ui.js';
-import { textoEstadoInsumo } from './etiquetas.js';
 
 await exigirRol('VETERINARIO');
 
 const PAGINA = 25;       // filas que se muestran de a una vez
-// Stock bajo: el límite que configuró la veterinaria (lo dice la API en resumen.limite_stock_bajo).
-// Mientras no llega, el de siempre: 10 unidades o menos.
-let stockBajo = 10;
 
 const $ = (id) => document.getElementById(id);
 const estado = $('estado');
@@ -116,20 +113,6 @@ function listaPaginada(tbody, botonMas, contador, crearFila) {
     visibles = PAGINA;
     pintar();
   };
-}
-
-// Búsqueda por nombre y "solo stock bajo" sobre una lista que se vuelve a dibujar con cada cambio.
-function conFiltros(buscar, soloBajo, obtenerTodos, pintar) {
-  const aplicar = () => {
-    const q = buscar.value.trim().toLowerCase();
-    pintar(obtenerTodos().filter((x) =>
-      (!q || String(x.nombre).toLowerCase().includes(q)) &&
-      (!soloBajo.checked || Number(x.stock) <= stockBajo)
-    ));
-  };
-  buscar.addEventListener('input', aplicar);
-  soloBajo.addEventListener('change', aplicar);
-  return aplicar;
 }
 
 /* ------------------------------------------------------------------ */
@@ -549,81 +532,6 @@ async function cargarTurnos() {
 formTurnos.addEventListener('submit', (ev) => { ev.preventDefault(); cargarTurnos(); });
 
 /* ------------------------------------------------------------------ */
-/* Stock y movimientos                                                  */
-/* ------------------------------------------------------------------ */
-
-const formMov = $('filtro-movimientos');
-let productos = [];
-let insumos = [];
-
-function avisoStock(stock) {
-  if (Number(stock) === 0) return 'Sin stock';
-  return Number(stock) <= stockBajo ? 'Stock bajo' : '';
-}
-
-function filaProducto(p) {
-  const tr = el('tr');
-  tr.append(el('td', p.nombre), el('td', p.stock), el('td', p.fecha_vencimiento ? fecha(p.fecha_vencimiento) : '—'), el('td', avisoStock(p.stock)));
-  return tr;
-}
-
-function filaInsumo(i) {
-  const tr = el('tr');
-  tr.append(el('td', i.nombre), el('td', textoEstadoInsumo(i.estado)), el('td', i.stock), el('td', avisoStock(i.stock)));
-  return tr;
-}
-
-// El movimiento solo trae el id del ítem: el nombre se busca en las listas de stock.
-function filaMovimiento(m) {
-  const nombre = m.producto_id
-    ? productos.find((p) => Number(p.id) === Number(m.producto_id))?.nombre ?? 'Producto ' + m.producto_id
-    : insumos.find((i) => Number(i.id) === Number(m.insumo_id))?.nombre ?? 'Insumo ' + m.insumo_id;
-  const f = String(m.fecha ?? '');
-  const tr = el('tr');
-  tr.append(
-    el('td', fecha(f.slice(0, 10)) + ' ' + f.slice(11, 16)),
-    el('td', m.tipo),
-    el('td', m.motivo),
-    el('td', nombre),
-    el('td', m.cantidad)
-  );
-  return tr;
-}
-
-const pintarProductos = listaPaginada($('filas-stock-productos'), $('mas-productos'), $('cont-productos'), filaProducto);
-const pintarInsumos = listaPaginada($('filas-stock-insumos'), $('mas-insumos'), $('cont-insumos'), filaInsumo);
-const pintarMovimientos = listaPaginada($('filas-movimientos'), $('mas-movimientos'), $('cont-movimientos'), filaMovimiento);
-
-const aplicarProductos = conFiltros($('buscar-productos'), $('bajo-productos'), () => productos, pintarProductos);
-const aplicarInsumos = conFiltros($('buscar-insumos'), $('bajo-insumos'), () => insumos, pintarInsumos);
-
-// Menor stock primero: lo que hay que reponer queda arriba.
-const porStock = (a, b) => Number(a.stock) - Number(b.stock) || String(a.nombre).localeCompare(String(b.nombre));
-
-async function cargarStock() {
-  const q = consulta(formMov, 'error-movimientos');
-  if (q === null) return;
-  try {
-    const r = await api('/api/reportes/stock' + q);
-    stockBajo = Number(r.resumen?.limite_stock_bajo ?? stockBajo);
-    document.querySelectorAll('.limite-stock').forEach((s) => { s.textContent = String(stockBajo); });
-    productos = (r.productos ?? []).sort(porStock);
-    insumos = (r.insumos ?? []).sort(porStock);
-
-    $('resumen-stock').textContent =
-      `${r.resumen?.productos_stock_bajo ?? 0} productos y ${r.resumen?.insumos_stock_bajo ?? 0} insumos con stock bajo`;
-
-    aplicarProductos();
-    aplicarInsumos();
-    pintarMovimientos((r.movimientos ?? []).sort((a, b) => String(b.fecha).localeCompare(String(a.fecha))));
-  } catch (e) {
-    mostrarError('error-movimientos', e);
-  }
-}
-
-formMov.addEventListener('submit', (ev) => { ev.preventDefault(); cargarStock(); });
-
-/* ------------------------------------------------------------------ */
 /* Pestañas activas, carga diferida y hash de la URL                    */
 /* ------------------------------------------------------------------ */
 
@@ -636,10 +544,8 @@ const CARGA = {
   liquidar: ['sugerencias', cargarSugerencias],
   promociones: ['sugerencias', cargarSugerencias],
   'turnos-atendidos': ['turnos-atendidos', cargarTurnos],
-  stock: ['stock', cargarStock],
 };
 const VISTAS_SIMPLES = ['promocionar', 'liquidar', 'promociones', 'turnos-atendidos'];
-let subActual = 'productos';
 let iniciando = true;
 
 function cargarVista(vista) {
@@ -652,12 +558,11 @@ function cargarVista(vista) {
 // Deja la pestaña activa en la URL sin sumar entradas al historial ni mover la página.
 function actualizarHash() {
   if (iniciando) return;
-  history.replaceState(null, '', '#' + (vistaActual === 'stock' ? 'stock-' + subActual : vistaActual));
+  history.replaceState(null, '', '#' + vistaActual);
 }
 
 function desdeHash() {
   const nombre = location.hash.slice(1);
-  if (nombre.startsWith('stock')) return { vista: 'stock', sub: nombre.split('-')[1] || 'productos' };
   if (VISTAS_SIMPLES.includes(nombre)) return { vista: nombre, sub: null };
   return { vista: 'promocionar', sub: null };   // también #sugerencias, de los enlaces de antes
 }
@@ -668,23 +573,24 @@ const elegirPrincipal = activarPestanas($('pestanas'), (vista) => {
   cargarVista(vista);
 });
 
-const elegirSub = activarPestanas($('pestanas-stock'), (sub) => {
-  subActual = sub;
-  actualizarHash();
-});
-
-function mostrar({ vista, sub }) {
-  if (sub) elegirSub(sub);
+function mostrar({ vista }) {
   elegirPrincipal(vista);
 }
 
 window.addEventListener('hashchange', () => mostrar(desdeHash()));
 
-// Los dos filtros de fechas arrancan en los últimos 30 días.
-for (const form of [formTurnos, formMov]) {
+// El filtro de fechas de los turnos arranca en los últimos 30 días.
+for (const form of [formTurnos]) {
   form.elements.desde.value = haceDias(30);
   form.elements.hasta.value = aISO(new Date());
 }
 
-mostrar(desdeHash());
+// Los enlaces de antes al stock (#stock, #stock-insumos, #stock-movimientos) llevan a donde está ahora.
+const viejo = location.hash.slice(1);
+if (viejo.startsWith('stock')) {
+  location.replace(viejo.includes('insumos') ? '/panel/insumos.html'
+    : viejo.includes('movimientos') ? '/panel/productos-movimientos.html' : '/panel/productos.html');
+} else {
+  mostrar(desdeHash());
+}
 iniciando = false;

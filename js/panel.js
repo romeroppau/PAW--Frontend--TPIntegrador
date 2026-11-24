@@ -19,7 +19,7 @@ import { api } from './api.js';                                  // fetch común
 import { exigirRol } from './auth.js';                          // guardia de acceso compartida (ver auth.js)
 import { confirmar, el, limpiarErrores, mostrarErrores } from './ui.js';    // utilidades de interfaz
 import { textoCategoria } from './etiquetas.js';                // texto de cada código de categoría
-import { filtrarPorNombre } from './buscar-lista.js';           // buscador por nombre del listado
+import { filtrarPorNombre, filtroStockBajo } from './buscar-lista.js'; // buscador y "solo stock bajo"
 
 /* ------------------------------------------------------------------ */
 /* Guardia de acceso                                                   */
@@ -69,13 +69,18 @@ async function listado() {
   const filas = document.getElementById('filas');   // <tbody> de la tabla
   estado.textContent = 'Cargando…';
   try {
-    const productos = lista(await api(base));       // GET /api/inventario/productos
-    // El buscador filtra por nombre lo que ya se trajo (la lista incluye los dados de baja).
+    const respuesta = await api(base);              // GET /api/inventario/productos
+    const productos = lista(respuesta);
+    const bajo = filtroStockBajo(respuesta);
+    // El buscador filtra por nombre lo que ya se trajo (la lista incluye los dados de baja); la
+    // casilla deja solo los de stock bajo.
     filtrarPorNombre(document.getElementById('buscar'), productos, (visibles, texto) => {
       filas.replaceChildren(...visibles.map(fila));  // una fila por producto; reemplaza el contenido anterior
       estado.textContent = productos.length === 0 ? 'No hay productos cargados.'
-        : visibles.length === 0 ? `Ningún producto se llama "${texto}".` : '';
-    });
+        : visibles.length > 0 ? ''
+        : bajo.casilla?.checked ? (texto ? `Ningún producto con stock bajo se llama "${texto}".` : 'Ningún producto tiene stock bajo.')
+        : `Ningún producto se llama "${texto}".`;
+    }, bajo);
   } catch {
     estado.textContent = 'No se pudo cargar el listado.';
   }
@@ -104,7 +109,7 @@ function fila(p) {
   const acc = el('div', '', { class: 'acciones' });
   acc.append(
     el('a', 'Editar', { href: '/panel/producto-form.html?id=' + p.id, 'aria-label': 'Editar ' + p.nombre }),
-    el('a', 'Movimientos', { href: '/panel/movimientos.html?id=' + p.id, 'aria-label': 'Movimientos de ' + p.nombre })
+    el('a', 'Movimientos', { href: '/panel/productos-movimientos.html?producto=' + p.id, 'aria-label': 'Movimientos de ' + p.nombre })
   );
 
   // --- Carga de stock: formulario pequeño dentro de la fila ---
@@ -257,22 +262,7 @@ async function formulario() {
 /* Pantalla: movimientos de inventario (panel/movimientos.html)        */
 /* ------------------------------------------------------------------ */
 
-/**
- * Muestra el historial de movimientos de un producto (?id= en la URL).
- * Cada carga de stock genera un movimiento de entrada.
- */
+// La página vieja de un producto (panel/movimientos.html?id=) lleva a "Productos → Movimientos" filtrado.
 async function movimientos() {
-  const filas = document.getElementById('filas');
-  estado.textContent = 'Cargando…';
-  try {
-    const mov = lista(await api(`${base}/${id}/movimientos`));   // GET .../{id}/movimientos
-    filas.replaceChildren(...mov.map((m) => {
-      const tr = el('tr');
-      tr.append(el('td', m.fecha), el('td', m.tipo), el('td', m.cantidad));
-      return tr;
-    }));
-    estado.textContent = mov.length ? '' : 'Este producto no tiene movimientos.';
-  } catch {
-    estado.textContent = 'No se pudo cargar el historial.';
-  }
+  location.replace('/panel/productos-movimientos.html' + (id ? '?producto=' + encodeURIComponent(id) : ''));
 }

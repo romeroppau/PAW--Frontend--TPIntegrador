@@ -5,16 +5,22 @@
  * ve las suyas y el veterinario todas (lo decide el backend). Cambiar de mascota trae su calendario
  * con fetch, sin recargar la página.
  *
+ * Entrega 5: la lista trae solo las mascotas con vacunas o desparasitaciones registradas
+ * (con_calendario=1). La veterinaria ve el dueño en cada opción y arriba del calendario (con enlace a
+ * su ficha), y tiene un buscador por mascota o dueño que vuelve a pedir la lista (buscar=).
+ *
  * Contrato de la API: docs/api/contrato-calendario.md y contrato-mascotas-turnos.md (repo Pacientes).
  * Seguridad: la guardia de rol la hace guardia-panel.js; la autorización real la hace el backend
  * (404 si la mascota es de otro cliente). Todo texto de la API se inserta con el() (textContent).
  */
-import { api } from './api.js';
+import { api, debounce } from './api.js';
 import { exigirRol } from './auth.js';
 import { el } from './ui.js';
 import { textoEspecieMascota } from './etiquetas.js';
+import { enlaceDuenio } from './personas.js';
 
-await exigirRol(['CLIENTE', 'VETERINARIO']);
+const usuario = await exigirRol(['CLIENTE', 'VETERINARIO']);
+const esVeterinario = usuario.rol === 'VETERINARIO';
 
 const API = '/api/pacientes/mascotas';
 
@@ -42,23 +48,50 @@ let pedidoActual = 0;
 /* Lista de mascotas                                                   */
 /* ------------------------------------------------------------------ */
 
-async function cargarMascotas(elegida) {
+// "Bobby (Gato)"; para la veterinaria, con el dueño: "Bobby (Gato) · Ana Pérez".
+function textoOpcion(m) {
+  const texto = `${m.nombre} (${textoEspecieMascota(m.especie)})`;
+  return esVeterinario && m.duenio?.nombre ? `${texto} · ${m.duenio.nombre}` : texto;
+}
+
+let pedidoLista = 0;
+
+// buscar: lo escrito en el buscador de la veterinaria (vacío = todas).
+async function cargarMascotas(elegida, buscar = '') {
+  const pedido = ++pedidoLista;
+  const primera = select.options[0];
   try {
-    const { mascotas } = await api(API);
-    select.append(...mascotas.map((m) => el('option', `${m.nombre} (${textoEspecieMascota(m.especie)})`, { value: m.id })));
+    const parametros = new URLSearchParams({ con_calendario: '1' });
+    if (buscar) parametros.set('buscar', buscar);
+    const { mascotas } = await api(`${API}?${parametros}`);
+    if (pedido !== pedidoLista) return;
+    select.replaceChildren(primera, ...mascotas.map((m) => el('option', textoOpcion(m), { value: m.id })));
+    select.disabled = mascotas.length === 0 && !buscar;
     if (mascotas.length === 0) {
-      estado.textContent = 'Todavía no hay mascotas cargadas.';
-      select.disabled = true;
+      estado.textContent = buscar ? `Ninguna mascota con calendario coincide con "${buscar}".`
+        : 'Todavía no hay mascotas con vacunas o desparasitaciones registradas.';
+    } else if (!select.value || buscar) {
+      estado.textContent = buscar ? `${mascotas.length} mascotas coinciden.` : '';
     }
   } catch {
+    if (pedido !== pedidoLista) return;
     estado.textContent = 'No se pudo cargar la lista de mascotas.';
   }
 
-  // Una mascota dada de baja no aparece en la lista, pero su calendario se puede ver igual por la URL.
+  // Una mascota que no está en la lista (dada de baja, o sin calendario) se puede ver igual por la URL.
   if (elegida && ![...select.options].some((o) => o.value === elegida)) {
     select.append(el('option', 'Mascota ' + elegida, { value: elegida }));
   }
   select.value = elegida ?? '';
+}
+
+// El buscador (solo la veterinaria): pide la lista de nuevo mientras escribe, sin perder la elegida.
+if (esVeterinario) {
+  const buscar = document.getElementById('buscar');
+  document.getElementById('campo-buscar').hidden = false;
+  buscar.addEventListener('input', debounce(() => {
+    cargarMascotas(select.value || null, buscar.value.trim().slice(0, 80));
+  }, 300));
 }
 
 select.addEventListener('change', () => {
@@ -94,6 +127,11 @@ function pintar({ mascota, vacunas_al_dia: alDia, eventos }) {
   document.getElementById('titulo-mascota').textContent = `${mascota.nombre} · ${textoEspecieMascota(mascota.especie)}`;
   document.getElementById('leyenda-tabla').textContent = 'Calendario sanitario de ' + mascota.nombre;
   document.getElementById('enlace-historial').href = '/cliente/historial.html?mascota=' + mascota.id;
+
+  // La veterinaria ve de quién es, con enlace a la ficha del cliente.
+  const duenio = document.getElementById('duenio');
+  duenio.hidden = !(esVeterinario && mascota.duenio);
+  if (!duenio.hidden) document.getElementById('duenio-enlace').replaceChildren(enlaceDuenio(mascota.duenio));
 
   const aviso = document.getElementById('al-dia');
   aviso.hidden = eventos.length === 0;

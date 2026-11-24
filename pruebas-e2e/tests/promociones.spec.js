@@ -182,7 +182,7 @@ test('las sugerencias son tres pestañas, con un solo pedido, y los enlaces viej
   await page.goto('/panel/reportes.html#sugerencias');
 
   await expect(page.getByRole('tablist', { name: 'Secciones de reportes' }).getByRole('tab'))
-    .toHaveText(['Qué promocionar', 'Qué liquidar', 'Promociones publicadas', 'Turnos atendidos', 'Stock y movimientos']);
+    .toHaveText(['Qué promocionar', 'Qué liquidar', 'Promociones publicadas', 'Turnos atendidos']);
   await expect(page.getByRole('tab', { name: 'Qué promocionar' })).toHaveAttribute('aria-selected', 'true');
   await expect(page.getByRole('heading', { name: 'Qué liquidar' })).toBeHidden();
 

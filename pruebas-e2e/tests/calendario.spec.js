@@ -29,7 +29,7 @@ const CALENDARIOS = {
 };
 
 async function simularApi(page) {
-  await page.route('**/api/pacientes/mascotas', (route) => responderJson(route, { mascotas: MASCOTAS }));
+  await page.route(/\/api\/pacientes\/mascotas(\?.*)?$/, (route) => responderJson(route, { mascotas: MASCOTAS }));
   await page.route(/\/api\/pacientes\/mascotas\/\d+\/calendario-sanitario$/, (route) => {
     const id = route.request().url().match(/mascotas\/(\d+)\//)[1];
     return CALENDARIOS[id]
@@ -86,4 +86,43 @@ test('la mascota de otro cliente muestra "no se encontró"', async ({ page }) =>
   await page.goto('/cliente/calendario.html?mascota=101');
   await expect(page.locator('#estado')).toHaveText('No se encontró la mascota.');
   await expect(page.locator('#calendario')).toBeHidden();
+});
+
+test('la veterinaria busca por dueño, ve el dueño en la lista y su ficha enlazada (solo mascotas con calendario)', async ({ page }) => {
+  await simularSesion(page, { id: 101, nombre: 'Vet', email: 'v@prueba.huellavet', rol: 'VETERINARIO' });
+  const pedidos = [];
+  const CON_DUENIO = [
+    { id: 103, nombre: 'Luna', especie: 'PERRO', duenio: { id: 103, nombre: 'Tomás Aguirre' } },
+    { id: 105, nombre: 'Bobby', especie: 'GATO', duenio: { id: 104, nombre: 'Ana Pérez' } },
+  ];
+  await page.route(/\/api\/pacientes\/mascotas(\?.*)?$/, (route) => {
+    const q = new URL(route.request().url()).searchParams;
+    pedidos.push(Object.fromEntries(q));
+    const buscar = (q.get('buscar') ?? '').toLowerCase();
+    return responderJson(route, { mascotas: CON_DUENIO.filter((m) => !buscar || (m.nombre + ' ' + m.duenio.nombre).toLowerCase().includes(buscar)) });
+  });
+  await page.route(/\/api\/pacientes\/mascotas\/\d+\/calendario-sanitario$/, (route) => responderJson(route, {
+    ...CALENDARIOS[103], mascota: { ...CALENDARIOS[103].mascota, duenio: { id: 103, nombre: 'Tomás Aguirre' } },
+  }));
+
+  await page.goto('/cliente/calendario.html');
+  await expect(page.locator('#mascota option')).toHaveText(['Elegí una mascota', 'Luna (Perro) · Tomás Aguirre', 'Bobby (Gato) · Ana Pérez']);
+  expect(pedidos[0]).toEqual({ con_calendario: '1' });
+
+  await page.fill('#buscar', 'aguirre');
+  await expect(page.locator('#mascota option')).toHaveCount(2);
+  expect(pedidos.at(-1)).toEqual({ con_calendario: '1', buscar: 'aguirre' });
+
+  await page.selectOption('#mascota', '103');
+  await expect(page.locator('#duenio')).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Ver los datos de Tomás Aguirre' })).toHaveAttribute('href', '/panel/cliente.html?id=103');
+});
+
+test('el cliente no ve el buscador ni el dueño', async ({ page }) => {
+  await simularSesion(page, CLIENTE);
+  await simularApi(page);
+  await page.goto('/cliente/calendario.html?mascota=103');
+  await expect(page.locator('#titulo-mascota')).toHaveText('Luna · Perro');
+  await expect(page.locator('#campo-buscar')).toBeHidden();
+  await expect(page.locator('#duenio')).toBeHidden();
 });
