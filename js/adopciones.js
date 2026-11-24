@@ -2,7 +2,9 @@
  * adopciones.js — Animales en adopción (adopciones/adopciones.html), rol 3, Entrega 5
  *
  * Público: las publicaciones aprobadas y disponibles, con filtro por especie.
- * Cliente con sesión: se postula a una adopción y ve el estado de sus postulaciones.
+ * Cliente con sesión: dos pestañas, "Animales que buscan familia" (se postula desde ahí) y "Mis
+ * postulaciones" (el estado de cada una; el animal lleva a su publicación, adopciones/publicacion.html).
+ * Con #seccion-mias en la dirección abre la segunda; con ?postular=ID, el formulario de ese animal.
  * Contrato: docs/api/contrato-adopciones.md (repo Adopciones). Todo texto de la API va con el().
  */
 import { api } from './api.js';
@@ -10,6 +12,7 @@ import { sesion } from './auth.js';
 import { el, limpiarErrores, mostrarErrores } from './ui.js';
 import { textoEspecieMascota } from './etiquetas.js';
 import { edad, fecha, insignia, mensajeDeError } from './etiquetas-adopciones.js';
+import { activarPestanas } from './pestanas.js';
 
 const usuario = await sesion;
 const esCliente = usuario?.rol === 'CLIENTE';
@@ -28,11 +31,13 @@ if (usuario) document.getElementById('invitacion').hidden = true;
 /* ---------- Animales disponibles ---------- */
 
 let especie = '';
+let ultimasPublicaciones = [];
 
 async function cargar() {
   estado.textContent = 'Cargando…';
   try {
     const { publicaciones } = await api('/api/adopciones/publicaciones' + (especie ? '?especie=' + especie : ''));
+    ultimasPublicaciones = publicaciones;
     grilla.replaceChildren(...publicaciones.map(tarjeta));
     estado.textContent = publicaciones.length ? '' : 'Por ahora no hay animales en adopción con ese filtro.';
   } catch {
@@ -149,7 +154,13 @@ async function cargarMias() {
       const tr = el('tr');
       const celdaEstado = el('td');
       celdaEstado.append(insignia(p.estado));
-      tr.append(el('td', p.publicacion.mascota.nombre), el('td', fecha(p.fecha)), celdaEstado, el('td', seguimiento(p)));
+      // El animal lleva a su publicación (la ve aunque ya no esté disponible: se postuló).
+      const animal = el('td');
+      animal.append(el('a', p.publicacion.mascota.nombre, {
+        href: '/adopciones/publicacion.html?id=' + encodeURIComponent(p.publicacion.id),
+        'aria-label': 'Ver la publicación de ' + p.publicacion.mascota.nombre
+      }));
+      tr.append(animal, el('td', fecha(p.fecha)), celdaEstado, el('td', seguimiento(p)));
       return tr;
     }));
     document.getElementById('tabla-mias').hidden = postulaciones.length === 0;
@@ -161,14 +172,21 @@ async function cargarMias() {
 
 const cargas = [cargar()];
 if (esCliente) {
-  document.getElementById('seccion-mias').hidden = false;
-  document.getElementById('ir-mias').hidden = false;
+  // Las pestañas: la elegida queda en la dirección (#seccion-mias), así el menú y el panel del
+  // cliente ("Mis postulaciones") abren la que corresponde.
+  const lista = document.getElementById('pestanas-adopciones');
+  lista.hidden = false;
+  const elegir = activarPestanas(lista, (vista) => {
+    history.replaceState(null, '', vista === 'mias' ? '#seccion-mias' : location.pathname + location.search);
+  });
+  if (location.hash === '#seccion-mias') elegir('mias');
   cargas.push(cargarMias());
 }
 
-// Desde el panel del cliente ("Mis postulaciones"): la sección se muestra recién con la sesión y
-// las tarjetas la corren hacia abajo al cargarse, así que se baja hasta ella cuando todo está listo.
-if (esCliente && location.hash === '#seccion-mias') {
-  await Promise.all(cargas);
-  document.getElementById('seccion-mias').scrollIntoView();
+// Desde la publicación de un animal ("Quiero adoptarlo"): se abre el formulario para ese animal.
+const postular = new URLSearchParams(location.search).get('postular');
+if (esCliente && postular) {
+  await cargas[0];
+  const publicacion = ultimasPublicaciones.find((p) => String(p.id) === postular);
+  if (publicacion) abrirFormulario(publicacion);
 }

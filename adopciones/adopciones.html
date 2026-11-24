@@ -21,11 +21,15 @@
   <main id="contenido" class="seccion">
     <div class="contenedor">
       <p class="etiqueta">Adopciones responsables</p>
-      <div class="barra-titulo">
-        <h1>Animales que buscan familia</h1>
-        <!-- Solo para el cliente con sesión (js/adopciones.js): baja directo a sus postulaciones. -->
-        <a class="boton boton-borde" id="ir-mias" href="#seccion-mias" hidden>Ver mis postulaciones</a>
+      <h1>Adopciones</h1>
+
+      <!-- Pestañas: solo para el cliente con sesión (js/adopciones.js). Sin sesión se ve la lista sola. -->
+      <div class="pestanas" role="tablist" aria-label="Adopciones" id="pestanas-adopciones" hidden>
+        <button type="button" role="tab" id="tab-disponibles" aria-selected="true" aria-controls="panel-disponibles" data-vista="disponibles">Animales que buscan familia</button>
+        <button type="button" role="tab" id="tab-mias" aria-selected="false" tabindex="-1" aria-controls="seccion-mias" data-vista="mias">Mis postulaciones</button>
       </div>
+
+      <div id="panel-disponibles" role="tabpanel" aria-labelledby="tab-disponibles">
       <p>Rescatistas de la zona publican a los animales que tienen a su cargo. Cada publicación la revisa
         nuestra veterinaria, y antes de la entrega el animal pasa por un chequeo en HuellaVet.</p>
       <p id="invitacion" class="ayuda">Para postularte, <a href="/login/login.html">Inicia sesión</a> con tu cuenta de cliente.</p>
@@ -65,9 +69,11 @@
       </section>
 
       <p class="mensaje mensaje-ok bloque" id="aviso" role="status" hidden></p>
+      </div>
 
-      <section id="seccion-mias" class="bloque seccion-adopciones" aria-labelledby="titulo-mias" hidden>
-        <h2 id="titulo-mias">Mis postulaciones</h2>
+      <!-- "Mis postulaciones" (cliente): el nombre del animal lleva a su publicación. -->
+      <section id="seccion-mias" class="bloque seccion-adopciones" role="tabpanel" aria-labelledby="tab-mias" hidden>
+        <h2 id="titulo-mias" class="solo-lectores">Mis postulaciones</h2>
         <p class="estado" id="estado-mias" role="status"></p>
         <div class="tabla-scroll" id="tabla-mias" hidden>
           <table>
