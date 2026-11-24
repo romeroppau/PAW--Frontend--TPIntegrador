@@ -62,3 +62,38 @@ export function leerComoDataUrl(archivo) {
 
 // El mensaje de error de un pedido fallido (el backend lo manda en "error").
 export const mensajeDeError = (e, porDefecto) => e?.datos?.error ?? porDefecto;
+
+// "2026-11-26" → "jue 26/11" (al mediodía UTC, para que la zona horaria no corra el día).
+const DIAS = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
+export function diaCorto(f) {
+  const [, mes, dia] = f.split('-');
+  return `${DIAS[new Date(f + 'T12:00:00Z').getUTCDay()]} ${dia}/${mes}`;
+}
+
+// En qué paso está la postulación: para la elegida, el de la adopción y el turno del chequeo.
+export function seguimiento(p) {
+  if (p.estado === 'PENDIENTE') return 'La rescatista todavía está eligiendo.';
+  if (p.estado !== 'ELEGIDA') return '';
+  const { estado: estadoAdopcion, turno_chequeo: turno } = p.adopcion;
+  if (estadoAdopcion === 'FINALIZADA') return '¡Adopción completa! Ya está en Mis mascotas.';
+  if (estadoAdopcion === 'CANCELADA') return 'La adopción se canceló.';
+  if (turno?.estado === 'PROGRAMADO' || turno?.estado === 'EN_ATENCION') return `Turno de chequeo: ${diaCorto(turno.fecha)} a las ${turno.hora}.`;
+  if (turno?.estado === 'ATENDIDO') return 'Chequeo hecho: falta que la veterinaria cierre la adopción.';
+  if (turno) return 'El turno del chequeo se canceló: te vamos a dar otro.';
+  return 'Esperando el turno del chequeo: te avisamos cuando esté.';
+}
+
+/**
+ * "Tu postulación: Pendiente" y en qué paso está, para un animal al que el cliente ya se postuló
+ * (en "Animales que buscan familia" y en la publicación, en lugar de "Quiero adoptarlo": no se puede
+ * postular dos veces por el mismo animal).
+ */
+export function bloquePostulacion(p) {
+  const caja = el('div', '', { class: 'tu-postulacion' });
+  const linea = el('p', 'Tu postulación: ');
+  linea.append(insignia(p.estado));
+  caja.append(linea);
+  const paso = seguimiento(p);
+  if (paso) caja.append(el('p', paso, { class: 'datos' }));
+  return caja;
+}

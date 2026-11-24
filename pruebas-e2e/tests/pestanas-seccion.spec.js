@@ -51,3 +51,15 @@ test('el cliente: Turnos sin el enlace de WhatsApp, y Mis mascotas', async ({ pa
   await page.goto('/cliente/calendario.html');
   await expect(nav(page).getByRole('link')).toHaveText(['Fichas de mis mascotas', 'Historial clínico y facturas', 'Calendario sanitario']);
 });
+
+test('el cliente: Tienda tiene Promociones, el catálogo y Mis compras como pestañas', async ({ page }) => {
+  await simularSesion(page, CLIENTE);
+  await page.goto('/catalogo/promociones.html');
+  await expect(nav(page).getByRole('link')).toHaveText(['Promociones', 'Ver catálogo de productos', 'Mis compras']);
+  await expect(nav(page).locator('[aria-current="page"]')).toHaveText('Promociones');
+  await nav(page).getByRole('link', { name: 'Ver catálogo de productos' }).click();
+  await expect(page).toHaveURL(/\/catalogo\/catalogo\.html$/);
+  await expect(nav(page).locator('[aria-current="page"]')).toHaveText('Ver catálogo de productos');
+  await page.goto('/tienda/compras.html');
+  await expect(nav(page).locator('[aria-current="page"]')).toHaveText('Mis compras');
+});

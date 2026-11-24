@@ -12,7 +12,7 @@
 import { api } from './api.js';
 import { exigirRol } from './auth.js';
 import { el } from './ui.js';
-import { fecha, fechaHora, leerFechas } from './tienda.js';
+import { fecha, fechaHora, leerFechas, hoyArgentina } from './tienda.js';
 
 const PANEL = {
   CLIENTE: '/paneles/panel-cliente.html',
@@ -37,6 +37,11 @@ let pagina = 1;
 let pedidoActual = 0;   // si llegan dos respuestas, solo se dibuja la del último pedido
 
 const usuario = await exigirRol(['CLIENTE', 'RESCATISTA', 'VETERINARIO']);
+
+// Las fechas llegan como mucho hasta hoy: no hay notificaciones del futuro (24/11).
+const hoy = hoyArgentina();
+$desde.max = hoy;
+$hasta.max = hoy;
 document.getElementById('volver').href = PANEL[usuario.rol] ?? '/index.html';
 cargar();
 
@@ -133,7 +138,9 @@ $marcarTodas.addEventListener('click', async () => {
 
 $filtro.addEventListener('submit', (evento) => {
   evento.preventDefault();
-  const leidas = leerFechas($desde, $hasta);
+  const leidas = ($desde.value > hoy || $hasta.value > hoy)
+    ? 'Las fechas pueden llegar como mucho hasta hoy.'
+    : leerFechas($desde, $hasta);
   if (typeof leidas === 'string') {
     $estado.textContent = leidas;
     return;

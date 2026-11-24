@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Los productos de HuellaVet en promoción.">
+  <title>Promociones | HuellaVet</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Nunito+Sans:wght@400;600;700&display=swap">
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/catalogo/catalogo.css">
+  <script type="module" src="/js/promociones-tienda.js"></script>
+</head>
+
+<body>
+  <a class="saltar" href="#contenido">Saltar al contenido</a>
+  <div id="encabezado-sitio"></div>
+  <script src="/js/layout.js"></script>
+
+  <main id="contenido" class="contenedor catalogo-principal">
+    <section class="catalogo-intro" aria-labelledby="titulo-promociones">
+      <p class="etiqueta">TIENDA HUELLAVET</p>
+      <h1 id="titulo-promociones">Promociones</h1>
+      <p>Precios rebajados por tiempo limitado, hasta agotar stock. En el catálogo también aparecen, junto con el resto de los productos.</p>
+    </section>
+
+    <!-- Las llena js/promociones-tienda.js con GET /api/tienda/promociones (repo Inventario). -->
+    <section class="resultados-catalogo" aria-label="Productos en promoción">
+      <p id="estado" class="estado" role="status" aria-live="polite">Cargando promociones…</p>
+      <p id="aviso-carrito" class="aviso-carrito" role="status"></p>
+      <ul id="lista" class="lista-productos"></ul>
+      <p id="ir-catalogo" hidden><a class="boton boton-borde" href="/catalogo/catalogo.html">Ver todo el catálogo</a></p>
+    </section>
+  </main>
+
+  <div id="pie-sitio"></div>
+
+  <script type="module" src="/js/menu.js"></script>
+  <script type="module" src="/js/auth.js"></script>
+</body>
+
+</html>
