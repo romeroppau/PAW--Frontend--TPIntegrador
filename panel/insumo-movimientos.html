@@ -22,11 +22,24 @@
       <p><a href="/panel/insumos.html">&larr; Volver al listado de insumos</a></p>
       <h1>Movimientos de insumos</h1>
       <div class="campo campo-selector">
-        <label for="insumo">Filtrar por insumo</label>
-        <select id="insumo" name="insumo">
+        <label for="item">Filtrar por insumo</label>
+        <select id="item" name="item">
           <option value="">Todos los insumos</option>
         </select>
       </div>
+      <!-- Por fechas (arranca en los últimos 30 días; vacías = todo). js/movimientos-inventario.js -->
+      <form id="filtro-fechas" class="form-item" novalidate>
+        <div class="campo campo-chico">
+          <label for="mov-desde">Desde</label>
+          <input id="mov-desde" name="desde" type="date">
+        </div>
+        <div class="campo campo-chico">
+          <label for="mov-hasta">Hasta</label>
+          <input id="mov-hasta" name="hasta" type="date">
+        </div>
+        <button type="submit" class="boton boton-borde">Filtrar</button>
+      </form>
+      <p class="campo-error" id="error-fechas" role="alert" hidden></p>
       <p class="estado" id="estado" role="status"></p>
       <div class="tabla-scroll">
         <table>

@@ -26,11 +26,14 @@
           <a class="boton" href="/panel/insumo-form.html">Nuevo insumo</a>
         </div>
       </div>
-      <p>Los insumos con 10 unidades o menos se marcan con stock bajo. Cuando ya lo pediste al proveedor, marcalo "Ya pedido": queda así hasta que cargues el stock.</p>
+      <p>Los insumos con <span data-limite-stock>10</span> unidades o menos se marcan con stock bajo (el límite se cambia en Configuración). Cuando ya lo pediste al proveedor, marcalo "Ya pedido": queda así hasta que cargues el stock.</p>
       <!-- Filtra la lista mientras se escribe, sin pedir de nuevo a la API (js/buscar-lista.js). -->
       <div class="campo campo-buscar">
         <label for="buscar">Buscar un insumo por nombre</label>
         <input id="buscar" type="search" autocomplete="off" placeholder="Ej.: jeringa">
+      </div>
+      <div class="campo">
+        <label class="casilla"><input id="solo-bajo" type="checkbox"> Solo stock bajo (<span data-limite-stock>10</span> o menos)</label>
       </div>
       <p class="estado" id="estado" role="status"></p>
       <div class="tabla-scroll">

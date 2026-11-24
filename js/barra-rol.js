@@ -39,18 +39,21 @@ export const MENUS = {
         ['Ficha de mascotas', '/cliente/mascotas.html'],
         ['Historial clínico', '/panel/historial-clinico.html'],
         ['Calendario sanitario', '/cliente/calendario.html']]],
-      ['productos', 'Tienda', 'Productos, stock y pedidos de la tienda.', [
+      // Inventario (24/11): Productos e Insumos, cada uno con su stock y sus movimientos. La Tienda
+      // queda solo con las ventas, y Reportes con el análisis (sin el stock).
+      ['productos', 'Productos', 'Los productos, su stock y sus movimientos.', [
         ['Productos y stock', '/panel/productos.html'],
-        ['Ventas y pedidos para retirar', '/panel/ventas.html']]],
+        ['Movimientos', '/panel/productos-movimientos.html']]],
       ['insumos', 'Insumos', 'Lo que se usa en las consultas.', [
         ['Insumos y stock', '/panel/insumos.html'],
         ['Movimientos', '/panel/insumo-movimientos.html']]],
-      ['reportes', 'Reportes', 'Sugerencias, turnos atendidos y stock.', [
+      ['tienda', 'Tienda', 'Las ventas de la tienda web.', [
+        ['Ventas y pedidos para retirar', '/panel/ventas.html']]],
+      ['reportes', 'Reportes', 'Sugerencias y turnos atendidos.', [
         ['Qué promocionar', '/panel/reportes.html#promocionar'],
         ['Qué liquidar', '/panel/reportes.html#liquidar'],
         ['Promociones publicadas', '/panel/reportes.html#promociones'],
-        ['Turnos atendidos', '/panel/reportes.html#turnos-atendidos'],
-        ['Stock / movimientos de inventario', '/panel/reportes.html#stock']]],
+        ['Turnos atendidos', '/panel/reportes.html#turnos-atendidos']]],
       ['rescatistas', 'Rescatistas', 'Cuentas de rescatistas por aprobar.', [
         ['Solicitudes pendientes', '/panel/adopciones.html#rescatistas']]],
       ['adopcion', 'Adopción', 'Publicaciones y adopciones.', [

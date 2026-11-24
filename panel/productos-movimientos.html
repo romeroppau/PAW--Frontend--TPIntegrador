@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Movimientos de productos | HuellaVet</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Nunito+Sans:wght@400;600;700&display=swap">
+  <link rel="stylesheet" href="/css/base.css">
+</head>
+<!-- Productos → Movimientos (veterinaria, Entrega 5): las entradas y salidas de stock de los productos,
+     con filtro por producto y por fechas. El motivo lleva a la consulta donde se usó el producto o a la
+     factura de la venta web. Lo maneja js/productos-movimientos.js con
+     GET /api/inventario/productos/movimientos (repo Inventario, docs/api/contrato.md). -->
+<body data-rol="VETERINARIO">
+  <a class="saltar" href="#contenido">Saltar al contenido</a>
+  <div id="encabezado-sitio"></div>
+  <script src="/js/layout.js"></script>
+  <main id="contenido" class="seccion" hidden>
+    <div class="contenedor">
+      <p><a href="/panel/productos.html">&larr; Volver a productos y stock</a></p>
+      <h1>Movimientos de productos</h1>
+      <div class="campo campo-selector">
+        <label for="item">Filtrar por producto</label>
+        <select id="item" name="item">
+          <option value="">Todos los productos</option>
+        </select>
+      </div>
+      <!-- Por fechas (arranca en los últimos 30 días; vacías = todo). js/movimientos-inventario.js -->
+      <form id="filtro-fechas" class="form-item" novalidate>
+        <div class="campo campo-chico">
+          <label for="mov-desde">Desde</label>
+          <input id="mov-desde" name="desde" type="date">
+        </div>
+        <div class="campo campo-chico">
+          <label for="mov-hasta">Hasta</label>
+          <input id="mov-hasta" name="hasta" type="date">
+        </div>
+        <button type="submit" class="boton boton-borde">Filtrar</button>
+      </form>
+      <p class="campo-error" id="error-fechas" role="alert" hidden></p>
+      <p class="estado" id="estado" role="status"></p>
+      <div class="tabla-scroll">
+        <table>
+          <caption class="solo-lectores">Historial de movimientos de productos</caption>
+          <thead><tr><th scope="col">Fecha</th><th scope="col">Producto</th><th scope="col">Tipo</th><th scope="col">Motivo</th><th scope="col">Cantidad</th><th scope="col">Registró</th></tr></thead>
+          <tbody id="filas"></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+  <div id="pie-sitio"></div>
+
+  <script type="module" src="/js/menu.js"></script>
+  <script type="module" src="/js/guardia-panel.js"></script>
+  <script type="module" src="/js/auth.js"></script>
+  <script type="module" src="/js/productos-movimientos.js"></script>
+</body>
+</html>

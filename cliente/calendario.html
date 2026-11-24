@@ -26,6 +26,12 @@
       <h1>Calendario sanitario</h1>
       <p>Vacunas y desparasitaciones de cada mascota, según su especie y su edad.</p>
 
+      <!-- Solo la veterinaria (Entrega 5): busca por el nombre de la mascota o del dueño y la lista se
+           achica a las que coinciden. js/calendario.js lo muestra según el rol. -->
+      <div class="campo campo-buscar" id="campo-buscar" hidden>
+        <label for="buscar">Buscar por mascota o dueño</label>
+        <input id="buscar" type="search" autocomplete="off" maxlength="80" placeholder="Ej.: Luna o Pérez">
+      </div>
       <form id="form-mascota" class="campo campo-selector" novalidate>
         <label for="mascota">Mascota</label>
         <select id="mascota" name="mascota">
@@ -40,6 +46,7 @@
           <h2 id="titulo-mascota"></h2>
           <a id="enlace-historial" href="/cliente/historial.html">Ver historial clínico</a>
         </div>
+        <p id="duenio" hidden>Dueño: <span id="duenio-enlace"></span></p>
         <p id="al-dia" class="mensaje"></p>
         <p class="estado" id="vacio" hidden>Todavía no tiene vacunas ni desparasitaciones en su calendario.</p>
         <div class="tabla-scroll" id="tabla">

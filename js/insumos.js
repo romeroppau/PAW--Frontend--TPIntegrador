@@ -15,7 +15,8 @@ import { api } from './api.js';                              // fetch común (co
 import { exigirRol } from './auth.js';                       // guardia compartida
 import { confirmar, el, limpiarErrores, mostrarErrores } from './ui.js'; // utilidades de interfaz
 import { textoEstadoInsumo } from './etiquetas.js';          // "DISPONIBLE" -> "Disponible"
-import { filtrarPorNombre } from './buscar-lista.js';         // buscador por nombre del listado
+import { filtrarPorNombre, filtroStockBajo } from './buscar-lista.js'; // buscador y "solo stock bajo"
+import { pantallaMovimientos } from './movimientos-inventario.js'; // pantalla de movimientos
 
 // Espera a confirmar que es veterinario (y a tener el token CSRF). Si no, redirige al login
 // y el resto del archivo no corre.
@@ -24,14 +25,6 @@ await exigirRol('VETERINARIO');
 const base = '/api/inventario/insumos';
 const id = new URLSearchParams(location.search).get('id');  // ?id= del formulario y de movimientos
 const estado = document.getElementById('estado');           // mensajes (role="status")
-
-// Texto que ve el veterinario para cada movimiento (contrato: GET .../movimientos).
-const TIPOS = { ENTRADA: 'Entrada', SALIDA: 'Salida' };
-const MOTIVOS = {
-  CARGA_VETERINARIO: 'Carga de stock',
-  CONSULTA: 'Usado en una consulta',
-  AJUSTE: 'Retiro manual (sin consulta)'
-};
 
 // $1.900,00 (pesos argentinos)
 const pesos = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' });
@@ -48,13 +41,17 @@ async function listado() {
   const filas = document.getElementById('filas');
   estado.textContent = 'Cargando…';
   try {
-    const { datos } = await api(base);                       // GET /api/inventario/insumos
-    // El buscador filtra por nombre lo que ya se trajo.
+    const respuesta = await api(base);                       // GET /api/inventario/insumos
+    const { datos } = respuesta;
+    const bajo = filtroStockBajo(respuesta);
+    // El buscador filtra por nombre lo que ya se trajo; la casilla deja solo los de stock bajo.
     filtrarPorNombre(document.getElementById('buscar'), datos, (visibles, texto) => {
       filas.replaceChildren(...visibles.map(fila));
       estado.textContent = datos.length === 0 ? 'No hay insumos cargados.'
-        : visibles.length === 0 ? `Ningún insumo se llama "${texto}".` : '';
-    });
+        : visibles.length > 0 ? ''
+        : bajo.casilla?.checked ? (texto ? `Ningún insumo con stock bajo se llama "${texto}".` : 'Ningún insumo tiene stock bajo.')
+        : `Ningún insumo se llama "${texto}".`;
+    }, bajo);
   } catch {
     estado.textContent = 'No se pudo cargar el listado.';
   }
@@ -268,65 +265,14 @@ async function formulario() {
 /* Pantalla: movimientos (panel/insumo-movimientos.html)               */
 /* ------------------------------------------------------------------ */
 
+// Selector de insumo, filtro de fechas y tabla con el motivo enlazado: js/movimientos-inventario.js.
 async function movimientos() {
-  const selector = document.getElementById('insumo');
-  const filas = document.getElementById('filas');
-
-  // Carga los movimientos. Sin insumo elegido trae los de todos; con uno, el selector funciona
-  // como filtro (GET .../movimientos?insumo=ID).
-  async function mostrar(insumoId) {
-    estado.textContent = 'Cargando…';
-    try {
-      const filtro = insumoId ? '?insumo=' + encodeURIComponent(insumoId) : '';
-      const { datos } = await api(`${base}/movimientos${filtro}`);
-      filas.replaceChildren(...datos.map((m) => {
-        const tr = el('tr');
-        tr.append(
-          el('td', fecha(m.fecha)),
-          el('td', m.insumo),
-          el('td', TIPOS[m.tipo] ?? m.tipo),
-          el('td', MOTIVOS[m.motivo] ?? m.motivo),
-          el('td', m.cantidad),
-          el('td', m.usuario ?? '—')
-        );
-        return tr;
-      }));
-      if (datos.length) {
-        estado.textContent = '';
-      } else {
-        estado.textContent = insumoId ? 'Este insumo todavía no tiene movimientos.' : 'Todavía no hay movimientos de insumos.';
-      }
-    } catch {
-      filas.replaceChildren();
-      estado.textContent = 'No se pudo cargar el historial.';
-    }
-  }
-
-  // El selector se llena con todos los insumos (los dados de baja también tienen historial).
-  try {
-    const { datos } = await api(base);
-    selector.append(...datos.map((i) => el('option', i.activo ? i.nombre : i.nombre + ' (de baja)', { value: i.id })));
-  } catch {
-    estado.textContent = 'No se pudo cargar la lista de insumos.';
-    return;
-  }
-
-  // Si llegó con ?id=, ese insumo queda elegido.
-  if (id) selector.value = id;
-
-  // Al cambiar el insumo: se actualiza la URL (sin recargar) y se muestran sus movimientos.
-  selector.addEventListener('change', () => {
-    const elegido = selector.value;
-    history.replaceState(null, '', elegido ? '?id=' + elegido : location.pathname);
-    mostrar(elegido);
+  await pantallaMovimientos({
+    urlItems: base,
+    urlMovimientos: (insumo, desde, hasta) => `${base}/movimientos?` + new URLSearchParams(
+      Object.entries({ insumo, desde, hasta }).filter(([, v]) => v)).toString(),
+    campoItem: 'insumo',
+    parametroItem: 'id',
+    textoVacio: 'No hay movimientos de insumos con ese filtro.',
   });
-
-  mostrar(selector.value);
-}
-
-// "2026-11-06 15:30:00" -> "06/11/2026 15:30"
-function fecha(texto) {
-  const [dia, hora] = texto.split(' ');
-  const [a, m, d] = dia.split('-');
-  return `${d}/${m}/${a} ${hora.slice(0, 5)}`;
 }
