@@ -1,5 +1,6 @@
 // Textos y estilos de los estados del circuito de adopción (contrato-adopciones.md del repo Adopciones).
-import { el } from './ui.js';
+import { api } from './api.js';
+import { confirmar, el } from './ui.js';
 
 const ESTADOS = {
   // Publicación (moderación)
@@ -28,6 +29,39 @@ const ESTADOS = {
 };
 
 export const textoEstado = (codigo) => ESTADOS[codigo]?.[0] ?? codigo;
+
+// Estados de una postulación (24/11). RECHAZADA: la rescatista eligió a otra persona, o se cerró la
+// publicación o la adopción. CANCELADA: la canceló el cliente. Al cliente se le dice "por vos".
+const ESTADOS_POSTULACION = {
+  PENDIENTE: ['Esperando revisión', 'insignia-espera'],
+  ELEGIDA: ['Elegida', 'insignia-listo'],
+  RECHAZADA: ['Cancelada por la rescatista', 'insignia-anulado'],
+  CANCELADA: ['Cancelada por el postulante', 'insignia-anulado'],
+};
+
+/**
+ * La insignia de una postulación. mira: quién la ve. Al cliente que la canceló y a la rescatista que
+ * la cerró se les dice "Cancelada por vos"; a la veterinaria, quién la canceló.
+ */
+export function insigniaPostulacion(codigo, { mira = 'veterinaria' } = {}) {
+  let [texto, clase] = ESTADOS_POSTULACION[codigo] ?? [codigo, ''];
+  if ((mira === 'postulante' && codigo === 'CANCELADA') || (mira === 'rescatista' && codigo === 'RECHAZADA')) {
+    texto = 'Cancelada por vos';
+  }
+  return el('span', texto, { class: ('insignia ' + clase).trim() });
+}
+
+/**
+ * Cancela una postulación PENDIENTE del cliente (POST /api/adopciones/postulaciones/{id}/cancelar),
+ * después de confirmarlo. Devuelve la postulación actualizada, null si no confirmó, o lanza el error.
+ */
+export async function cancelarPostulacion(p) {
+  const pregunta = `¿Cancelar tu postulación para adoptar a ${p.publicacion.mascota.nombre}? `
+    + 'No vas a poder volver a postularte por este animal.';
+  if (!await confirmar(pregunta, { aceptar: 'Cancelar postulación', peligro: true })) return null;
+  const { postulacion } = await api(`/api/adopciones/postulaciones/${encodeURIComponent(p.id)}/cancelar`, { metodo: 'POST' });
+  return postulacion;
+}
 
 // <span class="insignia ...">Texto</span>
 export function insignia(codigo) {
@@ -73,6 +107,8 @@ export function diaCorto(f) {
 // En qué paso está la postulación: para la elegida, el de la adopción y el turno del chequeo.
 export function seguimiento(p) {
   if (p.estado === 'PENDIENTE') return 'La rescatista todavía está eligiendo.';
+  if (p.estado === 'RECHAZADA') return 'La rescatista eligió a otra persona o cerró la publicación.';
+  if (p.estado === 'CANCELADA') return 'La cancelaste: no te podés volver a postular por este animal.';
   if (p.estado !== 'ELEGIDA') return '';
   const { estado: estadoAdopcion, turno_chequeo: turno } = p.adopcion;
   if (estadoAdopcion === 'FINALIZADA') return '¡Adopción completa! Ya está en Mis mascotas.';
@@ -88,12 +124,31 @@ export function seguimiento(p) {
  * (en "Animales que buscan familia" y en la publicación, en lugar de "Quiero adoptarlo": no se puede
  * postular dos veces por el mismo animal).
  */
-export function bloquePostulacion(p) {
+export function bloquePostulacion(p, { cancelable = false } = {}) {
   const caja = el('div', '', { class: 'tu-postulacion' });
   const linea = el('p', 'Tu postulación: ');
-  linea.append(insignia(p.estado));
+  linea.append(insigniaPostulacion(p.estado, { mira: 'postulante' }));
   caja.append(linea);
   const paso = seguimiento(p);
   if (paso) caja.append(el('p', paso, { class: 'datos' }));
+  // Mientras la rescatista no eligió, se puede cancelar (24/11). La caja se reemplaza por la nueva.
+  if (cancelable && p.estado === 'PENDIENTE') {
+    const error = el('p', '', { class: 'campo-error', role: 'alert' });
+    const boton = el('button', 'Cancelar postulación', { type: 'button', class: 'boton boton-borde boton-chico' });
+    boton.addEventListener('click', async () => {
+      error.textContent = '';
+      boton.disabled = true;
+      try {
+        const actualizada = await cancelarPostulacion(p);
+        if (actualizada) caja.replaceWith(bloquePostulacion(actualizada, { cancelable }));
+      } catch (e) {
+        error.textContent = e?.datos?.error ?? 'No se pudo cancelar la postulación. Probá de nuevo.';
+      } finally {
+        boton.disabled = false;
+      }
+    });
+    caja.append(el('div', '', { class: 'acciones' }), error);
+    caja.querySelector('.acciones').append(boton);
+  }
   return caja;
 }

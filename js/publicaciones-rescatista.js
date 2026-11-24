@@ -9,7 +9,7 @@
 import { api } from './api.js';
 import { exigirRol } from './auth.js';
 import { confirmar, el, limpiarErrores, mostrarErrores } from './ui.js';
-import { edad, fecha, insignia, leerComoDataUrl, mensajeDeError } from './etiquetas-adopciones.js';
+import { edad, fecha, insignia, insigniaPostulacion, leerComoDataUrl, mensajeDeError } from './etiquetas-adopciones.js';
 import { textoEspecieMascota } from './etiquetas.js';
 
 const usuario = await exigirRol(['RESCATISTA']);
@@ -164,7 +164,7 @@ function filaPostulante(postulacion, adopcion, nombre) {
   // El teléfono llega solo cuando la postulación está elegida, para coordinar la entrega.
   if (postulacion.cliente.telefono) cliente.append(el('span', 'Tel.: ' + postulacion.cliente.telefono, { class: 'ayuda' }));
   const celdaEstado = el('td');
-  celdaEstado.append(insignia(postulacion.estado));
+  celdaEstado.append(insigniaPostulacion(postulacion.estado, { mira: 'rescatista' }));
 
   const celda = el('td');
   const acciones = el('div', '', { class: 'acciones' });

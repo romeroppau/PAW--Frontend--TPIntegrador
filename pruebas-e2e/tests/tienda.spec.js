@@ -461,7 +461,7 @@ test('el reintegro se ve en Mis compras, en la factura y en Ventas', async ({ pa
   await expect(page.locator('#filas')).toContainText('La canceló el comprador · reintegro de $ 7.250,00 (el 50 %), en proceso');
 });
 
-test('mis compras: cada una con su estado, lo que hay que hacer y la factura de las pagadas', async ({ page }) => {
+test('mis compras: cada una con su estado y lo que hay que hacer; la factura está en el detalle', async ({ page }) => {
   await simularSesion(page, CLIENTE);
   await page.route('**/api/tienda/carrito', (route) => responderJson(route, VACIO));
   await page.route('**/api/tienda/compras?*', (route) => responderJson(route, {
@@ -482,10 +482,10 @@ test('mis compras: cada una con su estado, lo que hay que hacer y la factura de 
   await expect(filas.nth(2)).toContainText('Venció el plazo de retiro');
   await expect(page.getByRole('link', { name: 'V-000101', exact: true })).toHaveAttribute('href', '/tienda/compra.html?numero=V-000101');
 
-  // Solo las que se pagaron tienen factura (también la que se pagó y después se canceló).
-  await expect(filas.nth(0).getByRole('link', { name: /factura/ })).toHaveCount(0);
-  await expect(page.getByRole('link', { name: 'Ver la factura de la compra V-000101' })).toHaveAttribute('href', '/tienda/factura.html?numero=V-000101');
-  await expect(page.getByRole('link', { name: 'Ver la factura de la compra V-000103' })).toBeVisible();
+  // Sin columna "Factura" (24/11): la factura se ve desde el detalle de la compra (el número es el enlace).
+  await expect(page.locator('thead th')).toHaveText(['Compra', 'Fecha', 'Total', 'Estado', 'Para tener en cuenta']);
+  await expect(page.getByRole('link', { name: /factura/ })).toHaveCount(0);
+  await expect(page.getByRole('link', { name: 'V-000101' })).toHaveAttribute('href', '/tienda/compra.html?numero=V-000101');
 
   // El filtro muestra las fechas que usó el servidor (los últimos 30 días); no hay más páginas.
   await expect(page.getByLabel('Desde')).toHaveValue('2026-10-22');

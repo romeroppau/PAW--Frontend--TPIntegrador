@@ -11,8 +11,8 @@
   <link rel="stylesheet" href="/css/tienda.css">
 </head>
 <!-- Las compras del comprador (cliente o rescatista), de la más nueva a la más vieja: por defecto las
-     de los últimos 30 días, con un filtro Desde / Hasta, de a 20 ("Ver más"). Las pagadas tienen
-     "Ver factura". Lo maneja js/compras.js con GET /api/tienda/compras?desde=&hasta=&pagina=
+     de los últimos 30 días, con un filtro Desde / Hasta, de a 20 ("Ver más"). La factura se ve
+     desde el detalle de cada compra (24/11: ya no hay columna "Factura"). Lo maneja js/compras.js con GET /api/tienda/compras?desde=&hasta=&pagina=
      (repo Inventario, docs/api/contrato-tienda.md). -->
 <body data-rol="CLIENTE,RESCATISTA">
   <a class="saltar" href="#contenido">Saltar al contenido</a>
@@ -46,7 +46,7 @@
       <div class="tabla-scroll" id="tabla" hidden>
         <table>
           <caption class="solo-lectores">Tus compras</caption>
-          <thead><tr><th scope="col">Compra</th><th scope="col">Fecha</th><th scope="col">Total</th><th scope="col">Estado</th><th scope="col">Para tener en cuenta</th><th scope="col">Factura</th></tr></thead>
+          <thead><tr><th scope="col">Compra</th><th scope="col">Fecha</th><th scope="col">Total</th><th scope="col">Estado</th><th scope="col">Para tener en cuenta</th></tr></thead>
           <tbody id="filas"></tbody>
         </table>
       </div>
