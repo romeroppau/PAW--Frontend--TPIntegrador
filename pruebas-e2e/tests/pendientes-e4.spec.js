@@ -178,3 +178,20 @@ test('el detalle de producto crea la imagen solo si el producto tiene una', asyn
   await expect(page.locator('#producto-sin-imagen')).toBeVisible();
   await expect(page.locator('#producto-imagen')).toHaveCount(0);
 });
+
+test('el historial dice el motivo de cada consulta: el chequeo de adopción se distingue (25/11)', async ({ page }) => {
+  await simularSesion(page, CLIENTE);
+  await page.route('**/api/pacientes/mascotas', (route) => responderJson(route, { mascotas: [{ id: 39201, nombre: 'Pancho', especie: 'PERRO' }] }));
+  await page.route('**/api/pacientes/mascotas/39201/historial', (route) => responderJson(route, { consultas: [
+    { id: 3, motivo: 'VACUNACION', fecha: '2026-11-20', diagnostico: 'Vacunación de rutina.', observaciones: null, insumos: [], productos: [], factura: null },
+    { id: 2, motivo: 'CHEQUEO_ADOPCION', fecha: '2026-10-25', diagnostico: 'Sano, apto para adopción.', observaciones: null, insumos: [], productos: [], factura: null },
+    { id: 1, motivo: 'CONSULTA', fecha: '2026-09-02', diagnostico: 'Otitis', observaciones: null, insumos: [], productos: [], factura: null },
+    // Una respuesta sin motivo (API vieja) sigue diciendo "Consulta".
+    { id: 0, fecha: '2026-08-01', diagnostico: 'Control', observaciones: null, insumos: [], productos: [], factura: null },
+  ] }));
+
+  await page.goto('/cliente/historial.html?mascota=39201');
+  await expect(page.locator('.historial-consulta h2')).toHaveText([
+    'Vacunación del 20/11/2026', 'Chequeo de adopción del 25/10/2026', 'Consulta del 02/09/2026', 'Consulta del 01/08/2026',
+  ]);
+});

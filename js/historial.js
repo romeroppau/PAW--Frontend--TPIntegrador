@@ -10,7 +10,7 @@
 
 import { api } from './api.js';
 import { el } from './ui.js';
-import { textoEstadoFactura, textoEspecieMascota } from './etiquetas.js';
+import { textoEstadoFactura, textoEspecieMascota, textoMotivoTurno } from './etiquetas.js';
 
 const estado = document.getElementById('estado');
 const contenedor = document.getElementById('consultas');
@@ -63,11 +63,12 @@ async function elegirMascota() {
   }
 }
 
-// Una consulta finalizada: fecha, diagnóstico, ítems y factura.
+// Una consulta finalizada: el motivo y la fecha ("Chequeo de adopción del 25/10/2026"; 25/11), el
+// diagnóstico, los ítems y la factura.
 function tarjeta(c) {
   const art = el('article', '', { class: 'tarjeta historial-consulta' });
   art.append(
-    el('h2', 'Consulta del ' + fecha(c.fecha ?? c.finalizada_en)),
+    el('h2', (c.motivo ? textoMotivoTurno(c.motivo) : 'Consulta') + ' del ' + fecha(c.fecha ?? c.finalizada_en)),
     el('p', 'Diagnóstico: ' + (c.diagnostico || '—'))
   );
   if (c.observaciones) art.append(el('p', 'Observaciones: ' + c.observaciones));

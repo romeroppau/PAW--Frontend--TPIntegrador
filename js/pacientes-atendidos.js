@@ -13,7 +13,7 @@
 import { api, debounce } from './api.js';
 import { exigirRol } from './auth.js';
 import { el } from './ui.js';
-import { textoEspecieMascota, textoEstadoFactura } from './etiquetas.js';
+import { textoEspecieMascota, textoEstadoFactura, textoMotivoTurno } from './etiquetas.js';
 import { enlaceMascota } from './mascota-datos.js';
 import { enlaceDuenio } from './personas.js';
 
@@ -129,10 +129,13 @@ async function desplegar(mascota, boton, detalle, celda) {
   }
 }
 
-// Una consulta: fecha, diagnóstico, observaciones, lo que se usó, la factura y los enlaces.
+// Una consulta: fecha, motivo (salvo una consulta común; 25/11), diagnóstico, observaciones, lo que se
+// usó, la factura y los enlaces.
 function consulta(c) {
   const li = el('li', '', { class: 'consulta-paciente' });
-  li.append(el('strong', fecha(c.fecha ?? c.finalizada_en)), ' ', el('span', c.diagnostico || 'Sin diagnóstico'));
+  li.append(el('strong', fecha(c.fecha ?? c.finalizada_en)), ' ');
+  if (c.motivo && c.motivo !== 'CONSULTA') li.append(el('span', textoMotivoTurno(c.motivo), { class: 'insignia' }), ' ');
+  li.append(el('span', c.diagnostico || 'Sin diagnóstico'));
   if (c.observaciones) li.append(el('span', c.observaciones, { class: 'ayuda' }));
 
   const usado = [
