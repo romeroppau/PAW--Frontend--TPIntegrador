@@ -14,8 +14,8 @@ export const FRANJAS = { MANIANA: 'mañana', TARDE: 'tarde' };
 
 const pesos = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 2 });
 export const dinero = (valor) => pesos.format(Number(valor || 0));
-// "2026-12-31" -> "31/12"
-const diaMes = (texto) => texto.slice(5, 10).split('-').reverse().join('/');
+// "2026-12-31" -> "31/12/2026"
+const diaMes = (texto) => texto.slice(0, 10).split('-').reverse().join('/');
 
 // GET /api/pacientes/promociones-turnos (público): { precio_consulta, datos }. Si no responde, null.
 export async function promocionesDeTurnos() {

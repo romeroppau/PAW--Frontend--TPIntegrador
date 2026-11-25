@@ -125,7 +125,7 @@ test('mis postulaciones: es una pestaña, y la elegida dice en qué paso está',
   await expect(page.locator('#publicaciones')).toBeHidden();
 
   const filas = page.locator('#filas-mias > tr');
-  await expect(filas.nth(0)).toContainText('Turno de chequeo: jue 26/11 a las 10:00.');
+  await expect(filas.nth(0)).toContainText('Turno de chequeo: jue 26/11/2026 a las 10:00.');
   await expect(filas.nth(1)).toContainText('Esperando el turno del chequeo');
   await expect(filas.nth(2)).toContainText('La rescatista todavía está eligiendo.');
 });

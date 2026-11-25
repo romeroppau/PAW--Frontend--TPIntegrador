@@ -15,6 +15,7 @@
 import { api, debounce } from './api.js';
 import { exigirRol } from './auth.js';
 import { confirmar, el } from './ui.js';
+import { limitarAHoy } from './rango-fechas.js';
 import { TEXTO_MOTIVO, textoDelReintegro, diaConNombre, fecha, fechaHora, hoyArgentina, leerFechas, precio, textoDeError } from './tienda.js';
 
 const PESTANIAS = {
@@ -46,6 +47,7 @@ const $verTodos = document.getElementById('ver-todos');
 const $filtro = document.getElementById('filtro');
 const $desde = document.getElementById('desde');
 const $hasta = document.getElementById('hasta');
+limitarAHoy($desde, $hasta);   // historial: nada posterior a hoy
 const $estado = document.getElementById('estado');
 const $aviso = document.getElementById('aviso');
 const $tabla = document.getElementById('tabla');

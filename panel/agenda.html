@@ -35,6 +35,9 @@
         <h2 id="titulo-turno">Nuevo turno</h2>
         <form id="form-turno" novalidate>
           <div class="campo">
+            <!-- 25/11: la lista trae hasta 100 mascotas; el buscador pide las que coinciden (mascota o dueño). -->
+            <label for="buscar-mascota">Buscar por mascota o dueño</label>
+            <input id="buscar-mascota" type="search" autocomplete="off" maxlength="80" placeholder="Ej.: Rocco o Benítez">
             <label for="mascota_id">Mascota</label>
             <select id="mascota_id" name="mascota_id" required>
               <option value="">Elegí la mascota</option>

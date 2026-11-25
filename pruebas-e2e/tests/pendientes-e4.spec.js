@@ -157,9 +157,9 @@ test('productos: uno dado de baja no carga stock y se puede reactivar', async ({
 
   await page.goto('/panel/productos.html');
 
-  await expect(page.getByLabel('Cantidad a cargar de Cama acolchada')).toHaveCount(0);
+  await expect(page.getByLabel('Cantidad de Cama acolchada')).toHaveCount(0);
   await page.getByRole('button', { name: 'Reactivar Cama acolchada' }).click();
-  await expect(page.getByLabel('Cantidad a cargar de Cama acolchada')).toBeVisible();
+  await expect(page.getByLabel('Cantidad de Cama acolchada')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Dar de baja Cama acolchada' })).toBeVisible();
 });
 

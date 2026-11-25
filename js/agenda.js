@@ -12,7 +12,7 @@
  * Seguridad: la guardia de acceso es solo comodidad de interfaz; la autorización real la hace
  * el backend. Todo texto que viene de la API se inserta con el() (textContent), nunca con innerHTML.
  */
-import { api } from './api.js';
+import { api, debounce } from './api.js';
 import { exigirRol } from './auth.js';
 import { confirmar, el, limpiarErrores, mostrarErrores } from './ui.js';
 import { textoEstadoTurno, textoMotivoTurno, textoEspecieMascota } from './etiquetas.js';
@@ -59,10 +59,9 @@ function sumarDias(fecha, dias) {
   return d.toISOString().slice(0, 10);
 }
 
-// "jueves 5 de noviembre de 2026"
-const textoDia = (fecha) => new Intl.DateTimeFormat('es-AR', {
-  weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC'
-}).format(new Date(fecha + 'T12:00:00Z'));
+// "jueves 05/11/2026" (el día de la semana y la fecha en DD/MM/AAAA)
+const DIAS_SEMANA = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+const textoDia = (fecha) => `${DIAS_SEMANA[new Date(fecha + 'T12:00:00Z').getUTCDay()]} ${fecha.split('-').reverse().join('/')}`;
 
 const esFechaValida = (texto) => /^\d{4}-\d{2}-\d{2}$/.test(texto ?? '') && !Number.isNaN(Date.parse(texto));
 
@@ -277,19 +276,36 @@ async function abrirFormularioTurno(turno = null) {
   }
   formTurno.elements.fecha.value = inputFecha.value >= hoy() ? inputFecha.value : hoy();
 
-  // La lista de mascotas se pide una sola vez, la primera vez que se abre el formulario.
-  if (!mascotasCargadas) {
-    try {
-      const { mascotas } = await api('/api/pacientes/mascotas');
-      selectMascota.append(...mascotas.map((m) => el('option',
-        `${m.nombre} (${textoEspecieMascota(m.especie)}) · ${m.duenio.nombre}`, { value: m.id })));
-      mascotasCargadas = true;
-    } catch {
-      mostrarErrores(formTurno, {}, 'No se pudo cargar la lista de mascotas.');
-    }
-  }
-  selectMascota.focus();
+  // La lista de mascotas se pide la primera vez que se abre el formulario.
+  if (!mascotasCargadas) await cargarMascotasTurno();
+  buscarMascota.focus();
 }
+
+// La API trae hasta 100 mascotas por pedido (por nombre). Con más, el buscador pide las que coinciden
+// con la mascota o el dueño (GET /api/pacientes/mascotas?buscar=), así ninguna queda afuera (25/11).
+const buscarMascota = document.getElementById('buscar-mascota');
+let pedidoMascotas = 0;
+
+async function cargarMascotasTurno(buscar = '') {
+  const pedido = ++pedidoMascotas;
+  const elegida = selectMascota.value;
+  try {
+    const { mascotas } = await api('/api/pacientes/mascotas' + (buscar ? '?buscar=' + encodeURIComponent(buscar) : ''));
+    if (pedido !== pedidoMascotas) return;
+    const primera = el('option', mascotas.length || !buscar ? 'Elegí la mascota' : `Ninguna mascota coincide con "${buscar}"`, { value: '' });
+    selectMascota.replaceChildren(primera, ...mascotas.map((m) => el('option',
+      `${m.nombre} (${textoEspecieMascota(m.especie)}) · ${m.duenio.nombre}`, { value: m.id })));
+    if ([...selectMascota.options].some((o) => o.value === elegida)) selectMascota.value = elegida;
+    // Si la búsqueda deja una sola mascota, queda elegida.
+    if (buscar && mascotas.length === 1) selectMascota.value = String(mascotas[0].id);
+    mascotasCargadas = true;
+  } catch {
+    if (pedido !== pedidoMascotas) return;
+    mostrarErrores(formTurno, {}, 'No se pudo cargar la lista de mascotas.');
+  }
+}
+
+buscarMascota.addEventListener('input', debounce(() => cargarMascotasTurno(buscarMascota.value.trim().slice(0, 80)), 300));
 
 document.getElementById('nuevo-turno').addEventListener('click', () => abrirFormularioTurno());
 document.getElementById('cancelar-turno').addEventListener('click', () => {
