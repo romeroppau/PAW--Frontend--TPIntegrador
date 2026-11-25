@@ -21,7 +21,7 @@ const CONSULTAS = [
     factura: { numero: 'C-000051', total: '15300.00', estado: 'PAGADA' },
   },
   {
-    id: 40, fecha: '2026-10-02', finalizada_en: '2026-10-02 09:30:00', diagnostico: 'Control general: sano.', observaciones: null,
+    id: 40, motivo: 'CHEQUEO_ADOPCION', fecha: '2026-10-02', finalizada_en: '2026-10-02 09:30:00', diagnostico: 'Control general: sano.', observaciones: null,
     valor_base: '15000.00', insumos: [], productos: [], factura: { numero: 'C-000040', total: '15000.00', estado: 'PAGADA' },
   },
 ];
@@ -84,6 +84,9 @@ test('"Ver consultas" despliega el historial de esa mascota en la misma lista', 
   await expect(consultas.nth(0)).toContainText('Factura C-000051: $15.300,00');
   await expect(consultas.nth(0).getByRole('link', { name: 'Ver la factura C-000051' })).toHaveAttribute('href', '/cliente/factura.html?consulta=51');
   await expect(consultas.nth(1).getByRole('link', { name: 'Ver la consulta del 02/10/2026' })).toHaveAttribute('href', '/panel/consulta.html?id=40');
+  // El motivo se ve si no es una consulta común (25/11).
+  await expect(consultas.nth(1).locator('.insignia')).toHaveText('Chequeo de adopción');
+  await expect(consultas.nth(0).locator('.insignia')).toHaveCount(0);
 
   // Se oculta y se vuelve a abrir sin pedirlo de nuevo.
   await page.getByRole('button', { name: 'Ver las consultas de Firulais' }).click();
