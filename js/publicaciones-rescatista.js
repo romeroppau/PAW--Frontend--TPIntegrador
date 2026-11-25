@@ -81,10 +81,18 @@ function tarjeta(publicacion) {
   const acciones = el('div', '', { class: 'acciones' });
   const error = el('span', '', { class: 'campo-error', role: 'alert' });
 
-  if (adopcion) {
+  if (adopcion && CON_ADOPTANTE.includes(adopcion.estado)) {
+    // Ya eligió (24/11): no hay nada que revisar, se ve quién adopta y lo que contestó.
+    const ver = el('button', 'Ver adoptante elegido', { type: 'button', class: 'boton boton-chico', 'aria-label': 'Ver el adoptante elegido para ' + mascota.nombre });
+    ver.addEventListener('click', () => verElegido(adopcion.id, mascota.nombre));
+    acciones.append(ver);
+  } else if (adopcion) {
     const ver = el('button', `Postulantes (${adopcion.postulaciones_pendientes ?? 0} sin revisar)`, { type: 'button', class: 'boton boton-chico' });
     ver.addEventListener('click', () => verPostulantes(adopcion.id, mascota.nombre));
     acciones.append(ver);
+  }
+
+  if (adopcion) {
 
     if (!TERMINADAS.includes(adopcion.estado)) {
       const cancelar = el('button', 'Cancelar adopción', { type: 'button', class: 'boton boton-borde boton-chico' });
@@ -141,9 +149,53 @@ async function darDeBaja(publicacion, error) {
 
 /* ---------- Postulantes y elección ---------- */
 
+// Adopciones en las que la rescatista ya eligió: muestran al adoptante en lugar de los postulantes.
+const CON_ADOPTANTE = ['ADOPTANTE_ELEGIDO', 'CHEQUEO_PENDIENTE', 'FINALIZADA'];
+
+// El adoptante elegido y lo que contestó en la postulación (24/11). Mismo pedido que los postulantes:
+// GET /api/adopciones/{id}/postulaciones (el teléfono llega solo del elegido).
+async function verElegido(adopcionId, nombre) {
+  const estadoPostulantes = document.getElementById('estado-postulantes');
+  const ficha = document.getElementById('adoptante-elegido');
+  document.getElementById('titulo-postulantes').textContent = 'Adoptante elegido para ' + nombre;
+  document.getElementById('tabla-postulantes').hidden = true;
+  ficha.hidden = true;
+  seccionPostulantes.hidden = false;
+  estadoPostulantes.textContent = 'Cargando…';
+  try {
+    const { adopcion, postulaciones } = await api(`/api/adopciones/${adopcionId}/postulaciones`);
+    const elegida = postulaciones.find((p) => p.estado === 'ELEGIDA');
+    if (!elegida) {
+      estadoPostulantes.textContent = 'No se encontró el adoptante elegido.';
+      return;
+    }
+    const datos = el('dl', '', { class: 'contacto-datos' });
+    const dato = (titulo, valor) => {
+      const fila = el('div');
+      fila.append(el('dt', titulo), el('dd', valor || '—'));
+      datos.append(fila);
+    };
+    dato('Nombre', elegida.cliente.nombre);
+    dato('Teléfono', elegida.cliente.telefono);
+    dato('Se postuló el', fecha(elegida.fecha));
+    dato('Tipo de vivienda', elegida.tipo_vivienda);
+    dato('Otras mascotas', elegida.otras_mascotas);
+    dato('Tiempo disponible', elegida.tiempo_disponible);
+    const estadoAdopcion = el('p', 'Adopción: ');
+    estadoAdopcion.append(insignia(adopcion.estado));
+    ficha.replaceChildren(estadoAdopcion, datos);
+    ficha.hidden = false;
+    estadoPostulantes.textContent = '';
+    seccionPostulantes.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } catch {
+    estadoPostulantes.textContent = 'No se pudo cargar el adoptante elegido.';
+  }
+}
+
 async function verPostulantes(adopcionId, nombre) {
   const estadoPostulantes = document.getElementById('estado-postulantes');
   document.getElementById('titulo-postulantes').textContent = 'Postulantes para ' + nombre;
+  document.getElementById('adoptante-elegido').hidden = true;
   seccionPostulantes.hidden = false;
   estadoPostulantes.textContent = 'Cargando…';
   try {

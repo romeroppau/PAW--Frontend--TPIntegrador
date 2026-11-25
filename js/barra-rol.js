@@ -115,7 +115,10 @@ export const MENUS = {
         ['Mis mascotas', '/cliente/mascotas.html']]],
       ['tienda', 'Tienda', 'También podés comprar en la tienda.', [
         ['Promociones', '/catalogo/promociones.html'],
-        ['Ver catálogo de productos', '/catalogo/catalogo.html'],
+        ['Ver catálogo de productos', '/catalogo/catalogo.html', false, [
+          ['Medicamentos', '/catalogo/catalogo.html?categoria=MEDICAMENTO'],
+          ['Alimento balanceado', '/catalogo/catalogo.html?categoria=ALIMENTO'],
+          ['Accesorios', '/catalogo/catalogo.html?categoria=ACCESORIO']]],
         ['Mis compras', '/tienda/compras.html']]],
       ['notificaciones', 'Notificaciones', 'Publicaciones, postulaciones y adopciones.', [
         ['Ver mis notificaciones', '/cuenta/notificaciones.html']]],
