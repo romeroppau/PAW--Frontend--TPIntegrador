@@ -56,6 +56,15 @@
           </form>
         </section>
 
+        <!-- Turno de vacunación o desparasitación (25/11): qué se da, y la dosis que tiene que estar en los
+             insumos (con su stock, que se puede cargar acá mismo). js/consulta.js lo arma. -->
+        <section class="bloque tarjeta" id="bloque-calendario" aria-labelledby="t-calendario" hidden>
+          <h2 id="t-calendario">Vacuna o desparasitación</h2>
+          <p id="texto-calendario"></p>
+          <div id="insumos-calendario"></div>
+          <p class="mensaje" id="mensaje-calendario" role="alert" hidden></p>
+        </section>
+
         <section class="bloque tarjeta" aria-labelledby="t-insumos">
           <h2 id="t-insumos">Insumos utilizados</h2>
           <p class="estado" id="vacio-insumos">No hay insumos cargados.</p>
@@ -120,6 +129,8 @@
           <p id="factura" class="mensaje mensaje-ok" role="status" hidden></p>
           <p><button type="button" class="boton boton-acento" id="finalizar">Finalizar consulta</button></p>
           <p class="mensaje" id="mensaje-finalizar" role="alert" hidden></p>
+          <!-- Si falta stock al finalizar: cargarlo acá, sin salir de la consulta (25/11). -->
+          <div id="cargar-faltantes"></div>
         </section>
       </div>
     </div>

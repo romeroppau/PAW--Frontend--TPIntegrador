@@ -88,7 +88,7 @@ test('la mascota de otro cliente muestra "no se encontró"', async ({ page }) =>
   await expect(page.locator('#calendario')).toBeHidden();
 });
 
-test('la veterinaria busca por dueño, ve el dueño en la lista y su ficha enlazada (solo mascotas con calendario)', async ({ page }) => {
+test('la veterinaria busca por dueño, ve el dueño en la lista y su ficha enlazada (todas las mascotas: puede armarles el calendario)', async ({ page }) => {
   await simularSesion(page, { id: 101, nombre: 'Vet', email: 'v@prueba.huellavet', rol: 'VETERINARIO' });
   const pedidos = [];
   const CON_DUENIO = [
@@ -107,11 +107,11 @@ test('la veterinaria busca por dueño, ve el dueño en la lista y su ficha enlaz
 
   await page.goto('/cliente/calendario.html');
   await expect(page.locator('#mascota option')).toHaveText(['Elegí una mascota', 'Luna (Perro) · Tomás Aguirre', 'Bobby (Gato) · Ana Pérez']);
-  expect(pedidos[0]).toEqual({ con_calendario: '1' });
+  expect(pedidos[0]).toEqual({});
 
   await page.fill('#buscar', 'aguirre');
   await expect(page.locator('#mascota option')).toHaveCount(2);
-  expect(pedidos.at(-1)).toEqual({ con_calendario: '1', buscar: 'aguirre' });
+  expect(pedidos.at(-1)).toEqual({ buscar: 'aguirre' });
 
   await page.selectOption('#mascota', '103');
   await expect(page.locator('#duenio')).toBeVisible();

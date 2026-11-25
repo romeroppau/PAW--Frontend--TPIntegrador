@@ -49,10 +49,27 @@
         <p id="duenio" hidden>Dueño: <span id="duenio-enlace"></span></p>
         <p id="al-dia" class="mensaje"></p>
         <p class="estado" id="vacio" hidden>Todavía no tiene vacunas ni desparasitaciones en su calendario.</p>
+        <!-- Solo la veterinaria (25/11): agrega al calendario una vacuna o desparasitación del plan de la
+             especie. Sin estar en el calendario no se puede sacar un turno para darla. -->
+        <form id="form-agregar" class="form-item" novalidate hidden>
+          <h3 class="ancho-completo">Agregar al calendario</h3>
+          <div class="campo">
+            <label for="plan_sanitario_id">Vacuna o desparasitación</label>
+            <select id="plan_sanitario_id" name="plan_sanitario_id"></select>
+            <span class="campo-error" id="error-plan_sanitario_id"></span>
+          </div>
+          <div class="campo">
+            <label for="fecha_programada">Le toca el</label>
+            <input id="fecha_programada" name="fecha_programada" type="date" required>
+            <span class="campo-error" id="error-fecha_programada"></span>
+          </div>
+          <p class="campo-error" id="error-general" role="alert" hidden></p>
+          <button type="submit" class="boton" id="agregar">Agregar</button>
+        </form>
         <div class="tabla-scroll" id="tabla">
           <table>
             <caption class="solo-lectores" id="leyenda-tabla">Calendario sanitario</caption>
-            <thead><tr><th scope="col">Fecha</th><th scope="col">Tipo</th><th scope="col">Vacuna o desparasitación</th><th scope="col">Estado</th></tr></thead>
+            <thead><tr><th scope="col">Fecha</th><th scope="col">Tipo</th><th scope="col">Vacuna o desparasitación</th><th scope="col">Estado</th><th scope="col" id="col-acciones" hidden>Acciones</th></tr></thead>
             <tbody id="filas"></tbody>
           </table>
         </div>
