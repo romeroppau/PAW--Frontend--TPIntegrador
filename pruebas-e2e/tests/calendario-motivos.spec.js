@@ -1,6 +1,7 @@
 // 25/11 (migración 025): el calendario sanitario manda en los turnos de vacunación y desparasitación.
-//   - Agenda: el turno de vacunación dice cuál; si no está en el calendario sin dar (o falta una dosis
-//     anterior), avisa con el enlace al calendario y no deja guardar.
+//   - Agenda: un turno con varios motivos; la vacunación dice cuáles. Si alguna no está en el calendario
+//     sin dar (o falta una dosis anterior), avisa con el enlace al calendario y no deja guardar.
+//   - El calendario no se arma solo: vacío, el cliente ve que la veterinaria todavía no lo cargó.
 //   - Calendario (veterinaria): marcar como dada, cambiar la fecha, quitar y agregar.
 //   - Consulta: la dosis tiene que estar en los insumos, y el stock se carga sin salir.
 //   - Insumos: el campo "¿Es una vacuna o antiparasitario del calendario?".
@@ -39,7 +40,7 @@ function calendarioLuna() {
   };
 }
 
-test('agenda: la vacuna tiene que estar en el calendario; si no, avisa y no deja guardar', async ({ page }) => {
+test('agenda: varios motivos; las vacunas tienen que estar en el calendario, si no avisa y no deja guardar', async ({ page }) => {
   await simularSesion(page, VET);
   await page.route(/\/api\/pacientes\/turnos\?fecha=/, (route) => responderJson(route, { fecha: HOY, turnos: [] }));
   await page.route('**/api/pacientes/mascotas', (route) => responderJson(route, { mascotas: [
@@ -54,7 +55,7 @@ test('agenda: la vacuna tiene que estar en el calendario; si no, avisa y no deja
       id: 120, fecha: MANIANA, hora: '10:30', motivo: 'VACUNACION', estado: 'PROGRAMADO',
       mascota: { id: 103, nombre: 'Luna', especie: 'PERRO' }, duenio: { id: 103, nombre: 'Tomás Aguirre', telefono: null },
       veterinario: { id: 101, nombre: 'Vet' }, consulta_id: null, precio: null,
-      evento_sanitario: { id: 108, nombre: 'Antirrábica', aplicacion: 'ANTIRRABICA' },
+      motivos: [{ motivo: 'VACUNACION', evento_sanitario: { id: 108, nombre: 'Antirrábica', aplicacion: 'ANTIRRABICA' } }, { motivo: 'CONSULTA', evento_sanitario: null }],
     } }, 201);
   });
 
@@ -63,30 +64,45 @@ test('agenda: la vacuna tiene que estar en el calendario; si no, avisa y no deja
   await page.selectOption('#mascota_id', '103');
   await page.fill('#turno-fecha', MANIANA);
   await page.fill('#hora', '10:30');
-  await expect(page.locator('#campo-plan')).toBeHidden();
-  await page.selectOption('#motivo', 'VACUNACION');
+  await expect(page.locator('#campo-VACUNA')).toBeHidden();
+  await page.getByLabel('Vacunación').check();
 
   // La lista dice cómo está cada vacuna en el calendario.
-  await expect(page.locator('#plan_sanitario_id option', { hasText: 'Tos de las perreras' })).toHaveText('Tos de las perreras (no está en el calendario)');
-  await expect(page.locator('#plan_sanitario_id option', { hasText: 'Séxtuple (2.ª dosis)' })).toHaveText('Séxtuple (2.ª dosis) (vencida el 29/10/2026)');
+  const vacunas = page.locator('#campo-VACUNA');
+  await expect(vacunas.locator('label', { hasText: 'Tos de las perreras' })).toContainText('(no está en el calendario)');
+  await expect(vacunas.locator('label', { hasText: 'Séxtuple (2.ª dosis)' })).toContainText('(vencida el 29/10/2026)');
 
   // No está en el calendario: aviso con el enlace, y no se guarda.
-  await page.selectOption('#plan_sanitario_id', '13');
+  await vacunas.getByLabel(/Tos de las perreras/).check();
   await expect(page.locator('#aviso-plan')).toContainText('En el calendario de Luna no figura que se le tenga que dar: Tos de las perreras. Cargala primero en el calendario.');
   await expect(page.getByRole('link', { name: 'Abrir el calendario de Luna' })).toHaveAttribute('href', '/cliente/calendario.html?mascota=103');
   await expect(page.getByRole('button', { name: 'Guardar turno' })).toBeDisabled();
+  await vacunas.getByLabel(/Tos de las perreras/).uncheck();
 
   // La 2.ª séxtuple con la 1.ª sin dar: tampoco.
-  await page.selectOption('#plan_sanitario_id', '3');
+  await vacunas.getByLabel(/Séxtuple \(2\.ª dosis\)/).check();
   await expect(page.locator('#aviso-plan')).toContainText('Antes de Séxtuple (2.ª dosis) tiene que darse Séxtuple (1.ª dosis)');
   await expect(page.getByRole('button', { name: 'Guardar turno' })).toBeDisabled();
+  await vacunas.getByLabel(/Séxtuple \(2\.ª dosis\)/).uncheck();
 
-  // La antirrábica está pendiente: se guarda con cuál.
-  await page.selectOption('#plan_sanitario_id', '5');
+  // La antirrábica está pendiente: se guarda, junto con la consulta general.
+  await vacunas.getByLabel(/Antirrábica/).check();
   await expect(page.locator('#aviso-plan')).toBeEmpty();
   await page.getByRole('button', { name: 'Guardar turno' }).click();
   await expect(page.locator('#seccion-turno')).toBeHidden();
-  expect(cuerpos).toEqual([{ mascota_id: 103, fecha: MANIANA, hora: '10:30', motivo: 'VACUNACION', plan_sanitario_id: 5 }]);
+  expect(cuerpos).toEqual([{ mascota_id: 103, fecha: MANIANA, hora: '10:30', motivos: [{ motivo: 'CONSULTA' }, { motivo: 'VACUNACION', plan_sanitario_id: 5 }] }]);
+});
+
+test('calendario vacío: el cliente ve que la veterinaria todavía no lo cargó', async ({ page }) => {
+  await simularSesion(page, { id: 103, nombre: 'Tomás', email: 'c2@prueba.huellavet', rol: 'CLIENTE' });
+  await page.route(/\/api\/pacientes\/mascotas(\?.*)?$/, (route) => responderJson(route, { mascotas: [{ id: 150, nombre: 'Canela', especie: 'PERRO' }] }));
+  await page.route('**/api/pacientes/mascotas/150/calendario-sanitario', (route) => responderJson(route, {
+    mascota: { id: 150, nombre: 'Canela', especie: 'PERRO', fecha_nacimiento: null, duenio: { id: 103, nombre: 'Tomás' } },
+    vacunas_al_dia: true, eventos: [], plan: PLAN_PERRO,
+  }));
+  await page.goto('/cliente/calendario.html?mascota=150');
+  await expect(page.locator('#vacio')).toHaveText('La veterinaria todavía no cargó el calendario sanitario de esta mascota.');
+  await expect(page.locator('#form-agregar')).toBeHidden();
 });
 
 test('calendario: la veterinaria marca como dada, agrega y quita', async ({ page }) => {
@@ -120,8 +136,12 @@ test('calendario: la veterinaria marca como dada, agrega y quita', async ({ page
   await expect(page.locator('tr[data-id="105"]')).toContainText('(cargada a mano)');
   await expect(page.locator('#estado')).toHaveText('Séxtuple (1.ª dosis): marcada como dada.');
 
-  // Agregar: solo se ofrecen las que no tiene sin dar; las opcionales lo dicen.
+  // Agregar: solo se ofrecen las que no tiene sin dar; las opcionales lo dicen; la 3.ª séxtuple, con la
+  // 2.ª sin dar, está deshabilitada y dice qué falta.
   await expect(page.locator('#form-agregar option', { hasText: 'Antirrábica' })).toHaveCount(0);
+  const tercera = page.locator('#form-agregar option', { hasText: 'Séxtuple (3.ª dosis)' });
+  await expect(tercera).toHaveText('Séxtuple (3.ª dosis) — primero, dadas: Séxtuple (2.ª dosis)');
+  await expect(tercera).toBeDisabled();
   await page.selectOption('#form-agregar select', { label: 'Tos de las perreras (opcional)' });
   await page.fill('#fecha_programada', MANIANA);
   await page.getByRole('button', { name: 'Agregar', exact: true }).click();
@@ -147,8 +167,9 @@ test('consulta: la vacuna va en los insumos, y sin stock se carga desde ahí', a
     id: 8, turno_id: 120, mascota_id: 102, motivo: 'VACUNACION', estado: 'ABIERTA', diagnostico: 'Sano',
     observaciones: null, valor_base: '15000.00', finalizada_en: null, total: '15000.00', productos: [],
     insumos: enConsulta ? [{ id: 1, insumo_id: 191, nombre: 'Vacuna leucemia felina (dosis)', cantidad: 1, costo_unitario: '9800.00', aplicacion: 'LEUCEMIA_FELINA', stock }] : [],
-    evento_sanitario: { id: 140, nombre: 'Leucemia felina (2.ª dosis)', aplicacion: 'LEUCEMIA_FELINA',
-      insumos: [{ id: 191, nombre: 'Vacuna leucemia felina (dosis)', stock }] },
+    motivos: [{ motivo: 'VACUNACION', evento_sanitario: { id: 140, nombre: 'Leucemia felina (2.ª dosis)', aplicacion: 'LEUCEMIA_FELINA' } }, { motivo: 'CONTROL', evento_sanitario: null }],
+    eventos_sanitarios: [{ id: 140, nombre: 'Leucemia felina (2.ª dosis)', aplicacion: 'LEUCEMIA_FELINA',
+      insumos: [{ id: 191, nombre: 'Vacuna leucemia felina (dosis)', stock }] }],
   });
   await page.route('**/api/pacientes/consultas/8', (route) => responderJson(route, consulta()));
   await page.route('**/api/pacientes/consultas/8/insumos', (route) => { enConsulta = true; return responderJson(route, consulta(), 201); });
@@ -163,7 +184,8 @@ test('consulta: la vacuna va en los insumos, y sin stock se carga desde ahí', a
 
   await page.goto('/panel/consulta.html?id=8');
   const bloque = page.locator('#bloque-calendario');
-  await expect(bloque).toContainText('Esta consulta es para Leucemia felina (2.ª dosis): cargá la dosis en los insumos.');
+  await expect(page.locator('#motivos-consulta')).toHaveText('Vacunación: Leucemia felina (2.ª dosis) · Control / seguimiento');
+  await expect(bloque).toContainText('Leucemia felina (2.ª dosis): falta cargar la dosis.');
   await expect(bloque).toContainText('Sin stock');
 
   // Sin stock: se carga ahí mismo, y aparece "Agregar 1".
@@ -173,7 +195,7 @@ test('consulta: la vacuna va en los insumos, y sin stock se carga desde ahí', a
   await expect(page.locator('#sel-insumos option', { hasText: 'Vacuna leucemia' })).toHaveText('Vacuna leucemia felina (dosis) (stock: 3)');
 
   await page.getByRole('button', { name: 'Agregar Vacuna leucemia felina (dosis) a la consulta' }).click();
-  await expect(bloque).toContainText('La dosis ya está en los insumos (Vacuna leucemia felina (dosis)).');
+  await expect(bloque).toContainText('Leucemia felina (2.ª dosis): cargada (Vacuna leucemia felina (dosis)).');
   expect(cargas).toEqual([{ cantidad: 3 }]);
 });
 

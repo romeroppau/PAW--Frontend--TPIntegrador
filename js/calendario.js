@@ -13,6 +13,9 @@
  * consulta (por ejemplo, en otra veterinaria), le cambia la fecha, la quita, o agrega una del plan de
  * la especie. Sin estar en el calendario no se puede sacar un turno para darla. Ve todas las mascotas,
  * no solo las que ya tienen calendario.
+ * El calendario no se arma solo: hasta que la veterinaria lo carga, el cliente (también el que adoptó)
+ * ve "La veterinaria todavía no cargó el calendario sanitario de esta mascota". Una dosis se agrega con
+ * las anteriores de la misma vacuna dadas: las que todavía no se pueden, se ven deshabilitadas.
  *
  * Contrato de la API: docs/api/contrato-calendario.md y contrato-mascotas-turnos.md (repo Pacientes).
  * Seguridad: la guardia de rol la hace guardia-panel.js; la autorización real la hace el backend
@@ -155,7 +158,11 @@ function pintar(calendario) {
 
   document.getElementById('filas').replaceChildren(...eventos.map(fila));
   document.getElementById('tabla').hidden = eventos.length === 0;
-  document.getElementById('vacio').hidden = eventos.length > 0;
+  const vacio = document.getElementById('vacio');
+  vacio.hidden = eventos.length > 0;
+  vacio.textContent = esVeterinario
+    ? `${mascota.nombre} todavía no tiene calendario sanitario: cargá abajo lo que le toca (o lo que ya le dieron, y marcalo como dado).`
+    : 'La veterinaria todavía no cargó el calendario sanitario de esta mascota.';
   document.getElementById('col-acciones').hidden = !esVeterinario;
   if (esVeterinario) pintarAgregar(calendario);
   seccion.hidden = false;
@@ -267,10 +274,19 @@ function pintarAgregar({ eventos, plan = [] }) {
   const dados = new Set(eventos.filter((e) => e.fecha_aplicada).map((e) => e.plan_sanitario_id));
   const disponibles = plan.filter((p) => !sinDar.has(p.id) && !(dados.has(p.id) && p.se_repite_cada_meses === null));
 
+  // Las dosis anteriores de la misma vacuna que todavía no están dadas (la 1.ª y la 2.ª antes de la 3.ª).
+  const faltanAntes = (p) => plan.filter((q) => q.aplicacion === p.aplicacion && q.orden < p.orden && !dados.has(q.id));
+
   const grupos = [['VACUNA', 'Vacunas'], ['DESPARASITACION', 'Desparasitaciones']].map(([tipo, titulo]) => {
     const grupo = el('optgroup', '', { label: titulo });
-    grupo.append(...disponibles.filter((p) => p.tipo === tipo)
-      .map((p) => el('option', p.automatico ? p.nombre : `${p.nombre} (opcional)`, { value: p.id })));
+    grupo.append(...disponibles.filter((p) => p.tipo === tipo).map((p) => {
+      const faltan = faltanAntes(p);
+      const texto = (p.automatico ? p.nombre : `${p.nombre} (opcional)`)
+        + (faltan.length ? ` — primero, dadas: ${faltan.map((q) => q.nombre).join(', ')}` : '');
+      const opcion = el('option', texto, { value: p.id });
+      opcion.disabled = faltan.length > 0;
+      return opcion;
+    }));
     return grupo;
   }).filter((g) => g.children.length > 0);
 

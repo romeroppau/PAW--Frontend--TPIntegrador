@@ -7,9 +7,9 @@
  *   - marcar ausente un turno programado de hoy o de un día anterior;
  *   - atender un turno de hoy (abre la consulta del rol 4) o ver la consulta de un turno atendido;
  *   - cargar un turno nuevo o reprogramar uno programado (Entrega 5), en el mismo formulario.
- *   - 25/11: un turno de vacunación o desparasitación dice cuál, y solo se carga si el calendario de
- *     la mascota la tiene sin dar (con las dosis anteriores dadas y sin otro turno para lo mismo).
- *     Si no, avisa, con el enlace al calendario para cargarla. Pacientes lo vuelve a revisar al guardar.
+ *   - 25/11: un turno puede tener varios motivos. Vacunación y desparasitación dicen cuáles, y solo se
+ *     carga si el calendario de la mascota las tiene sin dar (con las dosis anteriores dadas y sin otro
+ *     turno para lo mismo). Si no, avisa, con el enlace al calendario. Pacientes lo vuelve a revisar.
  *
  * Contrato de la API: docs/api/contrato-mascotas-turnos.md (repo Pacientes).
  * Seguridad: la guardia de acceso es solo comodidad de interfaz; la autorización real la hace
@@ -18,7 +18,7 @@
 import { api, debounce } from './api.js';
 import { exigirRol } from './auth.js';
 import { confirmar, el, limpiarErrores, mostrarErrores } from './ui.js';
-import { textoEstadoTurno, textoMotivoConEvento, textoEspecieMascota } from './etiquetas.js';
+import { textoEstadoTurno, textoMotivos, textoEspecieMascota } from './etiquetas.js';
 import { aplicarHorario, horarioDeAtencion } from './horario.js';
 import { enlaceDuenio } from './personas.js';
 import { precioPara, promocionesDeTurnos, textoPrecio } from './precio-turno.js';
@@ -137,7 +137,7 @@ function fila(turno) {
   celdaEstado.append(el('span', textoEstadoTurno(turno.estado), { class: CLASE_ESTADO[turno.estado] ?? 'insignia' }));
 
   // El motivo, y si el turno se sacó en una franja promocionada, su descuento (lo guardó al sacarse).
-  const motivo = el('td', textoMotivoConEvento(turno));
+  const motivo = el('td', textoMotivos(turno));
   if (turno.precio?.descuento) {
     motivo.append(' ', el('span', `${turno.precio.descuento} % off`, { class: 'insignia insignia-promo', title: textoPrecio(turno.precio) }));
   }
@@ -251,15 +251,15 @@ async function pintarPrecioTurno() {
 formTurno.elements.fecha.addEventListener('input', pintarPrecioTurno);
 formTurno.elements.hora.addEventListener('input', pintarPrecioTurno);
 // Al reprogramar solo cambian la fecha y la hora: la mascota y el motivo se ocultan.
-const camposSoloAlta = [selectMascota.closest('.campo'), formTurno.elements.motivo.closest('.campo')];
+const camposSoloAlta = [selectMascota.closest('.campo'), document.getElementById('campo-motivos')];
 
-/* Vacunación o desparasitación: cuál, según el calendario de la mascota (25/11) */
+/* Motivos del turno (25/11): varios; vacunación y desparasitación dicen cuáles, del calendario */
 
 const MOTIVOS_DEL_CALENDARIO = { VACUNACION: 'VACUNA', DESPARASITACION: 'DESPARASITACION' };
-const campoPlan = document.getElementById('campo-plan');
-const selectPlan = formTurno.elements.plan_sanitario_id;
 const avisoPlan = document.getElementById('aviso-plan');
 const fechaCorta = (texto) => texto.split('-').reverse().join('/');
+const motivosMarcados = () => [...formTurno.querySelectorAll('input[name="motivo"]:checked')].map((c) => c.value);
+const planMarcados = (tipo) => [...document.querySelectorAll(`#campo-${tipo} input:checked`)].map((c) => Number(c.value));
 // El calendario de cada mascota, pedido una vez mientras el formulario está abierto.
 const calendarios = new Map();
 let pedidoCalendario = 0;
@@ -268,6 +268,9 @@ let pedidoCalendario = 0;
 // Pacientes: estar en el calendario sin dar, sin una dosis anterior sin dar y sin otro turno.
 function problemaDelPlan(calendario, item) {
   const { mascota, eventos } = calendario;
+  if (eventos.length === 0) {
+    return `${mascota.nombre} todavía no tiene calendario sanitario: cargalo primero, con lo que le toca.`;
+  }
   const sinDar = eventos.filter((e) => !e.fecha_aplicada);
   const evento = sinDar.find((e) => e.plan_sanitario_id === item.id);
   if (!evento) {
@@ -285,7 +288,7 @@ function problemaDelPlan(calendario, item) {
   return null;
 }
 
-// Cómo está cada ítem en el calendario, para la lista: "vencida el 20/10/2026", "le toca el 05/12/2026"...
+// Cómo está cada ítem en el calendario: "vencida el 20/10/2026", "le toca el 05/12/2026"...
 function estadoEnCalendario(calendario, item) {
   const eventos = calendario.eventos.filter((e) => e.plan_sanitario_id === item.id);
   const sinDar = eventos.find((e) => !e.fecha_aplicada);
@@ -294,64 +297,96 @@ function estadoEnCalendario(calendario, item) {
   return 'no está en el calendario';
 }
 
+// Muestra la lista de vacunas y la de desparasitaciones si su motivo está marcado, con el estado de cada
+// una en el calendario de la mascota elegida.
 async function pintarPlan() {
-  const tipo = MOTIVOS_DEL_CALENDARIO[formTurno.elements.motivo.value];
-  campoPlan.hidden = !tipo || reprogramando !== null;
+  const marcados = motivosMarcados();
+  const tipos = Object.entries(MOTIVOS_DEL_CALENDARIO).filter(([motivo]) => marcados.includes(motivo)).map(([, tipo]) => tipo);
+  for (const tipo of Object.values(MOTIVOS_DEL_CALENDARIO)) {
+    document.getElementById('campo-' + tipo).hidden = !tipos.includes(tipo) || reprogramando !== null;
+  }
   avisoPlan.replaceChildren();
   document.getElementById('error-plan_sanitario_id').textContent = '';
   botonGuardarTurno.disabled = false;
-  if (campoPlan.hidden) return;
+  if (tipos.length === 0 || reprogramando !== null) return;
 
-  document.getElementById('etiqueta-plan').textContent = tipo === 'VACUNA' ? 'Vacuna' : 'Desparasitación';
+  const listas = tipos.map((tipo) => document.querySelector(`#campo-${tipo} .lista-plan`));
   const mascotaId = selectMascota.value;
   if (!mascotaId) {
-    selectPlan.replaceChildren(el('option', 'Primero elegí la mascota', { value: '' }));
+    for (const lista of listas) lista.replaceChildren(el('p', 'Primero elegí la mascota.', { class: 'ayuda' }));
     return;
   }
 
   const pedido = ++pedidoCalendario;
   let calendario = calendarios.get(mascotaId);
   if (!calendario) {
-    selectPlan.replaceChildren(el('option', 'Cargando el calendario…', { value: '' }));
+    for (const lista of listas) lista.replaceChildren(el('p', 'Cargando el calendario…', { class: 'ayuda' }));
     try {
       calendario = await api(`/api/pacientes/mascotas/${encodeURIComponent(mascotaId)}/calendario-sanitario`);
       calendarios.set(mascotaId, calendario);
     } catch {
       if (pedido !== pedidoCalendario) return;
-      selectPlan.replaceChildren(el('option', 'No se pudo cargar el calendario', { value: '' }));
+      for (const lista of listas) lista.replaceChildren(el('p', 'No se pudo cargar el calendario.', { class: 'campo-error' }));
       return;
     }
   }
   if (pedido !== pedidoCalendario) return;
 
-  const elegido = selectPlan.value;
-  const items = calendario.plan.filter((p) => p.tipo === tipo);
-  selectPlan.replaceChildren(el('option', tipo === 'VACUNA' ? 'Elegí la vacuna' : 'Elegí cuál', { value: '' }),
-    ...items.map((p) => el('option', `${p.nombre} (${estadoEnCalendario(calendario, p)})`, { value: p.id })));
-  // Si hay una sola que se puede dar, queda elegida.
-  const posibles = items.filter((p) => problemaDelPlan(calendario, p) === null);
-  if ([...selectPlan.options].some((o) => o.value === elegido)) selectPlan.value = elegido;
-  else if (posibles.length === 1) selectPlan.value = String(posibles[0].id);
+  for (const tipo of tipos) {
+    const lista = document.querySelector(`#campo-${tipo} .lista-plan`);
+    const elegidos = new Set(planMarcados(tipo));
+    const items = calendario.plan.filter((p) => p.tipo === tipo);
+    lista.replaceChildren(...items.map((p) => {
+      const casilla = el('input', '', { type: 'checkbox', value: p.id });
+      casilla.checked = elegidos.has(p.id);
+      casilla.addEventListener('change', revisarPlan);
+      const label = el('label', '', { class: 'casilla' });
+      label.append(casilla, ' ' + p.nombre, el('span', `(${estadoEnCalendario(calendario, p)})`, { class: 'ayuda' }));
+      return label;
+    }));
+    // Si hay una sola que se puede dar, queda marcada.
+    const posibles = items.filter((p) => problemaDelPlan(calendario, p) === null);
+    if (elegidos.size === 0 && posibles.length === 1) {
+      lista.querySelector(`input[value="${posibles[0].id}"]`).checked = true;
+    }
+  }
   revisarPlan();
 }
 
-// Avisa si lo elegido no se puede dar, con el enlace al calendario de la mascota, y no deja guardar.
+// Avisa si alguna de las marcadas no se puede dar, con el enlace al calendario de la mascota, y no deja guardar.
 function revisarPlan() {
   avisoPlan.replaceChildren();
   botonGuardarTurno.disabled = false;
   const calendario = calendarios.get(selectMascota.value);
-  const item = calendario?.plan.find((p) => String(p.id) === selectPlan.value);
-  if (!item) return;
-  const problema = problemaDelPlan(calendario, item);
-  if (!problema) return;
-  avisoPlan.append(el('span', problema + ' ', { class: 'campo-error' }),
-    el('a', `Abrir el calendario de ${calendario.mascota.nombre}`, { href: '/cliente/calendario.html?mascota=' + calendario.mascota.id }));
+  if (!calendario) return;
+  const problemas = Object.values(MOTIVOS_DEL_CALENDARIO)
+    .filter((tipo) => !document.getElementById('campo-' + tipo).hidden)
+    .flatMap((tipo) => planMarcados(tipo))
+    .map((id) => problemaDelPlan(calendario, calendario.plan.find((p) => p.id === id)))
+    .filter(Boolean);
+  if (problemas.length === 0) return;
+  for (const problema of problemas) avisoPlan.append(el('span', problema + ' ', { class: 'campo-error' }));
+  avisoPlan.append(el('a', `Abrir el calendario de ${calendario.mascota.nombre}`, { href: '/cliente/calendario.html?mascota=' + calendario.mascota.id }));
   botonGuardarTurno.disabled = true;
 }
 
-formTurno.elements.motivo.addEventListener('change', pintarPlan);
-selectMascota.addEventListener('change', pintarPlan);
-selectPlan.addEventListener('change', revisarPlan);
+// Lo que se manda: [{motivo}, {motivo: 'VACUNACION', plan_sanitario_id}, ...]. Vacunación sin ninguna
+// vacuna marcada va sin plan_sanitario_id, así Pacientes responde "Elegí la vacuna".
+function motivosParaEnviar() {
+  return motivosMarcados().flatMap((motivo) => {
+    const tipo = MOTIVOS_DEL_CALENDARIO[motivo];
+    if (!tipo) return [{ motivo }];
+    const ids = planMarcados(tipo);
+    return ids.length ? ids.map((id) => ({ motivo, plan_sanitario_id: id })) : [{ motivo }];
+  });
+}
+
+formTurno.querySelectorAll('input[name="motivo"]').forEach((c) => c.addEventListener('change', pintarPlan));
+selectMascota.addEventListener('change', () => {
+  // Otra mascota, otro calendario: las vacunas marcadas no siguen.
+  document.querySelectorAll('.lista-plan').forEach((l) => l.replaceChildren());
+  pintarPlan();
+});
 let mascotasCargadas = false;
 // Turno que se está reprogramando (null = se está cargando uno nuevo).
 let reprogramando = null;
@@ -433,11 +468,7 @@ formTurno.addEventListener('submit', async (ev) => {
       ? await api(`${API}/${reprogramando.id}/reprogramar`, { metodo: 'POST', cuerpo: { fecha, hora } })
       : await api(API, {
         metodo: 'POST',
-        cuerpo: {
-          mascota_id: Number(selectMascota.value), fecha, hora, motivo: formTurno.elements.motivo.value,
-          // Solo en vacunación y desparasitación (Pacientes lo ignora en los demás motivos).
-          ...(campoPlan.hidden ? {} : { plan_sanitario_id: Number(selectPlan.value) || null }),
-        }
+        cuerpo: { mascota_id: Number(selectMascota.value), fecha, hora, motivos: motivosParaEnviar() }
       });
     const accion = reprogramando ? 'Turno reprogramado' : 'Turno cargado';
     seccionTurno.hidden = true;

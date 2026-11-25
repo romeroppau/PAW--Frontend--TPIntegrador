@@ -48,7 +48,9 @@
         </div>
         <p id="duenio" hidden>Dueño: <span id="duenio-enlace"></span></p>
         <p id="al-dia" class="mensaje"></p>
-        <p class="estado" id="vacio" hidden>Todavía no tiene vacunas ni desparasitaciones en su calendario.</p>
+        <!-- El calendario no se arma solo (25/11): hasta que la veterinaria lo carga, está vacío. El texto
+             lo pone js/calendario.js según quién lo mira. -->
+        <p class="mensaje" id="vacio" hidden></p>
         <!-- Solo la veterinaria (25/11): agrega al calendario una vacuna o desparasitación del plan de la
              especie. Sin estar en el calendario no se puede sacar un turno para darla. -->
         <form id="form-agregar" class="form-item" novalidate hidden>

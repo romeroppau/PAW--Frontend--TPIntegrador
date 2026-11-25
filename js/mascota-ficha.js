@@ -86,7 +86,13 @@ async function cargarVacunas() {
       .sort((a, b) => a.fecha_programada.localeCompare(b.fecha_programada))[0];
 
     const $estadoVacunas = document.getElementById('estado-vacunas');
-    if (vacunas.length === 0) {
+    if (eventos.length === 0) {
+      // El calendario no se arma solo (25/11): lo carga la veterinaria.
+      $estadoVacunas.className = 'mensaje';
+      $estadoVacunas.textContent = esVeterinaria
+        ? 'Todavía no tiene calendario sanitario: cargalo desde "Ver calendario completo".'
+        : 'La veterinaria todavía no cargó el calendario sanitario de esta mascota.';
+    } else if (vacunas.length === 0) {
       $estadoVacunas.className = 'mensaje';
       $estadoVacunas.textContent = 'No tiene vacunas en el calendario.';
     } else if (alDia && vencidas.length === 0) {
