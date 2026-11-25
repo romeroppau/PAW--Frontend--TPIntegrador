@@ -25,6 +25,7 @@ import { activarPestanas } from './pestanas.js';
 import { aplicarHorario, horarioDeAtencion } from './horario.js';
 import { accionesRescatista, enlacePerfil } from './validar-rescatista.js';
 import { enlaceMascota } from './mascota-datos.js';
+import { conOrigen } from './volver-adopciones.js';
 
 // El adoptante como enlace a su ficha de cliente (panel/cliente.html).
 const enlaceAdoptante = (adoptante) => el('a', adoptante.nombre, {
@@ -437,9 +438,9 @@ function filaEnCurso(adopcion) {
   const animal = el('td');
   // Cada nombre lleva a su información: la ficha del animal, el perfil del rescatista y la ficha del adoptante.
   const nombreAnimal = el('strong');
-  nombreAnimal.append(enlaceMascota(publicacion.mascota));
+  nombreAnimal.append(conOrigen(enlaceMascota(publicacion.mascota), 'adopciones-en-curso'));
   const deRescatista = el('span', 'Rescatista: ', { class: 'ayuda' });
-  deRescatista.append(enlacePerfil(publicacion.rescatista));
+  deRescatista.append(conOrigen(enlacePerfil(publicacion.rescatista), 'adopciones-en-curso'));
   animal.append(nombreAnimal, deRescatista);
   const celdaEstado = el('td');
   celdaEstado.append(insignia(adopcion.estado));
@@ -448,7 +449,7 @@ function filaEnCurso(adopcion) {
   }
 
   const celdaAdoptante = el('td');
-  if (adoptante) celdaAdoptante.append(enlaceAdoptante(adoptante), el('span', adoptante.telefono ?? '', { class: 'ayuda' }));
+  if (adoptante) celdaAdoptante.append(conOrigen(enlaceAdoptante(adoptante), 'adopciones-en-curso'), el('span', adoptante.telefono ?? '', { class: 'ayuda' }));
   else celdaAdoptante.textContent = '—';
 
   const celdaChequeo = el('td');
@@ -542,9 +543,9 @@ async function cargarFinalizadas() {
       const detalle = el('td');
       detalle.append(enlaceDetalle(a));
       tr.append(
-        conEnlace(enlaceMascota(a.publicacion.mascota)),
-        a.adoptante ? conEnlace(enlaceAdoptante(a.adoptante)) : el('td', '—'),
-        conEnlace(enlacePerfil(a.publicacion.rescatista)),
+        conEnlace(conOrigen(enlaceMascota(a.publicacion.mascota), 'adopciones-finalizadas')),
+        a.adoptante ? conEnlace(conOrigen(enlaceAdoptante(a.adoptante), 'adopciones-finalizadas')) : el('td', '—'),
+        conEnlace(conOrigen(enlacePerfil(a.publicacion.rescatista), 'adopciones-finalizadas')),
         el('td', fecha(a.fecha_inicio)),
         el('td', fecha(a.fecha_fin)),
         detalle

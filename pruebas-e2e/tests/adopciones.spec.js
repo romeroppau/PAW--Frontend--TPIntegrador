@@ -853,15 +853,45 @@ test('en curso y finalizadas: el animal, el rescatista y el adoptante llevan a s
   await page.goto('/panel/adopciones.html');
 
   const fila = page.locator('#filas-curso tr').first();
-  await expect(fila.getByRole('link', { name: 'Ver la ficha de Pipa' })).toHaveAttribute('href', '/cliente/mascota.html?id=901');
-  await expect(fila.getByRole('link', { name: 'Rescatista Aprobada' })).toHaveAttribute('href', '/panel/rescatista.html?id=104');
-  await expect(fila.getByRole('link', { name: 'Cliente Dos' })).toHaveAttribute('href', '/panel/cliente.html?id=103');
+  await expect(fila.getByRole('link', { name: 'Ver la ficha de Pipa' })).toHaveAttribute('href', '/cliente/mascota.html?id=901&desde=adopciones-en-curso');
+  await expect(fila.getByRole('link', { name: 'Rescatista Aprobada' })).toHaveAttribute('href', '/panel/rescatista.html?id=104&desde=adopciones-en-curso');
+  await expect(fila.getByRole('link', { name: 'Cliente Dos' })).toHaveAttribute('href', '/panel/cliente.html?id=103&desde=adopciones-en-curso');
 
   await page.getByRole('tab', { name: /Finalizadas/ }).click();
   const terminada = page.locator('#filas-finalizadas tr').first();
-  await expect(terminada.getByRole('link', { name: 'Ver la ficha de Pipa' })).toHaveAttribute('href', '/cliente/mascota.html?id=901');
-  await expect(terminada.getByRole('link', { name: 'Cliente Dos' })).toHaveAttribute('href', '/panel/cliente.html?id=103');
-  await expect(terminada.getByRole('link', { name: 'Rescatista Aprobada' })).toHaveAttribute('href', '/panel/rescatista.html?id=104');
+  await expect(terminada.getByRole('link', { name: 'Ver la ficha de Pipa' })).toHaveAttribute('href', '/cliente/mascota.html?id=901&desde=adopciones-finalizadas');
+  await expect(terminada.getByRole('link', { name: 'Cliente Dos' })).toHaveAttribute('href', '/panel/cliente.html?id=103&desde=adopciones-finalizadas');
+  await expect(terminada.getByRole('link', { name: 'Rescatista Aprobada' })).toHaveAttribute('href', '/panel/rescatista.html?id=104&desde=adopciones-finalizadas');
+});
+
+test('las fichas abiertas desde las adopciones vuelven a esa pestaña; desde otro lado, como siempre', async ({ page }) => {
+  await simularSesion(page, VETERINARIO);
+  await page.route('**/api/rescatistas/104', (route) => responderJson(route, {
+    rescatista: rescatista(104, 'Rescatista Aprobada', { estado_validacion: 'APROBADO', validado_en: '2026-06-01 10:00:00' }),
+  }));
+  await page.route(/\/api\/adopciones\/(moderacion|rechazos)\?/, (route) => responderJson(route, { publicaciones: [], rechazos: [] }));
+  await page.route('**/api/clientes/103', (route) => responderJson(route, { id: 103, nombre: 'Cliente Dos', email: 'c2@prueba.huellavet', telefono: null, rol: 'CLIENTE', organizacion: null }));
+  await page.route(/\/api\/pacientes\/mascotas(\?.*)?$/, (route) => responderJson(route, { mascotas: [] }));
+  await page.route('**/api/pacientes/mascotas/901', (route) => responderJson(route, { mascota: {
+    id: 901, nombre: 'Pipa', especie: 'GATO', raza: null, fecha_nacimiento: null, edad_meses: 6, peso_kg: '2.10',
+    tiene_foto: false, activo: true, duenio: { id: 103, nombre: 'Cliente Dos', telefono: null },
+  } }));
+
+  const volver = page.locator('#volver');
+  await page.goto('/panel/rescatista.html?id=104&desde=adopciones-en-curso');
+  await expect(volver).toHaveText('← Volver a adopciones en curso');
+  await expect(volver).toHaveAttribute('href', '/panel/adopciones.html#en-curso');
+  await page.goto('/panel/cliente.html?id=103&desde=adopciones-finalizadas');
+  await expect(volver).toHaveText('← Volver a adopciones finalizadas');
+  await expect(volver).toHaveAttribute('href', '/panel/adopciones.html#finalizadas');
+  await page.goto('/cliente/mascota.html?id=901&desde=adopciones-en-curso');
+  await expect(volver).toHaveText('← Volver a adopciones en curso');
+
+  // Sin "desde", los de siempre.
+  await page.goto('/panel/rescatista.html?id=104');
+  await expect(volver).toHaveText('← Volver a los rescatistas');
+  await page.goto('/panel/cliente.html?id=103');
+  await expect(volver).toHaveText('← Clientes');
 });
 
 test('la búsqueda de en curso filtra por nombre y avisa si no hay ninguna', async ({ page }) => {

@@ -14,11 +14,13 @@ import { el } from './ui.js';
 import { enlaceTelefono } from './personas.js';
 import { fecha, fechaHora, insignia } from './etiquetas-adopciones.js';
 import { accionesRescatista } from './validar-rescatista.js';
+import { volverAAdopciones } from './volver-adopciones.js';
 
 const $ = (id) => document.getElementById(id);
 const id = Number(new URLSearchParams(location.search).get('id'));
 
 await exigirRol('VETERINARIO');
+volverAAdopciones(document.getElementById('volver'));
 
 const enlacePublicacion = (publicacionId, nombre) => el('a', nombre, {
   href: '/adopciones/publicacion.html?id=' + encodeURIComponent(publicacionId),

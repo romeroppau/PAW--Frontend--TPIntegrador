@@ -12,12 +12,15 @@ import { el } from './ui.js';
 import { textoEspecieMascota } from './etiquetas.js';
 import { enlaceTelefono } from './personas.js';
 import { enlaceMascota } from './mascota-datos.js';
+import { volverAAdopciones } from './volver-adopciones.js';
 
 const $estado = document.getElementById('estado');
 const id = Number(new URLSearchParams(location.search).get('id'));
 const poner = (idElemento, contenido) => document.getElementById(idElemento).replaceChildren(contenido);
 
 await exigirRol('VETERINARIO');
+// Abierta desde las adopciones (el adoptante): vuelve a esa pestaña.
+volverAAdopciones(document.getElementById('volver'));
 
 if (!Number.isInteger(id) || id <= 0) {
   $estado.textContent = 'Falta indicar el cliente.';
