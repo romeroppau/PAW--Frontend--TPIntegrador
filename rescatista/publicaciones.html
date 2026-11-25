@@ -66,7 +66,16 @@
         </form>
       </section>
 
-      <div class="grilla bloque" id="publicaciones"></div>
+      <!-- Las publicaciones, separadas (24/11): las que siguen abiertas, las adoptadas, las rechazadas
+           (para corregirlas) y las dadas de baja. -->
+      <div class="filtro-especie bloque" role="group" aria-label="Qué publicaciones ver" id="secciones" hidden>
+        <button type="button" class="boton boton-borde boton-chico" data-seccion="activas" aria-pressed="true">Activas <span class="contador"></span></button>
+        <button type="button" class="boton boton-borde boton-chico" data-seccion="adoptados" aria-pressed="false">Adoptados <span class="contador"></span></button>
+        <button type="button" class="boton boton-borde boton-chico" data-seccion="rechazadas" aria-pressed="false">Rechazadas <span class="contador"></span></button>
+        <button type="button" class="boton boton-borde boton-chico" data-seccion="bajas" aria-pressed="false">Dadas de baja <span class="contador"></span></button>
+      </div>
+      <p class="estado" id="estado-seccion" role="status"></p>
+      <div class="grilla" id="publicaciones"></div>
 
       <section id="seccion-postulantes" class="bloque seccion-adopciones" aria-labelledby="titulo-postulantes" hidden>
         <h2 id="titulo-postulantes">Postulantes</h2>

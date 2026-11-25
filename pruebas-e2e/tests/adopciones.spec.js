@@ -290,6 +290,9 @@ test('editar una publicación rechazada: muestra el motivo, no cambia la mascota
   }));
 
   await page.goto('/rescatista/publicaciones.html');
+  // Las rechazadas tienen su sección.
+  await expect(page.locator('#estado-seccion')).toHaveText('No tenés publicaciones activas.');
+  await page.getByRole('button', { name: /^Rechazadas/ }).click();
   await expect(page.locator('.tarjeta-adopcion')).toContainText('Motivo del rechazo: La foto no se ve bien');
   await page.getByRole('button', { name: 'Editar la publicación de Rocco' }).click();
   await expect(page.locator('#campo-mascota')).toBeHidden();
@@ -297,12 +300,14 @@ test('editar una publicación rechazada: muestra el motivo, no cambia la mascota
   await page.fill('#titulo', 'Rocco, compañero de caminatas');
   await page.getByRole('button', { name: 'Guardar cambios' }).click();
 
+  // Corregida, vuelve a revisión: se abre Activas, donde quedó.
+  await expect(page.getByRole('button', { name: /^Activas/ })).toHaveAttribute('aria-pressed', 'true');
   await expect(page.locator('.tarjeta-adopcion')).toContainText('Esperando revisión');
   await expect(page.locator('.tarjeta-adopcion')).not.toContainText('Motivo del rechazo');
   expect(cuerpo).toEqual({ titulo: 'Rocco, compañero de caminatas', descripcion: 'Rocco es muy cariñoso y está vacunado.' });
 });
 
-test('dar de baja pide confirmación (avisando que se cancela la adopción) y usa DELETE', async ({ page }) => {
+test('dar de baja con postulantes pide confirmación (les avisamos) y usa DELETE; queda en Dadas de baja', async ({ page }) => {
   await simularSesion(page, RESCATISTA);
   const pipa = publicacion(1, 'Pipa');
   await page.route('**/api/adopciones/mis-publicaciones', (route) => responderJson(route, { publicaciones: [pipa] }));
@@ -314,16 +319,63 @@ test('dar de baja pide confirmación (avisando que se cancela la adopción) y us
   }));
 
   await page.goto('/rescatista/publicaciones.html');
+  // No hay más "Cancelar adopción": solo dar de baja.
+  await expect(page.getByRole('button', { name: /Cancelar adopción/ })).toHaveCount(0);
   await page.getByRole('button', { name: 'Dar de baja la publicación de Pipa' }).click();
-  await expect(page.locator('dialog')).toContainText('Su adopción se cancela');
+  await expect(page.locator('dialog')).toContainText('Le avisamos a la persona que se postuló.');
   await page.locator('dialog').getByRole('button', { name: 'Volver' }).click();
   expect(bajas).toBe(0);
 
   await page.getByRole('button', { name: 'Dar de baja la publicación de Pipa' }).click();
   await page.locator('dialog').getByRole('button', { name: 'Dar de baja' }).click();
-  await expect(page.locator('.tarjeta-adopcion')).toContainText('Cancelada');
+  await expect(page.getByRole('button', { name: /^Dadas de baja/ })).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('.tarjeta-adopcion')).toContainText('Dada de baja');
   await expect(page.getByRole('button', { name: /Editar la publicación/ })).toHaveCount(0);
   expect(bajas).toBe(1);
+});
+
+test('dar de baja con adoptante elegido o con el chequeo avisa que la adopción no sigue', async ({ page }) => {
+  await simularSesion(page, RESCATISTA);
+  await page.route('**/api/adopciones/mis-publicaciones', (route) => responderJson(route, { publicaciones: [
+    publicacion(1, 'Pipa', { adopcion: { id: 1, estado: 'CHEQUEO_PENDIENTE', postulaciones_pendientes: 0 } }),
+    publicacion(2, 'Toby', { adopcion: { id: 2, estado: 'ADOPTANTE_ELEGIDO', postulaciones_pendientes: 0 } }),
+    publicacion(3, 'Luna', { adopcion: { id: 3, estado: 'PUBLICADA', postulaciones_pendientes: 0 } }),
+  ] }));
+  await page.goto('/rescatista/publicaciones.html');
+
+  const textoDe = async (nombre) => {
+    await page.getByRole('button', { name: 'Dar de baja la publicación de ' + nombre }).click();
+    const texto = await page.locator('dialog').textContent();
+    await page.locator('dialog').getByRole('button', { name: 'Volver' }).click();
+    return texto;
+  };
+  expect(await textoDe('Pipa')).toContain('se cancela el turno del chequeo y les avisamos al adoptante y a la veterinaria');
+  expect(await textoDe('Toby')).toContain('La adopción no sigue: les avisamos al adoptante y a la veterinaria.');
+  expect(await textoDe('Luna')).toContain('Los clientes ya no la van a ver.');
+});
+
+test('mis publicaciones se separan en Activas, Adoptados, Rechazadas y Dadas de baja', async ({ page }) => {
+  await simularSesion(page, RESCATISTA);
+  await page.route('**/api/adopciones/mis-publicaciones', (route) => responderJson(route, { publicaciones: [
+    publicacion(1, 'Pipa'),
+    publicacion(2, 'Kala', { activa: false, adopcion: { id: 2, estado: 'FINALIZADA', postulaciones_pendientes: 0 } }),
+    publicacion(3, 'Rocco', { estado_moderacion: 'RECHAZADA', motivo_rechazo: 'La foto no se ve', adopcion: null }),
+    publicacion(4, 'Toby', { activa: false, adopcion: { id: 4, estado: 'CANCELADA', postulaciones_pendientes: 0 } }),
+    publicacion(5, 'Luna', { activa: false, estado_moderacion: 'PENDIENTE', adopcion: null }),
+  ] }));
+  await page.goto('/rescatista/publicaciones.html');
+
+  const nombres = () => page.locator('.tarjeta-adopcion h2').allTextContents();
+  await expect(page.getByRole('button', { name: /^Activas/ })).toContainText('(1)');
+  expect(await nombres()).toEqual(['Pipa']);
+  await page.getByRole('button', { name: /^Adoptados/ }).click();
+  await expect(page.locator('.tarjeta-adopcion')).toContainText('Adoptado');
+  expect(await nombres()).toEqual(['Kala']);
+  await page.getByRole('button', { name: /^Rechazadas/ }).click();
+  expect(await nombres()).toEqual(['Rocco']);
+  await page.getByRole('button', { name: /^Dadas de baja/ }).click();
+  await expect(page.getByRole('button', { name: /^Dadas de baja/ })).toContainText('(2)');
+  expect(await nombres()).toEqual(['Toby', 'Luna']);
 });
 
 test('la rescatista ve los postulantes y elige al adoptante; el teléfono aparece solo del elegido', async ({ page }) => {
@@ -758,11 +810,19 @@ test('las finalizadas arrancan en los últimos 30 días, se pasan de página y s
   await expect(page.getByRole('link', { name: 'Ver el detalle de la adopción de Gato 25' }))
     .toHaveAttribute('href', '/panel/adopcion.html?id=124');
 
-  // Elegir "Canceladas" filtra en el momento y vuelve a la página 1.
+  // Elegir "Dadas de baja" filtra en el momento y vuelve a la página 1.
   await page.getByLabel('Resultado').selectOption('CANCELADA');
-  await expect(page.locator('#estado-finalizadas')).toHaveText('1 adopción cancelada.');
+  await expect(page.locator('#estado-finalizadas')).toHaveText('1 adopción dada de baja.');
   await expect(page.locator('#filas-finalizadas')).toContainText('Canela');
   await expect(paginas).toBeHidden();
+});
+
+test('la veterinaria ya no cancela adopciones en curso: solo la rescatista, dando de baja', async ({ page }) => {
+  await simularPanelVet(page, { enCurso: [adopcionEnCurso('ADOPTANTE_ELEGIDO'), { ...adopcionEnCurso('CON_POSTULANTES'), id: 2, adoptante: null, publicacion: publicacion(2, 'Rocco') }] });
+  await page.goto('/panel/adopciones.html');
+  await expect(page.locator('#filas-curso tr')).toHaveCount(2);
+  await expect(page.locator('#filas-curso').getByRole('button', { name: 'Cancelar' })).toHaveCount(0);
+  await expect(page.locator('#filas-curso').getByRole('link', { name: /Ver el detalle/ })).toHaveCount(2);
 });
 
 test('la búsqueda de en curso filtra por nombre y avisa si no hay ninguna', async ({ page }) => {
@@ -966,9 +1026,12 @@ test('cada uno ve quién canceló cada postulación, y las no elegidas dicen "No
   const textos = await page.evaluate(async () => {
     const { insigniaPostulacion } = await import('/js/etiquetas-adopciones.js');
     const t = (estado, mira) => insigniaPostulacion(estado, { mira }).textContent;
-    return [t('CANCELADA', 'rescatista'), t('RECHAZADA', 'rescatista'), t('CANCELADA', 'veterinaria'), t('RECHAZADA', 'veterinaria'), t('CANCELADA', 'postulante'), t('RECHAZADA', 'postulante')];
+    const baja = (mira) => insigniaPostulacion('RECHAZADA', { mira, adopcion: 'CANCELADA' }).textContent;
+    return [t('CANCELADA', 'rescatista'), t('RECHAZADA', 'rescatista'), t('CANCELADA', 'veterinaria'), t('RECHAZADA', 'veterinaria'), t('CANCELADA', 'postulante'), t('RECHAZADA', 'postulante'),
+      baja('postulante'), baja('rescatista'), baja('veterinaria')];
   });
-  expect(textos).toEqual(['Cancelada por el postulante', 'No elegida', 'Cancelada por el postulante', 'No elegida', 'Cancelada por vos', 'No elegida']);
+  expect(textos).toEqual(['Cancelada por el postulante', 'No elegida', 'Cancelada por el postulante', 'No elegida', 'Cancelada por vos', 'No elegida',
+    'Publicación dada de baja', 'Publicación dada de baja', 'Publicación dada de baja']);
 });
 
 test('en la publicación, una postulación cancelada deja volver a postularse si el animal sigue disponible', async ({ page }) => {
@@ -1000,9 +1063,11 @@ test('con el adoptante ya elegido, la rescatista ve "Ver adoptante elegido" con 
   }));
 
   await page.goto('/rescatista/publicaciones.html');
+  await expect(page.locator('article', { hasText: 'Toby busca familia' }).getByRole('button', { name: /Postulantes/ })).toBeVisible();
+  // Pipa ya se adoptó: está en Adoptados.
+  await page.getByRole('button', { name: /^Adoptados/ }).click();
   const pipa = page.locator('article', { hasText: 'Pipa busca familia' });
   await expect(pipa.getByRole('button', { name: /Postulantes/ })).toHaveCount(0);
-  await expect(page.locator('article', { hasText: 'Toby busca familia' }).getByRole('button', { name: /Postulantes/ })).toBeVisible();
 
   await pipa.getByRole('button', { name: 'Ver el adoptante elegido para Pipa' }).click();
   await expect(page.locator('#titulo-postulantes')).toHaveText('Adoptante elegido para Pipa');

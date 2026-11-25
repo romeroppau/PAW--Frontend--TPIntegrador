@@ -11,7 +11,8 @@
   <link rel="stylesheet" href="/css/adopciones.css">
 </head>
 <!-- Adopciones de la veterinaria (Entrega 5, rol 3): validar rescatistas, moderar publicaciones,
-     programar el chequeo, completar y cancelar adopciones, y ver las terminadas. Cuatro pestañas;
+     programar el chequeo, completar adopciones y ver las terminadas (una adopción solo se corta cuando la
+     rescatista da de baja la publicación). Cuatro pestañas;
      la activa viaja en el hash (#rescatistas, #publicaciones, #en-curso, #finalizadas; #moderacion
      sigue andando y abre Publicaciones). Rescatistas y Publicaciones tienen tres listas cada una
      (por aprobar o revisar, aprobados y rechazos, con motivo, fecha y hora) y una búsqueda.
@@ -159,7 +160,7 @@
         </nav>
       </section>
 
-      <!-- Adopciones terminadas (finalizadas o canceladas) -->
+      <!-- Adopciones terminadas (adoptadas o dadas de baja) -->
       <section id="panel-finalizadas" role="tabpanel" aria-labelledby="tab-finalizadas" tabindex="0" hidden>
         <h2 class="solo-lectores">Adopciones finalizadas</h2>
         <form class="form-item" id="filtro-finalizadas" role="search" novalidate>
@@ -167,7 +168,7 @@
             <label for="resultado">Resultado</label>
             <select id="resultado" name="estado">
               <option value="FINALIZADA">Adoptados</option>
-              <option value="CANCELADA">Canceladas</option>
+              <option value="CANCELADA">Dadas de baja</option>
             </select>
           </div>
           <div class="campo campo-chico">

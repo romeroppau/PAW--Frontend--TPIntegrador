@@ -142,7 +142,7 @@ async function cargarMias() {
     document.getElementById('filas-mias').replaceChildren(...postulaciones.map((p) => {
       const tr = el('tr');
       const celdaEstado = el('td');
-      celdaEstado.append(insigniaPostulacion(p.estado, { mira: 'postulante' }));
+      celdaEstado.append(insigniaPostulacion(p.estado, { mira: 'postulante', adopcion: p.adopcion?.estado }));
       // El animal lleva a su publicación (la ve aunque ya no esté disponible: se postuló).
       const animal = el('td');
       animal.append(el('a', p.publicacion.mascota.nombre, {
