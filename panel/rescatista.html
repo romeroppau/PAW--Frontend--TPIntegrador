@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Perfil del rescatista | HuellaVet</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Nunito+Sans:wght@400;600;700&display=swap">
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/adopciones.css">
+</head>
+<!-- Perfil de un rescatista para la veterinaria (Entrega 5, rol 3): sus datos, si está aprobado o
+     rechazado (cuándo y por qué), las mascotas que publicó (cada una enlaza a su publicación) y los
+     rechazos de sus publicaciones. Si está pendiente, se lo aprueba o rechaza desde acá.
+     Se abre con ?id=<rescatista>. Datos: GET /api/rescatistas/{id} (Backend),
+     GET /api/adopciones/moderacion?estado=TODAS&rescatista_id= y GET /api/adopciones/rechazos?rescatista_id=
+     (Adopciones). Todo en js/rescatista-perfil.js. -->
+<body data-rol="VETERINARIO">
+  <a class="saltar" href="#contenido">Saltar al contenido</a>
+  <div id="encabezado-sitio"></div>
+  <script src="/js/layout.js"></script>
+  <main id="contenido" class="seccion" hidden>
+    <div class="contenedor">
+      <p><a href="/panel/adopciones.html#rescatistas">&larr; Volver a los rescatistas</a></p>
+      <div class="barra-titulo titulo-con-estado">
+        <h1 id="nombre">Perfil del rescatista</h1>
+        <span id="insignia-estado"></span>
+      </div>
+      <p class="estado" id="estado" role="status">Cargando…</p>
+
+      <div id="perfil" hidden>
+        <section class="tarjeta bloque-detalle" aria-labelledby="t-datos">
+          <h2 id="t-datos">Datos</h2>
+          <dl class="factura-datos">
+            <div><dt>Organización</dt><dd id="organizacion"></dd></div>
+            <div><dt>Email</dt><dd id="email"></dd></div>
+            <div><dt>Teléfono</dt><dd id="telefono"></dd></div>
+            <div><dt>Cuenta</dt><dd id="validacion"></dd></div>
+            <div id="dato-motivo" hidden><dt>Motivo del rechazo</dt><dd id="motivo"></dd></div>
+          </dl>
+          <div id="acciones-pendiente" hidden></div>
+          <p><a id="enlace-ficha" href="#">Ver su ficha y las mascotas que tiene a cargo</a></p>
+        </section>
+
+        <section class="tarjeta bloque-detalle" aria-labelledby="t-publicaciones">
+          <h2 id="t-publicaciones">Mascotas que publicó</h2>
+          <p class="estado" id="estado-publicaciones" role="status"></p>
+          <div class="tabla-scroll" id="tabla-publicaciones" hidden>
+            <table>
+              <caption class="solo-lectores">Publicaciones del rescatista, las más nuevas primero</caption>
+              <thead><tr><th scope="col">Animal</th><th scope="col">Publicada el</th><th scope="col">Revisión</th><th scope="col">Adopción</th></tr></thead>
+              <tbody id="filas-publicaciones"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="tarjeta bloque-detalle" aria-labelledby="t-rechazos">
+          <h2 id="t-rechazos">Rechazos de sus publicaciones</h2>
+          <p class="estado" id="estado-rechazos" role="status"></p>
+          <div class="tabla-scroll" id="tabla-rechazos" hidden>
+            <table>
+              <caption class="solo-lectores">Rechazos de las publicaciones del rescatista, los más nuevos primero</caption>
+              <thead><tr><th scope="col">Animal</th><th scope="col">Rechazada el</th><th scope="col">Motivo</th></tr></thead>
+              <tbody id="filas-rechazos"></tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+  <div id="pie-sitio"></div>
+
+  <script type="module" src="/js/menu.js"></script>
+  <script type="module" src="/js/guardia-panel.js"></script>
+  <script type="module" src="/js/auth.js"></script>
+  <script type="module" src="/js/rescatista-perfil.js"></script>
+</body>
+</html>

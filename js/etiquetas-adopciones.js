@@ -84,6 +84,9 @@ export function edad(meses) {
 // "2026-11-17 10:30:00" → "17/11/2026"
 export const fecha = (texto) => (texto ? texto.slice(0, 10).split('-').reverse().join('/') : '—');
 
+// "2026-11-17 10:30:00" → "17/11/2026 10:30" (la fecha y hora de una aprobación o un rechazo).
+export const fechaHora = (texto) => (texto ? `${fecha(texto)} ${texto.slice(11, 16)}`.trim() : '—');
+
 // Lee un archivo elegido en un <input type="file"> como data URL (así viaja la foto en el JSON).
 export function leerComoDataUrl(archivo) {
   return new Promise((resolver, rechazar) => {
