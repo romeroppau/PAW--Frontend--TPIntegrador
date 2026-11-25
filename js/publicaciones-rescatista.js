@@ -75,6 +75,9 @@ secciones.addEventListener('click', (ev) => {
   const boton = ev.target.closest('[data-seccion]');
   if (!boton) return;
   seccion = boton.dataset.seccion;
+  // Los postulantes (o el adoptante elegido) que se abrieron son de una publicación de la sección
+  // anterior: se cierran al cambiar.
+  seccionPostulantes.hidden = true;
   pintar();
 });
 
@@ -105,11 +108,16 @@ function tarjeta(publicacion) {
     alt: 'Foto de ' + mascota.nombre, width: '400', height: '300', loading: 'lazy'
   }));
 
+  // Una dada de baja ya terminó: solo dice "Dada de baja", sin la revisión ni los postulantes.
+  const dadaDeBaja = seccionDe(publicacion) === 'bajas';
   const cuerpo = el('div', '', { class: 'cuerpo' });
   const estados = el('p', '', { class: 'acciones' });
-  estados.append(insignia(publicacion.estado_moderacion));
-  if (adopcion) estados.append(insignia(adopcion.estado));
-  if (!publicacion.activa && !adopcion) estados.append(insignia('BAJA'));
+  if (dadaDeBaja) {
+    estados.append(insignia('BAJA'));
+  } else {
+    estados.append(insignia(publicacion.estado_moderacion));
+    if (adopcion) estados.append(insignia(adopcion.estado));
+  }
 
   cuerpo.append(
     el('h2', mascota.nombre),
@@ -125,7 +133,9 @@ function tarjeta(publicacion) {
   const acciones = el('div', '', { class: 'acciones' });
   const error = el('span', '', { class: 'campo-error', role: 'alert' });
 
-  if (adopcion && CON_ADOPTANTE.includes(adopcion.estado)) {
+  if (dadaDeBaja) {
+    // Nada que hacer con una dada de baja.
+  } else if (adopcion && CON_ADOPTANTE.includes(adopcion.estado)) {
     // Ya eligió (24/11): no hay nada que revisar, se ve quién adopta y lo que contestó.
     const ver = el('button', 'Ver adoptante elegido', { type: 'button', class: 'boton boton-chico', 'aria-label': 'Ver el adoptante elegido para ' + mascota.nombre });
     ver.addEventListener('click', () => verElegido(adopcion.id, mascota.nombre));
