@@ -376,6 +376,28 @@ test('mis publicaciones se separan en Activas, Adoptados, Rechazadas y Dadas de 
   await page.getByRole('button', { name: /^Dadas de baja/ }).click();
   await expect(page.getByRole('button', { name: /^Dadas de baja/ })).toContainText('(2)');
   expect(await nombres()).toEqual(['Toby', 'Luna']);
+  // Las dadas de baja solo dicen "Dada de baja": ni "Aprobada" ni los postulantes.
+  const toby = page.locator('.tarjeta-adopcion', { hasText: 'Toby' });
+  await expect(toby.locator('.insignia')).toHaveText(['Dada de baja']);
+  await expect(toby.getByRole('button')).toHaveCount(0);
+});
+
+test('al cambiar de sección se cierra el adoptante elegido que estaba abierto', async ({ page }) => {
+  await simularSesion(page, RESCATISTA);
+  await page.route('**/api/adopciones/mis-publicaciones', (route) => responderJson(route, { publicaciones: [
+    publicacion(1, 'Ricky', { activa: false, adopcion: { id: 1, estado: 'FINALIZADA', postulaciones_pendientes: 0 } }),
+    publicacion(2, 'Rocco', { estado_moderacion: 'RECHAZADA', motivo_rechazo: 'La foto no se ve', adopcion: null }),
+  ] }));
+  await page.route('**/api/adopciones/1/postulaciones', (route) => responderJson(route, {
+    adopcion: { id: 1, estado: 'FINALIZADA' },
+    postulaciones: [postulacion(2, 'Cliente Dos', { estado: 'ELEGIDA', cliente: { id: 103, nombre: 'Cliente Dos', telefono: '1155550103' } })],
+  }));
+  await page.goto('/rescatista/publicaciones.html');
+  await page.getByRole('button', { name: /^Adoptados/ }).click();
+  await page.getByRole('button', { name: 'Ver el adoptante elegido para Ricky' }).click();
+  await expect(page.locator('#titulo-postulantes')).toHaveText('Adoptante elegido para Ricky');
+  await page.getByRole('button', { name: /^Rechazadas/ }).click();
+  await expect(page.locator('#seccion-postulantes')).toBeHidden();
 });
 
 test('la rescatista ve los postulantes y elige al adoptante; el teléfono aparece solo del elegido', async ({ page }) => {
