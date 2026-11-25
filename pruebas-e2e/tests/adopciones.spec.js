@@ -177,7 +177,7 @@ test('mis postulaciones: el animal lleva a su publicación, aunque ya no esté d
   await expect(page.getByRole('heading', { level: 1, name: 'Pipa' })).toBeVisible();
   await expect(page.locator('#descripcion')).toHaveText('Pipa es muy cariñoso y está vacunado.');
   // Ya se postuló: ve el estado de su postulación en lugar de los botones.
-  await expect(page.locator('.tu-postulacion')).toContainText('Tu postulación: Cancelada por la rescatista');
+  await expect(page.locator('.tu-postulacion')).toContainText('Tu postulación: No elegida');
   await expect(page.getByRole('link', { name: 'Quiero adoptarlo' })).toHaveCount(0);
   await expect(page.getByRole('link', { name: 'Ver mis postulaciones' })).toHaveCount(0);
   await expect(page.locator('#volver')).toHaveText('← Volver a mis postulaciones');
@@ -351,7 +351,7 @@ test('la rescatista ve los postulantes y elige al adoptante; el teléfono aparec
   await page.getByRole('button', { name: 'Elegir a Cliente Dos' }).click();
   await page.locator('dialog').getByRole('button', { name: 'Elegir adoptante' }).click();
   await expect(page.locator('#filas-postulantes')).toContainText('Tel.: 1155550103');
-  await expect(page.locator('#filas-postulantes')).toContainText('Cancelada por vos');
+  await expect(page.locator('#filas-postulantes')).toContainText('No elegida');
   await expect(page.getByRole('button', { name: /^Elegir a/ })).toHaveCount(0);
   expect(elegida).toEqual({ postulacion_id: 2 });
 });
@@ -816,7 +816,7 @@ test('el detalle de una adopción finalizada muestra a las personas, el recorrid
   await expect(page.getByRole('link', { name: 'Ver la consulta del chequeo' })).toHaveAttribute('href', '/panel/consulta.html?id=7');
 
   await expect(page.locator('#filas-postulaciones tr')).toHaveCount(2);
-  await expect(page.locator('#filas-postulaciones')).toContainText('Cancelada por la rescatista');
+  await expect(page.locator('#filas-postulaciones')).toContainText('No elegida');
   await expect(page.getByRole('link', { name: /Volver a las adopciones/ })).toHaveAttribute('href', '/panel/adopciones.html#finalizadas');
 });
 
@@ -960,7 +960,7 @@ test('desde la publicación también se cancela, y si la rescatista ya eligió a
   await expect(page.locator('.tu-postulacion .campo-error')).toHaveText('Solo se puede cancelar una postulación que la rescatista todavía no revisó');
 });
 
-test('la rescatista y la veterinaria ven quién canceló cada postulación', async ({ page }) => {
+test('cada uno ve quién canceló cada postulación, y las no elegidas dicen "No elegida"', async ({ page }) => {
   await simularSesion(page, { id: 101, nombre: 'Vet', email: 'v@prueba.huellavet', rol: 'VETERINARIO', estado_validacion: null });
   await page.goto('/index.html');
   const textos = await page.evaluate(async () => {
@@ -968,7 +968,7 @@ test('la rescatista y la veterinaria ven quién canceló cada postulación', asy
     const t = (estado, mira) => insigniaPostulacion(estado, { mira }).textContent;
     return [t('CANCELADA', 'rescatista'), t('RECHAZADA', 'rescatista'), t('CANCELADA', 'veterinaria'), t('RECHAZADA', 'veterinaria'), t('CANCELADA', 'postulante'), t('RECHAZADA', 'postulante')];
   });
-  expect(textos).toEqual(['Cancelada por el postulante', 'Cancelada por vos', 'Cancelada por el postulante', 'Cancelada por la rescatista', 'Cancelada por vos', 'Cancelada por la rescatista']);
+  expect(textos).toEqual(['Cancelada por el postulante', 'No elegida', 'Cancelada por el postulante', 'No elegida', 'Cancelada por vos', 'No elegida']);
 });
 
 test('en la publicación, una postulación cancelada deja volver a postularse si el animal sigue disponible', async ({ page }) => {

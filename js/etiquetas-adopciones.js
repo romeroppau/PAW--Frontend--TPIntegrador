@@ -30,22 +30,23 @@ const ESTADOS = {
 
 export const textoEstado = (codigo) => ESTADOS[codigo]?.[0] ?? codigo;
 
-// Estados de una postulación (24/11). RECHAZADA: la rescatista eligió a otra persona, o se cerró la
-// publicación o la adopción. CANCELADA: la canceló el cliente. Al cliente se le dice "por vos".
+// Estados de una postulación (24/11). RECHAZADA: no la eligieron (la rescatista eligió a otra
+// persona, o se cerró la publicación o la adopción): "No elegida", para todos. CANCELADA: la canceló
+// el cliente; a él se le dice "por vos".
 const ESTADOS_POSTULACION = {
   PENDIENTE: ['Esperando revisión', 'insignia-espera'],
   ELEGIDA: ['Elegida', 'insignia-listo'],
-  RECHAZADA: ['Cancelada por la rescatista', 'insignia-anulado'],
+  RECHAZADA: ['No elegida', 'insignia-anulado'],
   CANCELADA: ['Cancelada por el postulante', 'insignia-anulado'],
 };
 
 /**
- * La insignia de una postulación. mira: quién la ve. Al cliente que la canceló y a la rescatista que
- * la cerró se les dice "Cancelada por vos"; a la veterinaria, quién la canceló.
+ * La insignia de una postulación. mira: quién la ve. Al cliente que la canceló se le dice "Cancelada
+ * por vos"; a la rescatista y a la veterinaria, "Cancelada por el postulante".
  */
 export function insigniaPostulacion(codigo, { mira = 'veterinaria' } = {}) {
   let [texto, clase] = ESTADOS_POSTULACION[codigo] ?? [codigo, ''];
-  if ((mira === 'postulante' && codigo === 'CANCELADA') || (mira === 'rescatista' && codigo === 'RECHAZADA')) {
+  if (mira === 'postulante' && codigo === 'CANCELADA') {
     texto = 'Cancelada por vos';
   }
   return el('span', texto, { class: ('insignia ' + clase).trim() });
