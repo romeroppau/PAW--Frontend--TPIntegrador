@@ -177,7 +177,7 @@ test('mis postulaciones: el animal lleva a su publicación, aunque ya no esté d
   await expect(page.getByRole('heading', { level: 1, name: 'Pipa' })).toBeVisible();
   await expect(page.locator('#descripcion')).toHaveText('Pipa es muy cariñoso y está vacunado.');
   // Ya se postuló: ve el estado de su postulación en lugar de los botones.
-  await expect(page.locator('.tu-postulacion')).toContainText('Tu postulación: Cancelada por la rescatista');
+  await expect(page.locator('.tu-postulacion')).toContainText('Tu postulación: No elegida');
   await expect(page.getByRole('link', { name: 'Quiero adoptarlo' })).toHaveCount(0);
   await expect(page.getByRole('link', { name: 'Ver mis postulaciones' })).toHaveCount(0);
   await expect(page.locator('#volver')).toHaveText('← Volver a mis postulaciones');
@@ -351,7 +351,7 @@ test('la rescatista ve los postulantes y elige al adoptante; el teléfono aparec
   await page.getByRole('button', { name: 'Elegir a Cliente Dos' }).click();
   await page.locator('dialog').getByRole('button', { name: 'Elegir adoptante' }).click();
   await expect(page.locator('#filas-postulantes')).toContainText('Tel.: 1155550103');
-  await expect(page.locator('#filas-postulantes')).toContainText('Cancelada por vos');
+  await expect(page.locator('#filas-postulantes')).toContainText('No elegida');
   await expect(page.getByRole('button', { name: /^Elegir a/ })).toHaveCount(0);
   expect(elegida).toEqual({ postulacion_id: 2 });
 });
@@ -549,11 +549,11 @@ test('publicaciones aprobadas y el historial de rechazos, con motivo, fecha, hor
     aprobadas: [publicacion(3, 'Mishi', { aprobada_en: '2026-11-18 11:05:00' })],
     historial: [
       { id: 2, motivo: 'La foto no se ve bien', rechazada_en: '2026-11-15 16:30:00', veterinaria: 'Vet',
-        publicacion: { id: 3, titulo: 'Mishi busca familia', estado_moderacion: 'APROBADA', activa: true },
+        publicacion: { id: 3, titulo: 'Mishi busca familia', estado_moderacion: 'APROBADA', activa: false, adopcion_estado: 'FINALIZADA' },
         mascota: { id: 903, nombre: 'Mishi', especie: 'GATO' },
         rescatista: { id: 104, nombre: 'Rescatista Aprobada', organizacion: null } },
       { id: 1, motivo: 'Falta la descripción', rechazada_en: '2026-11-10 10:00:00', veterinaria: null,
-        publicacion: { id: 4, titulo: 'Toby', estado_moderacion: 'RECHAZADA', activa: false },
+        publicacion: { id: 4, titulo: 'Toby', estado_moderacion: 'RECHAZADA', activa: false, adopcion_estado: null },
         mascota: { id: 904, nombre: 'Toby', especie: 'PERRO' },
         rescatista: { id: 104, nombre: 'Rescatista Aprobada', organizacion: null } },
     ],
@@ -571,10 +571,12 @@ test('publicaciones aprobadas y el historial de rechazos, con motivo, fecha, hor
 
   await page.getByRole('button', { name: 'Rechazos' }).click();
   await expect(filas).toHaveCount(2);
-  // Mishi se rechazó y después se aprobó: el rechazo sigue en el historial.
+  // Mishi se rechazó, después se aprobó y se adoptó: el rechazo sigue en el historial, y "Ahora"
+  // dice Adoptado (su publicación quedó inactiva al completarse la adopción, no se dio de baja).
   await expect(filas.nth(0)).toContainText('15/11/2026 16:30');
   await expect(filas.nth(0)).toContainText('La foto no se ve bien');
-  await expect(filas.nth(0)).toContainText('Aprobada');
+  await expect(filas.nth(0)).toContainText('Adoptado');
+  await expect(filas.nth(0)).not.toContainText('Dada de baja');
   await expect(filas.nth(1)).toContainText('Dada de baja');
   await expect(page.locator('#ayuda-rechazos')).toBeVisible();
 
@@ -625,6 +627,48 @@ test('desde el perfil se aprueba a un rescatista pendiente', async ({ page }) =>
   await page.getByRole('button', { name: 'Aprobar' }).click();
   await expect(page.locator('#validacion')).toHaveText('Aprobada el 24/11/2026 10:00');
   await expect(page.getByRole('button', { name: 'Aprobar' })).toHaveCount(0);
+});
+
+test('en el perfil, un animal adoptado no figura como dado de baja', async ({ page }) => {
+  await simularSesion(page, VETERINARIO);
+  await page.route('**/api/rescatistas/104', (route) => responderJson(route, {
+    rescatista: rescatista(104, 'Rescatista Aprobada', { estado_validacion: 'APROBADO', validado_en: '2026-06-01 10:00:00' }),
+  }));
+  await page.route(/\/api\/adopciones\/moderacion\?/, (route) => responderJson(route, { publicaciones: [
+    // Kala: aprobada y adoptada (la publicación se cerró con la adopción).
+    publicacion(7, 'Kala', { activa: false, adopcion: { id: 7, estado: 'FINALIZADA', postulaciones_pendientes: 0 } }),
+    // Toby: la rescatista la sacó antes de que se revisara.
+    publicacion(8, 'Toby', { activa: false, estado_moderacion: 'PENDIENTE', adopcion: null }),
+  ] }));
+  await page.route(/\/api\/adopciones\/rechazos\?/, (route) => responderJson(route, { rechazos: [] }));
+
+  await page.goto('/panel/rescatista.html?id=104');
+  const kala = page.locator('#filas-publicaciones tr', { hasText: 'Kala' });
+  await expect(kala).toContainText('Aprobada');
+  await expect(kala).toContainText('Adoptado');
+  await expect(kala).not.toContainText('Dada de baja');
+  await expect(page.locator('#filas-publicaciones tr', { hasText: 'Toby' })).toContainText('Dada de baja');
+});
+
+test('los filtros de fechas llegan hasta hoy y avisan si se escribe una fecha futura', async ({ page }) => {
+  const datos = { aprobadas: [] };
+  await simularPanelVet(page, datos);
+  await page.goto('/panel/adopciones.html#publicaciones');
+  const hoy = diasAtras(0);
+  for (const id of ['desde-publicaciones', 'hasta-publicaciones', 'desde-rescatistas', 'hasta-rescatistas', 'desde', 'hasta']) {
+    await expect(page.locator('#' + id)).toHaveAttribute('max', hoy);
+  }
+
+  await page.locator('#hasta-publicaciones').fill('2099-12-31');
+  const antes = datos.pedidos.length;
+  await page.locator('#filtro-publicaciones').getByRole('button', { name: 'Buscar' }).click();
+  await expect(page.locator('#error-publicaciones')).toHaveText('La fecha no puede ser posterior a hoy.');
+  expect(datos.pedidos.length).toBe(antes);
+
+  await page.locator('#hasta-publicaciones').fill(hoy);
+  await page.locator('#desde-publicaciones').fill(diasAtras(1));
+  await page.locator('#filtro-publicaciones').getByRole('button', { name: 'Buscar' }).click();
+  await expect(page.locator('#error-publicaciones')).toHaveText('');
 });
 
 test('el perfil de un rescatista que no existe lo avisa', async ({ page }) => {
@@ -772,7 +816,7 @@ test('el detalle de una adopción finalizada muestra a las personas, el recorrid
   await expect(page.getByRole('link', { name: 'Ver la consulta del chequeo' })).toHaveAttribute('href', '/panel/consulta.html?id=7');
 
   await expect(page.locator('#filas-postulaciones tr')).toHaveCount(2);
-  await expect(page.locator('#filas-postulaciones')).toContainText('Cancelada por la rescatista');
+  await expect(page.locator('#filas-postulaciones')).toContainText('No elegida');
   await expect(page.getByRole('link', { name: /Volver a las adopciones/ })).toHaveAttribute('href', '/panel/adopciones.html#finalizadas');
 });
 
@@ -916,7 +960,7 @@ test('desde la publicación también se cancela, y si la rescatista ya eligió a
   await expect(page.locator('.tu-postulacion .campo-error')).toHaveText('Solo se puede cancelar una postulación que la rescatista todavía no revisó');
 });
 
-test('la rescatista y la veterinaria ven quién canceló cada postulación', async ({ page }) => {
+test('cada uno ve quién canceló cada postulación, y las no elegidas dicen "No elegida"', async ({ page }) => {
   await simularSesion(page, { id: 101, nombre: 'Vet', email: 'v@prueba.huellavet', rol: 'VETERINARIO', estado_validacion: null });
   await page.goto('/index.html');
   const textos = await page.evaluate(async () => {
@@ -924,7 +968,7 @@ test('la rescatista y la veterinaria ven quién canceló cada postulación', asy
     const t = (estado, mira) => insigniaPostulacion(estado, { mira }).textContent;
     return [t('CANCELADA', 'rescatista'), t('RECHAZADA', 'rescatista'), t('CANCELADA', 'veterinaria'), t('RECHAZADA', 'veterinaria'), t('CANCELADA', 'postulante'), t('RECHAZADA', 'postulante')];
   });
-  expect(textos).toEqual(['Cancelada por el postulante', 'Cancelada por vos', 'Cancelada por el postulante', 'Cancelada por la rescatista', 'Cancelada por vos', 'Cancelada por la rescatista']);
+  expect(textos).toEqual(['Cancelada por el postulante', 'No elegida', 'Cancelada por el postulante', 'No elegida', 'Cancelada por vos', 'No elegida']);
 });
 
 test('en la publicación, una postulación cancelada deja volver a postularse si el animal sigue disponible', async ({ page }) => {
