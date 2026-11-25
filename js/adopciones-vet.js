@@ -19,7 +19,7 @@ import { api } from './api.js';
 import { exigirRol } from './auth.js';
 import { confirmar, el } from './ui.js';
 import { textoEspecieMascota } from './etiquetas.js';
-import { edad, fecha, fechaHora, insignia, mensajeDeError } from './etiquetas-adopciones.js';
+import { edad, fecha, fechaHora, insignia, insigniaPublicacion, mensajeDeError } from './etiquetas-adopciones.js';
 import { activarPestanas } from './pestanas.js';
 import { aplicarHorario, horarioDeAtencion } from './horario.js';
 import { accionesRescatista, enlacePerfil } from './validar-rescatista.js';
@@ -130,6 +130,31 @@ function filtrosDe(form, extra = {}) {
   return query;
 }
 
+// Las fechas de los filtros llegan hasta hoy (no hay nada en el futuro), y "hasta" no puede ser
+// anterior a "desde". El navegador respeta min/max en el calendario; escritas a mano, las revisa
+// fechasValidas() antes de pedir la lista.
+function limitarFechas(form) {
+  const { desde, hasta } = form.elements;
+  desde.max = hoy;
+  hasta.max = hoy;
+  desde.addEventListener('change', () => { hasta.min = desde.value; });
+  hasta.addEventListener('change', () => { desde.max = hasta.value || hoy; });
+}
+
+// null si las fechas sirven; si no, el mensaje de error.
+function errorDeFechas(form) {
+  const { desde, hasta } = form.elements;
+  for (const campo of [desde, hasta]) {
+    if (campo.closest('[hidden]') || !campo.value) continue;
+    if (campo.validity.badInput) return 'La fecha no es válida.';
+    if (campo.value > hoy) return 'La fecha no puede ser posterior a hoy.';
+  }
+  if (desde.value && hasta.value && !desde.closest('[hidden]') && desde.value > hasta.value) {
+    return 'La fecha "hasta" no puede ser anterior a "desde".';
+  }
+  return null;
+}
+
 const columnas = (fila, nombres) => $(fila).replaceChildren(...nombres.map((n) => el('th', n, { scope: 'col' })));
 
 /* ---------- Rescatistas ---------- */
@@ -169,7 +194,8 @@ function filaRescatista(r) {
 async function cargarRescatistas() {
   const { lista } = rescatistas;
   const textos = TEXTOS_RESCATISTAS[lista];
-  $('error-rescatistas').textContent = '';
+  $('error-rescatistas').textContent = errorDeFechas(formRescatistas) ?? '';
+  if ($('error-rescatistas').textContent) return;
   try {
     // El número de la pestaña siempre es el de pendientes (lo que hay que resolver).
     const query = filtrosDe(formRescatistas, { estado: lista });
@@ -203,6 +229,7 @@ activarListas($('lista-rescatistas'), (lista) => {
   formRescatistas.querySelector('[data-etiqueta-desde]').textContent = TEXTOS_RESCATISTAS[lista].fecha + ' desde';
   cargarRescatistas();
 });
+limitarFechas(formRescatistas);
 formRescatistas.addEventListener('submit', (ev) => {
   ev.preventDefault();
   cargarRescatistas();
@@ -230,16 +257,15 @@ function conEnlace(nodo) {
   return td;
 }
 
-// Cómo está ahora una publicación del historial.
-function estadoActual(publicacion) {
-  return publicacion.activa ? insignia(publicacion.estado_moderacion) : insignia('BAJA');
-}
+// Cómo está ahora una publicación del historial: si después se aprobó, en qué quedó su adopción.
+const estadoActual = (publicacion) => insigniaPublicacion(publicacion, publicacion.adopcion_estado);
 
 async function cargarModeracion() {
   const { lista } = publicaciones;
   const textos = TEXTOS_PUBLICACIONES[lista];
   const estado = $('estado-moderacion');
-  $('error-publicaciones').textContent = '';
+  $('error-publicaciones').textContent = errorDeFechas(formPublicaciones) ?? '';
+  if ($('error-publicaciones').textContent) return;
   $('ayuda-rechazos').hidden = lista !== 'RECHAZOS';
   try {
     const query = filtrosDe(formPublicaciones, lista === 'RECHAZOS' ? {} : { estado: lista });
@@ -303,6 +329,7 @@ activarListas($('lista-publicaciones'), (lista) => {
   formPublicaciones.elements.buscar.placeholder = textos.buscar;
   cargarModeracion();
 });
+limitarFechas(formPublicaciones);
 formPublicaciones.addEventListener('submit', (ev) => {
   ev.preventDefault();
   cargarModeracion();
@@ -482,10 +509,13 @@ const paginasFinalizadas = paginador('finalizadas', (paso) => { finalizadas.pagi
 // Arranca en los últimos 30 días.
 formFinalizadas.elements.desde.value = haceDias(30);
 formFinalizadas.elements.hasta.value = hoy;
+limitarFechas(formFinalizadas);
+formFinalizadas.elements.hasta.min = formFinalizadas.elements.desde.value;
 
 async function cargarFinalizadas() {
   finalizadas.cargada = true;
-  $('error-finalizadas').textContent = '';
+  $('error-finalizadas').textContent = errorDeFechas(formFinalizadas) ?? '';
+  if ($('error-finalizadas').textContent) return;
   const campos = formFinalizadas.elements;
   const filtros = {
     estado: campos.estado.value, desde: campos.desde.value, hasta: campos.hasta.value, buscar: campos.buscar.value.trim(),

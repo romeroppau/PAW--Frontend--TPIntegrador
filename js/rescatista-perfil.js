@@ -66,7 +66,9 @@ async function cargarPublicaciones() {
   try {
     const { publicaciones } = await api(`/api/adopciones/moderacion?estado=TODAS&rescatista_id=${id}`);
     tabla('publicaciones', publicaciones.map((p) => {
-      const revision = p.activa ? insignia(p.estado_moderacion) : insignia('BAJA');
+      // Revisión: lo que decidió la veterinaria. "Dada de baja" solo si la rescatista la sacó antes de
+      // que se aprobara; si se aprobó, en qué quedó lo dice la columna Adopción.
+      const revision = !p.activa && !p.adopcion ? insignia('BAJA') : insignia(p.estado_moderacion);
       const adopcion = p.adopcion ? celda(insignia(p.adopcion.estado), ' ',
         el('a', 'Ver la adopción', { href: '/panel/adopcion.html?id=' + p.adopcion.id })) : celda('—');
       const tr = el('tr');

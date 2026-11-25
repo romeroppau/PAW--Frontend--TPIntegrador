@@ -69,6 +69,18 @@ export function insignia(codigo) {
   return el('span', texto, { class: ('insignia ' + clase).trim() });
 }
 
+/**
+ * Cómo está una publicación para la veterinaria. Una publicación queda inactiva por dos motivos: la
+ * dio de baja la rescatista, o se cerró con su adopción (adoptado o cancelada). Solo la primera es
+ * "Dada de baja"; si tiene adopción, se muestra en qué quedó (por ejemplo, "Adoptado").
+ * @param {{estado_moderacion: string, activa: boolean}} publicacion
+ * @param {string|null} adopcionEstado  El estado de su adopción, o null si nunca se aprobó.
+ */
+export function insigniaPublicacion(publicacion, adopcionEstado = null) {
+  if (adopcionEstado) return insignia(adopcionEstado);
+  return publicacion.activa ? insignia(publicacion.estado_moderacion) : insignia('BAJA');
+}
+
 // 36 meses → "3 años"; 14 → "1 año y 2 meses"; 2 → "2 meses" (igual que en mascotas.js).
 export function edad(meses) {
   if (meses === null || meses === undefined) return 'Edad desconocida';
