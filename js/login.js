@@ -56,14 +56,57 @@ formulario.addEventListener('submit', async (evento) => {
   } catch (error) {
     // Si el backend respondió (400 o 401), su mensaje viene en error.datos.error
     // (por ejemplo, "Email o contraseña incorrectos"). Si no hay error.datos, ni siquiera hubo respuesta.
-    if (error.datos) {
+    if (error.estado === 429 && error.datos?.bloqueada) {
+      bloquear(error.datos.segundos_restantes);
+    } else if (error.datos) {
       mostrarError(error.datos.error ?? 'No se pudo iniciar sesión');
     } else {
       mostrarError('No se pudo conectar con el servidor. Probá de nuevo en un momento.');
     }
   } finally {
-    // finally se ejecuta siempre al final, haya salido bien o mal: vuelve a habilitar el botón.
-    botonEnviar.disabled = false;
+    // finally se ejecuta siempre al final, haya salido bien o mal: vuelve a habilitar el botón
+    // (salvo que la cuenta haya quedado bloqueada).
+    if (!finDelBloqueo) botonEnviar.disabled = false;
+  }
+});
+
+// Cuenta bloqueada (25/11): 5 intentos fallidos la bloquean 15 minutos. El servidor responde 429 con
+// los segundos que faltan; mientras tanto no se puede escribir la contraseña ni enviar, y el mensaje
+// dice cuánto falta. Si se cambia el email (otra cuenta), se puede volver a intentar.
+const campoPassword = document.getElementById('password');
+const campoEmail = document.getElementById('email');
+let finDelBloqueo = null;
+let reloj = null;
+
+function bloquear(segundos) {
+  const espera = Math.max(1, Number(segundos) || 900) * 1000;
+  finDelBloqueo = Date.now() + espera;
+  campoPassword.value = '';
+  campoPassword.disabled = true;
+  botonEnviar.disabled = true;
+  // Un solo mensaje con la hora (role="alert": si cambiara cada segundo, el lector lo leería cada vez).
+  const hora = new Date(finDelBloqueo).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+  const minutos = Math.ceil(espera / 60000);
+  mostrarError(`Tu cuenta quedó bloqueada por demasiados intentos fallidos. Podés volver a intentar a las ${hora} `
+    + `(en ${minutos} ${minutos === 1 ? 'minuto' : 'minutos'}).`);
+  clearTimeout(reloj);
+  reloj = setTimeout(() => {
+    desbloquear();
+    mostrarError('');
+  }, espera);
+}
+
+function desbloquear() {
+  clearTimeout(reloj);
+  finDelBloqueo = null;
+  campoPassword.disabled = false;
+  botonEnviar.disabled = false;
+}
+
+campoEmail.addEventListener('input', () => {
+  if (finDelBloqueo) {
+    desbloquear();
+    mostrarError('');
   }
 });
 
