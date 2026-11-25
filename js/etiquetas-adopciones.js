@@ -13,7 +13,8 @@ const ESTADOS = {
   ADOPTANTE_ELEGIDO: ['Adoptante elegido', 'insignia-espera'],
   CHEQUEO_PENDIENTE: ['Chequeo pendiente', 'insignia-espera'],
   FINALIZADA: ['Adoptado', 'insignia-listo'],
-  CANCELADA: ['Cancelada', 'insignia-anulado'],
+  // Desde el 24/11 una adopción solo se cancela cuando la rescatista da de baja la publicación.
+  CANCELADA: ['Dada de baja', 'insignia-anulado'],
   BAJA: ['Dada de baja', 'insignia-anulado'],
   // Postulación
   ELEGIDA: ['Elegida', 'insignia-listo'],
@@ -30,9 +31,9 @@ const ESTADOS = {
 
 export const textoEstado = (codigo) => ESTADOS[codigo]?.[0] ?? codigo;
 
-// Estados de una postulación (24/11). RECHAZADA: no la eligieron (la rescatista eligió a otra
-// persona, o se cerró la publicación o la adopción): "No elegida", para todos. CANCELADA: la canceló
-// el cliente; a él se le dice "por vos".
+// Estados de una postulación (24/11). RECHAZADA: no la eligieron: "No elegida", o, si la adopción se
+// cerró porque la rescatista dio de baja la publicación, "Publicación dada de baja" (también la que
+// había sido elegida). CANCELADA: la canceló el cliente; a él se le dice "por vos".
 const ESTADOS_POSTULACION = {
   PENDIENTE: ['Esperando revisión', 'insignia-espera'],
   ELEGIDA: ['Elegida', 'insignia-listo'],
@@ -42,10 +43,12 @@ const ESTADOS_POSTULACION = {
 
 /**
  * La insignia de una postulación. mira: quién la ve. Al cliente que la canceló se le dice "Cancelada
- * por vos"; a la rescatista y a la veterinaria, "Cancelada por el postulante".
+ * por vos"; a la rescatista y a la veterinaria, "Cancelada por el postulante". adopcion: el estado de
+ * la adopción, para distinguir "No elegida" de "Publicación dada de baja".
  */
-export function insigniaPostulacion(codigo, { mira = 'veterinaria' } = {}) {
+export function insigniaPostulacion(codigo, { mira = 'veterinaria', adopcion = null } = {}) {
   let [texto, clase] = ESTADOS_POSTULACION[codigo] ?? [codigo, ''];
+  if (codigo === 'RECHAZADA' && adopcion === 'CANCELADA') texto = 'Publicación dada de baja';
   if (mira === 'postulante' && codigo === 'CANCELADA') {
     texto = 'Cancelada por vos';
   }
@@ -123,12 +126,16 @@ export function diaCorto(f) {
 // En qué paso está la postulación: para la elegida, el de la adopción y el turno del chequeo.
 export function seguimiento(p) {
   if (p.estado === 'PENDIENTE') return 'La rescatista todavía está eligiendo.';
-  if (p.estado === 'RECHAZADA') return 'La rescatista eligió a otra persona o cerró la publicación.';
+  if (p.estado === 'RECHAZADA') {
+    return p.adopcion?.estado === 'CANCELADA'
+      ? 'La rescatista dio de baja la publicación, así que la adopción no sigue.'
+      : 'La rescatista eligió a otra persona.';
+  }
   if (p.estado === 'CANCELADA') return 'La cancelaste. Si cambiás de idea, podés volver a postularte mientras siga disponible.';
   if (p.estado !== 'ELEGIDA') return '';
   const { estado: estadoAdopcion, turno_chequeo: turno } = p.adopcion;
   if (estadoAdopcion === 'FINALIZADA') return '¡Adopción completa! Ya está en Mis mascotas.';
-  if (estadoAdopcion === 'CANCELADA') return 'La adopción se canceló.';
+  if (estadoAdopcion === 'CANCELADA') return 'La rescatista dio de baja la publicación, así que la adopción no sigue.';
   if (turno?.estado === 'PROGRAMADO' || turno?.estado === 'EN_ATENCION') return `Turno de chequeo: ${diaCorto(turno.fecha)} a las ${turno.hora}.`;
   if (turno?.estado === 'ATENDIDO') return 'Chequeo hecho: falta que la veterinaria cierre la adopción.';
   if (turno) return 'El turno del chequeo se canceló: te vamos a dar otro.';
@@ -143,7 +150,7 @@ export function seguimiento(p) {
 export function bloquePostulacion(p, { cancelable = false } = {}) {
   const caja = el('div', '', { class: 'tu-postulacion' });
   const linea = el('p', 'Tu postulación: ');
-  linea.append(insigniaPostulacion(p.estado, { mira: 'postulante' }));
+  linea.append(insigniaPostulacion(p.estado, { mira: 'postulante', adopcion: p.adopcion?.estado }));
   caja.append(linea);
   const paso = seguimiento(p);
   if (paso) caja.append(el('p', paso, { class: 'datos' }));

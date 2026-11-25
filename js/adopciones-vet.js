@@ -8,8 +8,9 @@
  *   de rechazos (GET /api/adopciones/rechazos: cada rechazo, aunque después la hayan corregido).
  *   Con búsqueda y fechas.
  * - En curso: programar el chequeo (crea el turno en la agenda y lo asocia), completar la adopción
- *   cuando el chequeo está atendido (la mascota pasa al adoptante) o cancelarla. Con búsqueda.
- * - Finalizadas: las adoptadas o las canceladas, filtradas por fecha (arranca en los últimos 30 días)
+ *   cuando el chequeo está atendido (la mascota pasa al adoptante). Con búsqueda. No se cancela desde
+ *   acá: solo la rescatista corta una adopción, dando de baja la publicación.
+ * - Finalizadas: las adoptadas o las dadas de baja, filtradas por fecha (arranca en los últimos 30 días)
  *   y por nombre.
  * Las dos listas de adopciones vienen de a 20 (la API pagina) y cada fila enlaza a su detalle
  * (panel/adopcion.html). Contrato: docs/api/contrato-adopciones.md (repo Adopciones).
@@ -457,10 +458,8 @@ function filaEnCurso(adopcion) {
   } else if (adopcion.estado === 'CHEQUEO_PENDIENTE' && turno?.estado === 'PROGRAMADO') {
     acciones.append(el('a', 'Atender en la agenda', { href: '/panel/agenda.html' }));
   }
-  acciones.append(enlaceDetalle(adopcion), botonAccion('Cancelar', {
-    ruta: `/api/adopciones/${adopcion.id}/cancelar`, error, peligro: true, clase: 'boton boton-borde boton-chico',
-    pregunta: `¿Cancelar la adopción de ${publicacion.mascota.nombre}? Si había un chequeo programado, cancelalo también en la agenda.`
-  }), error);
+  // Sin "Cancelar" (24/11): una adopción solo se corta cuando la rescatista da de baja la publicación.
+  acciones.append(enlaceDetalle(adopcion), error);
   celda.append(acciones);
 
   tr.append(animal, celdaEstado, celdaAdoptante, celdaChequeo, celda);
@@ -523,8 +522,9 @@ async function cargarFinalizadas() {
   };
   try {
     const respuesta = await pedirPagina(filtros, finalizadas);
-    const terminadas = filtros.estado === 'CANCELADA' ? 'canceladas' : 'finalizadas';
-    const resumen = respuesta.total === 1 ? `1 adopción ${terminadas.slice(0, -1)}.` : `${respuesta.total} adopciones ${terminadas}.`;
+    const [una, varias] = filtros.estado === 'CANCELADA' ? ['dada de baja', 'dadas de baja'] : ['finalizada', 'finalizadas'];
+    const terminadas = varias;
+    const resumen = respuesta.total === 1 ? `1 adopción ${una}.` : `${respuesta.total} adopciones ${varias}.`;
     pintarTabla('finalizadas', respuesta.adopciones.map((a) => {
       const tr = el('tr');
       const detalle = el('td');
