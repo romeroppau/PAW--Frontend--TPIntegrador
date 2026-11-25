@@ -9,11 +9,13 @@
 import { api } from './api.js';
 import { exigirRol } from './auth.js';
 import { el } from './ui.js';
+import { limitarAHoy } from './rango-fechas.js';
 import { TEXTO_ESTADO, textoDelReintegro, diaConNombre, fecha, fechaHora, leerFechas, precio, textoDeError } from './tienda.js';
 
 const $filtro = document.getElementById('filtro');
 const $desde = document.getElementById('desde');
 const $hasta = document.getElementById('hasta');
+limitarAHoy($desde, $hasta);   // historial: nada posterior a hoy
 const $estado = document.getElementById('estado');
 const $vacio = document.getElementById('vacio');
 const $textoVacio = document.getElementById('texto-vacio');

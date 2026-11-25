@@ -5,6 +5,7 @@
  * Las fechas llegan en hora de Argentina, sin zona: "2026-11-18 10:30:00".
  */
 import { api } from './api.js';
+import { errorDeRango } from './rango-fechas.js';
 
 /** La política de reintegro por defecto (la configura la veterinaria; llega del servidor). */
 const REINTEGRO_POR_DEFECTO = { anticipado: 75, ultimo_momento: 50, horas: 48 };
@@ -39,7 +40,7 @@ export function reintegroAhora(p) {
     : { porcentaje: p.ultimo_momento, monto: p.monto_ultimo_momento };
 }
 
-/** La política de una compra pagada con fechas y montos: "Si lo cancelás hasta el lunes 23/11 a las 23:59…". */
+/** La política de una compra pagada con fechas y montos: "Si lo cancelás hasta el lunes 23/11/2026 a las 23:59…". */
 export function reintegroConFechas(p) {
   const montoUltimo = p.monto_ultimo_momento > 0 ? `${precio(p.monto_ultimo_momento)} (el ${p.ultimo_momento} %)` : null;
   const ahora = reintegroAhora(p);
@@ -81,8 +82,8 @@ export function precio(valor) {
   return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(Number(valor));
 }
 
-/** "2026-12-10" -> "10/12" */
-const diaMes = (texto) => texto.slice(5, 10).split('-').reverse().join('/');
+/** "2026-12-10" -> "10/12/2026" (todas las fechas, DD/MM/AAAA) */
+const diaMes = (texto) => texto.slice(0, 10).split('-').reverse().join('/');
 
 /**
  * El precio de un producto del catálogo, con su promoción si tiene (producto.promocion, ver
@@ -147,17 +148,16 @@ export function fecha(texto) {
  * o un texto de error si "desde" es después de "hasta".
  */
 export function leerFechas($desde, $hasta) {
-  const desde = $desde.value;
-  const hasta = $hasta.value;
-  if (desde && hasta && desde > hasta) return 'La fecha "Desde" tiene que ser anterior o igual a "Hasta".';
-  return { desde, hasta };
+  const error = errorDeRango($desde, $hasta);
+  if (error) return error;
+  return { desde: $desde.value, hasta: $hasta.value };
 }
 
-/** "2026-11-25" -> "miércoles 25/11" */
+/** "2026-11-25" -> "miércoles 25/11/2026" */
 export function diaConNombre(texto) {
   const [a, m, d] = texto.split('-').map(Number);
   const dia = new Date(Date.UTC(a, m - 1, d)).getUTCDay();
-  return `${DIAS[dia]} ${String(d).padStart(2, '0')}/${String(m).padStart(2, '0')}`;
+  return `${DIAS[dia]} ${String(d).padStart(2, '0')}/${String(m).padStart(2, '0')}/${a}`;
 }
 
 /** Hoy en Argentina, como "2026-11-18" (para comparar con retirar_hasta). */

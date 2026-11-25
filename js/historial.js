@@ -20,8 +20,9 @@ const dinero = (v) => '$' + Number(v || 0).toLocaleString('es-AR', { minimumFrac
 
 // MySQL devuelve "2026-11-09 10:30:00": el espacio se cambia por "T" para que todos los navegadores lo lean.
 function fecha(valor) {
-  const d = new Date(String(valor).replace(' ', 'T'));
-  return Number.isNaN(d.getTime()) ? String(valor ?? '') : d.toLocaleDateString('es-AR');
+  // "2026-01-05 10:30:00" -> "05/01/2026" (toLocaleDateString daría "5/1/2026", sin los ceros).
+  const [a, m, d] = String(valor ?? '').slice(0, 10).split('-');
+  return d ? `${d}/${m}/${a}` : String(valor ?? '');
 }
 
 async function cargar() {
