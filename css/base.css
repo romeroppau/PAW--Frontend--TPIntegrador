@@ -335,6 +335,14 @@ form .boton + .boton { margin-left: .5rem; }
 .pestanas [role="tab"]:focus-visible { outline: 3px solid var(--pino); outline-offset: 2px; }
 .pestanas .contador { font-weight: 600; color: var(--naranja-oscuro); }
 [role="tabpanel"]:focus-visible { outline: 3px solid var(--pino); outline-offset: 4px; }
+/* Pestañas de una sección del menú (js/barra-rol.js): son enlaces a otras páginas, con el mismo aspecto. */
+.pestanas-seccion a {
+  border-bottom: 3px solid transparent; padding: .6rem 1rem; font-weight: 700;
+  color: var(--tinta-suave); text-decoration: none; white-space: nowrap;
+}
+.pestanas-seccion a:hover { color: var(--pino); }
+.pestanas-seccion a[aria-current="page"] { color: var(--pino-oscuro); border-bottom-color: var(--pino); }
+.pestanas-seccion a:focus-visible { outline: 3px solid var(--pino); outline-offset: 2px; }
 
 /* Anterior / Siguiente de una lista paginada */
 .paginacion { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: .75rem; margin-top: 1rem; }
@@ -345,3 +353,39 @@ form .boton + .boton { margin-left: .5rem; }
 .filtros-turnos .campo { margin: 0; min-width: 11rem; }
 .filtros-turnos .boton { margin-bottom: .2rem; }
 @media (max-width: 600px) { .filtros-turnos .campo { flex: 1 1 100%; } }
+
+/* Contactanos (portada y paneles de cliente y rescatista): los datos al costado del mapa. */
+.contacto-grilla {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.contacto-datos {
+  display: grid;
+  gap: .6rem;
+  margin: 0 0 1rem;
+}
+
+.contacto-datos dt {
+  color: var(--tinta-suave);
+  font-size: .9rem;
+  font-weight: 700;
+}
+
+.contacto-datos dd {
+  margin: .1rem 0 0;
+}
+
+.contacto-mapa {
+  width: 100%;
+  min-height: 16rem;
+  border: 0;
+  border-radius: var(--radio);
+}
+@media (max-width: 700px) {
+  .contacto-grilla { grid-template-columns: 1fr; }
+}
+.contacto-acciones { display: flex; flex-wrap: wrap; gap: .6rem; margin: 0; }
+#contacto { scroll-margin-top: 1rem; }

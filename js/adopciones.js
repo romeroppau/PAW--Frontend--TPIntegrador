@@ -2,14 +2,17 @@
  * adopciones.js — Animales en adopción (adopciones/adopciones.html), rol 3, Entrega 5
  *
  * Público: las publicaciones aprobadas y disponibles, con filtro por especie.
- * Cliente con sesión: se postula a una adopción y ve el estado de sus postulaciones.
+ * Cliente con sesión: dos pestañas, "Animales que buscan familia" (se postula desde ahí) y "Mis
+ * postulaciones" (el estado de cada una; el animal lleva a su publicación, adopciones/publicacion.html).
+ * Con #seccion-mias en la dirección abre la segunda; con ?postular=ID, el formulario de ese animal.
  * Contrato: docs/api/contrato-adopciones.md (repo Adopciones). Todo texto de la API va con el().
  */
 import { api } from './api.js';
 import { sesion } from './auth.js';
 import { el, limpiarErrores, mostrarErrores } from './ui.js';
 import { textoEspecieMascota } from './etiquetas.js';
-import { edad, fecha, insignia, mensajeDeError } from './etiquetas-adopciones.js';
+import { bloquePostulacion, cancelarPostulacion, edad, fecha, insigniaPostulacion, mensajeDeError, seguimiento } from './etiquetas-adopciones.js';
+import { activarPestanas } from './pestanas.js';
 
 const usuario = await sesion;
 const esCliente = usuario?.rol === 'CLIENTE';
@@ -28,11 +31,16 @@ if (usuario) document.getElementById('invitacion').hidden = true;
 /* ---------- Animales disponibles ---------- */
 
 let especie = '';
+let ultimasPublicaciones = [];
+// Las postulaciones del cliente, por publicación: esos animales muestran el estado en lugar de
+// "Quiero adoptarlo" (no se puede postular dos veces por el mismo).
+let misPostulaciones = new Map();
 
 async function cargar() {
   estado.textContent = 'Cargando…';
   try {
     const { publicaciones } = await api('/api/adopciones/publicaciones' + (especie ? '?especie=' + especie : ''));
+    ultimasPublicaciones = publicaciones;
     grilla.replaceChildren(...publicaciones.map(tarjeta));
     estado.textContent = publicaciones.length ? '' : 'Por ahora no hay animales en adopción con ese filtro.';
   } catch {
@@ -57,7 +65,10 @@ function tarjeta(publicacion) {
     el('p', 'Lo cuida: ' + (rescatista.organizacion || rescatista.nombre), { class: 'datos' })
   );
 
-  if (esCliente) {
+  // Si ya se postuló, ve el estado; si la había cancelado, también "Quiero adoptarlo" (24/11).
+  const mia = misPostulaciones.get(publicacion.id);
+  if (esCliente && mia) cuerpo.append(bloquePostulacion(mia));
+  if (esCliente && (!mia || mia.estado === 'CANCELADA')) {
     const acciones = el('div', '', { class: 'acciones' });
     const boton = el('button', 'Quiero adoptarlo', { type: 'button', class: 'boton', 'aria-label': 'Postularme para adoptar a ' + mascota.nombre });
     boton.addEventListener('click', () => abrirFormulario(publicacion));
@@ -121,35 +132,24 @@ form.addEventListener('submit', async (ev) => {
 
 /* ---------- Mis postulaciones (cliente) ---------- */
 
-// "2026-11-26" → "jue 26/11" (al mediodía UTC, para que la zona horaria no corra el día).
-const DIAS = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
-function diaCorto(f) {
-  const [, mes, dia] = f.split('-');
-  return `${DIAS[new Date(f + 'T12:00:00Z').getUTCDay()]} ${dia}/${mes}`;
-}
-
-// En qué paso está la postulación: para la elegida, el de la adopción y el turno del chequeo.
-function seguimiento(p) {
-  if (p.estado === 'PENDIENTE') return 'La rescatista todavía está eligiendo.';
-  if (p.estado !== 'ELEGIDA') return '';
-  const { estado: estadoAdopcion, turno_chequeo: turno } = p.adopcion;
-  if (estadoAdopcion === 'FINALIZADA') return '¡Adopción completa! Ya está en Mis mascotas.';
-  if (estadoAdopcion === 'CANCELADA') return 'La adopción se canceló.';
-  if (turno?.estado === 'PROGRAMADO' || turno?.estado === 'EN_ATENCION') return `Turno de chequeo: ${diaCorto(turno.fecha)} a las ${turno.hora}.`;
-  if (turno?.estado === 'ATENDIDO') return 'Chequeo hecho: falta que la veterinaria cierre la adopción.';
-  if (turno) return 'El turno del chequeo se canceló: te vamos a dar otro.';
-  return 'Esperando el turno del chequeo: te avisamos cuando esté.';
-}
 
 async function cargarMias() {
   const estadoMias = document.getElementById('estado-mias');
   try {
     const { postulaciones } = await api('/api/adopciones/mis-postulaciones');
+    misPostulaciones = new Map(postulaciones.map((p) => [p.publicacion.id, p]));
+    grilla.replaceChildren(...ultimasPublicaciones.map(tarjeta));
     document.getElementById('filas-mias').replaceChildren(...postulaciones.map((p) => {
       const tr = el('tr');
       const celdaEstado = el('td');
-      celdaEstado.append(insignia(p.estado));
-      tr.append(el('td', p.publicacion.mascota.nombre), el('td', fecha(p.fecha)), celdaEstado, el('td', seguimiento(p)));
+      celdaEstado.append(insigniaPostulacion(p.estado, { mira: 'postulante', adopcion: p.adopcion?.estado }));
+      // El animal lleva a su publicación (la ve aunque ya no esté disponible: se postuló).
+      const animal = el('td');
+      animal.append(el('a', p.publicacion.mascota.nombre, {
+        href: '/adopciones/publicacion.html?id=' + encodeURIComponent(p.publicacion.id),
+        'aria-label': 'Ver la publicación de ' + p.publicacion.mascota.nombre
+      }));
+      tr.append(animal, el('td', fecha(p.fecha)), celdaEstado, el('td', seguimiento(p)), celdaCancelar(p));
       return tr;
     }));
     document.getElementById('tabla-mias').hidden = postulaciones.length === 0;
@@ -159,16 +159,49 @@ async function cargarMias() {
   }
 }
 
+// Mientras la rescatista no eligió, el cliente puede cancelar su postulación (24/11).
+function celdaCancelar(p) {
+  const celda = el('td');
+  if (p.estado !== 'PENDIENTE') return celda;
+  const boton = el('button', 'Cancelar', {
+    type: 'button', class: 'boton boton-borde boton-chico',
+    'aria-label': 'Cancelar mi postulación para adoptar a ' + p.publicacion.mascota.nombre
+  });
+  const error = el('span', '', { class: 'campo-error', role: 'alert' });
+  boton.addEventListener('click', async () => {
+    error.textContent = '';
+    boton.disabled = true;
+    try {
+      if (await cancelarPostulacion(p)) await cargarMias();
+    } catch (e) {
+      error.textContent = e?.datos?.error ?? 'No se pudo cancelar. Probá de nuevo.';
+    } finally {
+      boton.disabled = false;
+    }
+  });
+  celda.append(boton, error);
+  return celda;
+}
+
 const cargas = [cargar()];
 if (esCliente) {
-  document.getElementById('seccion-mias').hidden = false;
-  document.getElementById('ir-mias').hidden = false;
+  // Las pestañas: la elegida queda en la dirección (#seccion-mias), así el menú y el panel del
+  // cliente ("Mis postulaciones") abren la que corresponde.
+  const lista = document.getElementById('pestanas-adopciones');
+  lista.hidden = false;
+  const elegir = activarPestanas(lista, (vista) => {
+    history.replaceState(null, '', vista === 'mias' ? '#seccion-mias' : location.pathname + location.search);
+  });
+  if (location.hash === '#seccion-mias') elegir('mias');
   cargas.push(cargarMias());
 }
 
-// Desde el panel del cliente ("Mis postulaciones"): la sección se muestra recién con la sesión y
-// las tarjetas la corren hacia abajo al cargarse, así que se baja hasta ella cuando todo está listo.
-if (esCliente && location.hash === '#seccion-mias') {
-  await Promise.all(cargas);
-  document.getElementById('seccion-mias').scrollIntoView();
+// Desde la publicación de un animal ("Quiero adoptarlo"): se abre el formulario para ese animal.
+const postular = new URLSearchParams(location.search).get('postular');
+if (esCliente && postular) {
+  await cargas[0];
+  await cargas[1];
+  const publicacion = ultimasPublicaciones.find((p) => String(p.id) === postular);
+  const mia = publicacion && misPostulaciones.get(publicacion.id);
+  if (publicacion && (!mia || mia.estado === 'CANCELADA')) abrirFormulario(publicacion);
 }

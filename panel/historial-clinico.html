@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Historial clínico | HuellaVet</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Nunito+Sans:wght@400;600;700&display=swap">
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/cuenta.css">
+</head>
+<!-- Historial clínico (veterinaria, Entrega 5): los pacientes atendidos, el de la consulta más
+     reciente primero, con buscador por mascota o dueño, de a 20 ("Ver más"). "Ver consultas" despliega
+     en la misma fila el historial de esa mascota. Se llega desde Panel → Mis pacientes → Historial clínico.
+     Lo maneja js/pacientes-atendidos.js con GET /api/pacientes/atendidos y
+     GET /api/pacientes/mascotas/{id}/historial (repo Pacientes, docs/api/contrato-consultas.md). -->
+<body data-rol="VETERINARIO">
+  <a class="saltar" href="#contenido">Saltar al contenido</a>
+  <div id="encabezado-sitio"></div>
+  <script src="/js/layout.js"></script>
+  <main id="contenido" class="seccion" hidden>
+    <div class="contenedor">
+      <p><a href="/paneles/panel-administrador.html#pacientes">&larr; Volver al panel</a></p>
+      <h1>Historial clínico</h1>
+      <p>Los pacientes que se atendieron, el de la consulta más reciente primero. Con "Ver consultas" se despliegan sus consultas acá mismo.</p>
+
+      <div class="campo campo-buscador">
+        <label for="buscar">Buscar por mascota o dueño</label>
+        <input id="buscar" type="search" placeholder="Ej.: Firulais o Ana" autocomplete="off" maxlength="80">
+      </div>
+
+      <p class="estado" id="estado" role="status">Cargando pacientes…</p>
+      <div class="tabla-scroll" id="tabla" hidden>
+        <table>
+          <caption class="solo-lectores">Pacientes atendidos</caption>
+          <thead>
+            <tr>
+              <th scope="col">Mascota</th><th scope="col">Dueño</th><th scope="col">Consultas</th>
+              <th scope="col">Última consulta</th><th scope="col">Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="filas"></tbody>
+        </table>
+      </div>
+      <p><button class="boton boton-borde" type="button" id="ver-mas" hidden>Ver más</button></p>
+    </div>
+  </main>
+  <div id="pie-sitio"></div>
+
+  <script type="module" src="/js/menu.js"></script>
+  <script type="module" src="/js/guardia-panel.js"></script>
+  <script type="module" src="/js/auth.js"></script>
+  <script type="module" src="/js/pacientes-atendidos.js"></script>
+</body>
+</html>

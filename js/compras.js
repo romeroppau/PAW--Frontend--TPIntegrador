@@ -74,20 +74,12 @@ function crearFila(compra) {
   numero.append(el('a', compra.numero, { href: '/tienda/compra.html?numero=' + encodeURIComponent(compra.numero) }));
   const estado = el('td');
   estado.append(el('span', TEXTO_ESTADO[compra.estado] ?? compra.estado, { class: 'estado-compra estado-' + compra.estado.toLowerCase() }));
-  const factura = el('td');
-  if (compra.tiene_factura) {
-    factura.append(el('a', 'Ver factura', {
-      href: '/tienda/factura.html?numero=' + encodeURIComponent(compra.numero),
-      'aria-label': `Ver la factura de la compra ${compra.numero}`,
-    }));
-  }
   fila.append(
     numero,
     el('td', fechaHora(compra.fecha)),
     el('td', precio(compra.total)),
     estado,
     el('td', plazo(compra)),
-    factura,
   );
   return fila;
 }

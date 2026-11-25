@@ -25,7 +25,6 @@
         <button type="button" role="tab" id="tab-liquidar" aria-selected="false" tabindex="-1" aria-controls="panel-liquidar" data-vista="liquidar">Qué liquidar</button>
         <button type="button" role="tab" id="tab-promociones" aria-selected="false" tabindex="-1" aria-controls="panel-promociones" data-vista="promociones">Promociones publicadas</button>
         <button type="button" role="tab" id="tab-turnos-atendidos" aria-selected="false" tabindex="-1" aria-controls="panel-turnos-atendidos" data-vista="turnos-atendidos">Turnos atendidos</button>
-        <button type="button" role="tab" id="tab-stock" aria-selected="false" tabindex="-1" aria-controls="panel-stock" data-vista="stock">Stock y movimientos</button>
       </div>
       <p class="estado" id="estado" role="status"></p>
 
@@ -195,92 +194,6 @@
             </table>
           </div>
           <p><button type="button" class="boton boton-borde" id="mas-turnos" hidden>Mostrar más</button></p>
-        </section>
-      </div>
-
-      <!-- Stock y movimientos -->
-      <div id="panel-stock" role="tabpanel" aria-labelledby="tab-stock" tabindex="0" hidden>
-        <section class="tarjeta" aria-labelledby="t-stock">
-          <h2 id="t-stock">Stock y movimientos</h2>
-          <p class="estado" id="resumen-stock" role="status"></p>
-
-          <div class="pestanas pestanas-sub" role="tablist" aria-label="Stock y movimientos" id="pestanas-stock">
-            <button type="button" role="tab" id="tab-stock-productos" aria-selected="true" aria-controls="panel-stock-productos" data-vista="productos">Productos</button>
-            <button type="button" role="tab" id="tab-stock-insumos" aria-selected="false" tabindex="-1" aria-controls="panel-stock-insumos" data-vista="insumos">Insumos</button>
-            <button type="button" role="tab" id="tab-stock-movimientos" aria-selected="false" tabindex="-1" aria-controls="panel-stock-movimientos" data-vista="movimientos">Movimientos</button>
-          </div>
-          <p class="campo-ayuda">Productos e insumos muestran el stock de hoy. Para filtrar por fechas lo que entró y salió, abrí <strong>Movimientos</strong>.</p>
-
-          <div id="panel-stock-productos" role="tabpanel" aria-labelledby="tab-stock-productos" tabindex="0">
-            <div class="herramientas">
-              <div class="campo">
-                <label for="buscar-productos">Buscar producto</label>
-                <input id="buscar-productos" type="search" autocomplete="off">
-              </div>
-              <label class="check"><input type="checkbox" id="bajo-productos"> Solo stock bajo (<span class="limite-stock">10</span> o menos)</label>
-            </div>
-            <p class="estado" id="cont-productos" role="status"></p>
-            <div class="tabla-scroll">
-              <table>
-                <caption class="solo-lectores">Stock actual de los productos activos</caption>
-                <thead>
-                  <tr><th scope="col">Producto</th><th scope="col">Stock</th><th scope="col">Vence</th><th scope="col">Aviso</th></tr>
-                </thead>
-                <tbody id="filas-stock-productos"></tbody>
-              </table>
-            </div>
-            <p><button type="button" class="boton boton-borde" id="mas-productos" hidden>Mostrar más</button></p>
-          </div>
-
-          <div id="panel-stock-insumos" role="tabpanel" aria-labelledby="tab-stock-insumos" tabindex="0" hidden>
-            <div class="herramientas">
-              <div class="campo">
-                <label for="buscar-insumos">Buscar insumo</label>
-                <input id="buscar-insumos" type="search" autocomplete="off">
-              </div>
-              <label class="check"><input type="checkbox" id="bajo-insumos"> Solo stock bajo (<span class="limite-stock">10</span> o menos)</label>
-            </div>
-            <p class="estado" id="cont-insumos" role="status"></p>
-            <div class="tabla-scroll">
-              <table>
-                <caption class="solo-lectores">Stock actual de los insumos activos</caption>
-                <thead>
-                  <tr><th scope="col">Insumo</th><th scope="col">Estado</th><th scope="col">Stock</th><th scope="col">Aviso</th></tr>
-                </thead>
-                <tbody id="filas-stock-insumos"></tbody>
-              </table>
-            </div>
-            <p><button type="button" class="boton boton-borde" id="mas-insumos" hidden>Mostrar más</button></p>
-          </div>
-
-          <div id="panel-stock-movimientos" role="tabpanel" aria-labelledby="tab-stock-movimientos" tabindex="0" hidden>
-            <form id="filtro-movimientos" class="form-item" novalidate>
-              <div class="campo campo-chico">
-                <label for="mov-desde">Desde</label>
-                <input id="mov-desde" name="desde" type="date">
-              </div>
-              <div class="campo campo-chico">
-                <label for="mov-hasta">Hasta</label>
-                <input id="mov-hasta" name="hasta" type="date">
-              </div>
-              <button type="submit" class="boton boton-borde">Filtrar</button>
-            </form>
-            <p class="campo-error" id="error-movimientos" role="alert" hidden></p>
-            <p class="estado" id="cont-movimientos" role="status"></p>
-            <div class="tabla-scroll">
-              <table>
-                <caption class="solo-lectores">Movimientos de inventario del período, del más reciente al más antiguo</caption>
-                <thead>
-                  <tr>
-                    <th scope="col">Fecha</th><th scope="col">Tipo</th><th scope="col">Motivo</th>
-                    <th scope="col">Ítem</th><th scope="col">Cantidad</th>
-                  </tr>
-                </thead>
-                <tbody id="filas-movimientos"></tbody>
-              </table>
-            </div>
-            <p><button type="button" class="boton boton-borde" id="mas-movimientos" hidden>Mostrar más</button></p>
-          </div>
         </section>
       </div>
     </div>

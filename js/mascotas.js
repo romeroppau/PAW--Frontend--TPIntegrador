@@ -83,14 +83,17 @@ async function cargar() {
 function fila(mascota) {
   const tr = el('tr', '', { 'data-id': mascota.id });
 
+  // La foto, el nombre y la raza van en un <div>: si la clase "con-foto" (display: flex) estuviera en
+  // el <td>, la celda dejaría de ser una celda de tabla y la fila se vería desnivelada.
   const nombre = el('td');
+  const contenido = el('div', '', { class: 'con-foto' });
   if (mascota.tiene_foto) {
-    nombre.classList.add('con-foto');
-    nombre.append(el('img', '', { src: urlFoto(mascota), alt: 'Foto de ' + mascota.nombre, class: 'miniatura', width: '48', height: '48', loading: 'lazy' }));
+    contenido.append(el('img', '', { src: urlFoto(mascota), alt: 'Foto de ' + mascota.nombre, class: 'miniatura', width: '48', height: '48', loading: 'lazy' }));
   }
   // El nombre lleva a la ficha de la mascota (datos, dueño, vacunas y accesos).
-  nombre.append(enlaceMascota(mascota, el('strong', mascota.nombre)));
-  if (mascota.raza) nombre.append(el('span', mascota.raza, { class: 'ayuda' }));
+  contenido.append(enlaceMascota(mascota, el('strong', mascota.nombre)));
+  if (mascota.raza) contenido.append(el('span', mascota.raza, { class: 'ayuda' }));
+  nombre.append(contenido);
   tr.append(nombre);
 
   // La veterinaria: el nombre del dueño lleva a su ficha (datos de contacto y sus mascotas).

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Un animal rescatado que busca familia en HuellaVet.">
+  <title>Publicación de adopción | HuellaVet</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Nunito+Sans:wght@400;600;700&display=swap">
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/adopciones.css">
+</head>
+<!-- Una publicación de adopción (Entrega 5, rol 3): se abre con ?id=. Pública si el animal está
+     disponible; el cliente que se postuló la ve siempre (desde "Mis postulaciones"). La llena
+     js/publicacion.js con GET /api/adopciones/publicaciones/{id} (repo Adopciones). -->
+<body>
+  <a class="saltar" href="#contenido">Saltar al contenido</a>
+  <div id="encabezado-sitio"></div>
+  <script src="/js/layout.js"></script>
+  <main id="contenido" class="seccion">
+    <div class="contenedor">
+      <p><a href="/adopciones/adopciones.html" id="volver">&larr; Volver a adopciones</a></p>
+      <p class="estado" id="estado" role="status">Cargando…</p>
+
+      <article class="tarjeta detalle-publicacion" id="publicacion" hidden>
+        <!-- La foto la agrega el script (un img sin src no es HTML válido). -->
+        <div id="foto"></div>
+        <div class="cuerpo">
+          <p class="etiqueta" id="titulo"></p>
+          <h1 id="nombre"></h1>
+          <p class="datos" id="datos"></p>
+          <p id="descripcion"></p>
+          <p class="datos" id="rescatista"></p>
+          <p id="disponibilidad"></p>
+          <div class="acciones" id="acciones"></div>
+        </div>
+      </article>
+    </div>
+  </main>
+  <div id="pie-sitio"></div>
+
+  <script type="module" src="/js/menu.js"></script>
+  <script type="module" src="/js/auth.js"></script>
+  <script type="module" src="/js/publicacion.js"></script>
+</body>
+</html>

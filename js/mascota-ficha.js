@@ -10,6 +10,7 @@
  */
 import { api } from './api.js';
 import { exigirRol } from './auth.js';
+import { volverAAdopciones } from './volver-adopciones.js';
 import { el } from './ui.js';
 import { textoEspecieMascota } from './etiquetas.js';
 import { edad } from './mascota-datos.js';
@@ -26,6 +27,8 @@ const esVeterinaria = usuario.rol === 'VETERINARIO';
 const tieneCalendario = ['CLIENTE', 'VETERINARIO'].includes(usuario.rol);
 
 if (esVeterinaria) poner('volver', '← Ficha de mascotas');
+// Abierta desde las adopciones de la veterinaria: vuelve a esa pestaña.
+if (esVeterinaria) volverAAdopciones(document.getElementById('volver'));
 
 if (!Number.isInteger(id) || id <= 0) {
   $estado.textContent = 'Falta indicar la mascota.';

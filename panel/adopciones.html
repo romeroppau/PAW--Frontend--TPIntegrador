@@ -11,8 +11,11 @@
   <link rel="stylesheet" href="/css/adopciones.css">
 </head>
 <!-- Adopciones de la veterinaria (Entrega 5, rol 3): validar rescatistas, moderar publicaciones,
-     programar el chequeo, completar y cancelar adopciones, y ver las terminadas. Cuatro pestañas;
-     la activa viaja en el hash (#rescatistas, #moderacion, #en-curso, #finalizadas).
+     programar el chequeo, completar adopciones y ver las terminadas (una adopción solo se corta cuando la
+     rescatista da de baja la publicación). Cuatro pestañas;
+     la activa viaja en el hash (#rescatistas, #publicaciones, #en-curso, #finalizadas; #moderacion
+     sigue andando y abre Publicaciones). Rescatistas y Publicaciones tienen tres listas cada una
+     (por aprobar o revisar, aprobados y rechazos, con motivo, fecha y hora) y una búsqueda.
      Todo con fetch (js/adopciones-vet.js). -->
 <body data-rol="VETERINARIO">
   <a class="saltar" href="#contenido">Saltar al contenido</a>
@@ -28,32 +31,86 @@
       <div class="pestanas" role="tablist" aria-label="Secciones de adopciones" id="pestanas">
         <button type="button" role="tab" id="tab-rescatistas" aria-selected="false" tabindex="-1" aria-controls="panel-rescatistas" data-vista="rescatistas">
           Rescatistas <span class="contador" id="cuenta-rescatistas"></span></button>
-        <button type="button" role="tab" id="tab-moderacion" aria-selected="false" tabindex="-1" aria-controls="panel-moderacion" data-vista="moderacion">
-          Publicaciones por revisar <span class="contador" id="cuenta-moderacion"></span></button>
+        <button type="button" role="tab" id="tab-publicaciones" aria-selected="false" tabindex="-1" aria-controls="panel-publicaciones" data-vista="publicaciones">
+          Publicaciones <span class="contador" id="cuenta-moderacion"></span></button>
         <button type="button" role="tab" id="tab-en-curso" aria-selected="true" aria-controls="panel-en-curso" data-vista="en-curso">
           En curso <span class="contador" id="cuenta-curso"></span></button>
         <button type="button" role="tab" id="tab-finalizadas" aria-selected="false" tabindex="-1" aria-controls="panel-finalizadas" data-vista="finalizadas">
           Finalizadas</button>
       </div>
 
-      <!-- Rescatistas por aprobar -->
+      <!-- Rescatistas: por aprobar, aprobados y rechazados -->
       <section id="panel-rescatistas" role="tabpanel" aria-labelledby="tab-rescatistas" tabindex="0" hidden>
-        <h2 class="solo-lectores">Rescatistas por aprobar</h2>
+        <h2 class="solo-lectores">Rescatistas</h2>
+        <div class="filtro-especie" role="group" aria-label="Qué rescatistas ver" id="lista-rescatistas">
+          <button type="button" class="boton boton-borde boton-chico" data-lista="PENDIENTE" aria-pressed="true">
+            Por aprobar <span class="contador" id="cuenta-rescatistas-por-aprobar"></span></button>
+          <button type="button" class="boton boton-borde boton-chico" data-lista="APROBADO" aria-pressed="false">Aprobados</button>
+          <button type="button" class="boton boton-borde boton-chico" data-lista="RECHAZADO" aria-pressed="false">Rechazados</button>
+        </div>
+        <form class="form-item" id="filtro-rescatistas" role="search" novalidate>
+          <div class="campo">
+            <label for="buscar-rescatistas">Buscar</label>
+            <input id="buscar-rescatistas" name="buscar" type="search" maxlength="60" autocomplete="off" placeholder="Nombre, email u organización">
+          </div>
+          <!-- Las fechas, solo en aprobados y rechazados (el día en que se decidió). -->
+          <div class="campo campo-chico" data-solo-decididos hidden>
+            <label for="desde-rescatistas" data-etiqueta-desde>Desde</label>
+            <input id="desde-rescatistas" name="desde" type="date">
+          </div>
+          <div class="campo campo-chico" data-solo-decididos hidden>
+            <label for="hasta-rescatistas">Hasta</label>
+            <input id="hasta-rescatistas" name="hasta" type="date">
+          </div>
+          <button type="submit" class="boton boton-borde">Buscar</button>
+        </form>
+        <p class="campo-error" id="error-rescatistas" role="alert"></p>
         <p class="estado" id="estado-rescatistas" role="status">Cargando…</p>
         <div class="tabla-scroll" id="tabla-rescatistas" hidden>
           <table>
-            <caption class="solo-lectores">Rescatistas por aprobar</caption>
-            <thead><tr><th scope="col">Nombre</th><th scope="col">Organización</th><th scope="col">Contacto</th><th scope="col">Acciones</th></tr></thead>
+            <caption class="solo-lectores" id="titulo-tabla-rescatistas">Rescatistas por aprobar</caption>
+            <thead><tr id="columnas-rescatistas"><th scope="col">Nombre</th><th scope="col">Organización</th><th scope="col">Contacto</th><th scope="col">Acciones</th></tr></thead>
             <tbody id="filas-rescatistas"></tbody>
           </table>
         </div>
       </section>
 
-      <!-- Moderación -->
-      <section id="panel-moderacion" role="tabpanel" aria-labelledby="tab-moderacion" tabindex="0" hidden>
-        <h2 class="solo-lectores">Publicaciones por revisar</h2>
+      <!-- Publicaciones: por revisar, aprobadas y el historial de rechazos -->
+      <section id="panel-publicaciones" role="tabpanel" aria-labelledby="tab-publicaciones" tabindex="0" hidden>
+        <h2 class="solo-lectores">Publicaciones</h2>
+        <div class="filtro-especie" role="group" aria-label="Qué publicaciones ver" id="lista-publicaciones">
+          <button type="button" class="boton boton-borde boton-chico" data-lista="PENDIENTE" aria-pressed="true">
+            Por revisar <span class="contador" id="cuenta-por-revisar"></span></button>
+          <button type="button" class="boton boton-borde boton-chico" data-lista="APROBADA" aria-pressed="false">Aprobadas</button>
+          <button type="button" class="boton boton-borde boton-chico" data-lista="RECHAZOS" aria-pressed="false">Rechazos</button>
+        </div>
+        <form class="form-item" id="filtro-publicaciones" role="search" novalidate>
+          <div class="campo">
+            <label for="buscar-publicaciones">Buscar</label>
+            <input id="buscar-publicaciones" name="buscar" type="search" maxlength="60" autocomplete="off" placeholder="Mascota, rescatista u organización">
+          </div>
+          <div class="campo campo-chico">
+            <label for="desde-publicaciones" data-etiqueta-desde>Publicada desde</label>
+            <input id="desde-publicaciones" name="desde" type="date">
+          </div>
+          <div class="campo campo-chico">
+            <label for="hasta-publicaciones">Hasta</label>
+            <input id="hasta-publicaciones" name="hasta" type="date">
+          </div>
+          <button type="submit" class="boton boton-borde">Buscar</button>
+        </form>
+        <p class="ayuda" id="ayuda-rechazos" hidden>Cada rechazo queda guardado, aunque después el rescatista
+          haya corregido la publicación y se haya aprobado. "Ahora" dice cómo está hoy.</p>
+        <p class="campo-error" id="error-publicaciones" role="alert"></p>
         <p class="estado" id="estado-moderacion" role="status">Cargando…</p>
         <div class="grilla" id="publicaciones"></div>
+        <div class="tabla-scroll" id="tabla-publicaciones" hidden>
+          <table>
+            <caption class="solo-lectores" id="titulo-tabla-publicaciones">Publicaciones</caption>
+            <thead><tr id="columnas-publicaciones"><th scope="col">Animal</th><th scope="col">Rescatista</th><th scope="col">Fecha</th><th scope="col">Estado</th><th scope="col">Detalle</th></tr></thead>
+            <tbody id="filas-publicaciones"></tbody>
+          </table>
+        </div>
       </section>
 
       <!-- Adopciones en curso -->
@@ -103,7 +160,7 @@
         </nav>
       </section>
 
-      <!-- Adopciones terminadas (finalizadas o canceladas) -->
+      <!-- Adopciones terminadas (adoptadas o dadas de baja) -->
       <section id="panel-finalizadas" role="tabpanel" aria-labelledby="tab-finalizadas" tabindex="0" hidden>
         <h2 class="solo-lectores">Adopciones finalizadas</h2>
         <form class="form-item" id="filtro-finalizadas" role="search" novalidate>
@@ -111,7 +168,7 @@
             <label for="resultado">Resultado</label>
             <select id="resultado" name="estado">
               <option value="FINALIZADA">Adoptados</option>
-              <option value="CANCELADA">Canceladas</option>
+              <option value="CANCELADA">Dadas de baja</option>
             </select>
           </div>
           <div class="campo campo-chico">

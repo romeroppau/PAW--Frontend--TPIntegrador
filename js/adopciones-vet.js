@@ -2,11 +2,15 @@
  * adopciones-vet.js — Adopciones y rescatistas de la veterinaria (panel/adopciones.html), rol 3, Entrega 5
  *
  * Cuatro pestañas (la activa viaja en el hash, así los enlaces de otras pantallas caen en la correcta):
- * - Rescatistas: aprobar o rechazar las cuentas (Backend, /api/rescatistas).
- * - Publicaciones por revisar: aprobar o rechazar con motivo.
+ * - Rescatistas (Backend, /api/rescatistas): por aprobar (aprobar, o rechazar con motivo), aprobados y
+ *   rechazados (con la fecha y hora y el motivo). Con búsqueda; el nombre lleva a su perfil.
+ * - Publicaciones (Adopciones): por revisar (aprobar o rechazar con motivo), aprobadas y el historial
+ *   de rechazos (GET /api/adopciones/rechazos: cada rechazo, aunque después la hayan corregido).
+ *   Con búsqueda y fechas.
  * - En curso: programar el chequeo (crea el turno en la agenda y lo asocia), completar la adopción
- *   cuando el chequeo está atendido (la mascota pasa al adoptante) o cancelarla. Con búsqueda.
- * - Finalizadas: las adoptadas o las canceladas, filtradas por fecha (arranca en los últimos 30 días)
+ *   cuando el chequeo está atendido (la mascota pasa al adoptante). Con búsqueda. No se cancela desde
+ *   acá: solo la rescatista corta una adopción, dando de baja la publicación.
+ * - Finalizadas: las adoptadas o las dadas de baja, filtradas por fecha (arranca en los últimos 30 días)
  *   y por nombre.
  * Las dos listas de adopciones vienen de a 20 (la API pagina) y cada fila enlaza a su detalle
  * (panel/adopcion.html). Contrato: docs/api/contrato-adopciones.md (repo Adopciones).
@@ -16,9 +20,18 @@ import { api } from './api.js';
 import { exigirRol } from './auth.js';
 import { confirmar, el } from './ui.js';
 import { textoEspecieMascota } from './etiquetas.js';
-import { edad, fecha, insignia, mensajeDeError } from './etiquetas-adopciones.js';
+import { edad, fecha, fechaHora, insignia, insigniaPublicacion, mensajeDeError } from './etiquetas-adopciones.js';
 import { activarPestanas } from './pestanas.js';
 import { aplicarHorario, horarioDeAtencion } from './horario.js';
+import { accionesRescatista, enlacePerfil } from './validar-rescatista.js';
+import { enlaceMascota } from './mascota-datos.js';
+import { conOrigen } from './volver-adopciones.js';
+
+// El adoptante como enlace a su ficha de cliente (panel/cliente.html).
+const enlaceAdoptante = (adoptante) => el('a', adoptante.nombre, {
+  href: '/panel/cliente.html?id=' + encodeURIComponent(adoptante.id),
+  title: 'Ver la ficha de ' + adoptante.nombre,
+});
 
 await exigirRol(['VETERINARIO']);
 
@@ -106,46 +119,230 @@ async function pedirPagina(filtros, estadoLista) {
 // El primer error de un 400 de filtros, o un texto general.
 const errorDeFiltro = (e, porDefecto) => Object.values(e?.datos?.campos ?? {})[0] ?? mensajeDeError(e, porDefecto);
 
+// Las sub-listas de una pestaña (botones con aria-pressed). alCambiar recibe el data-lista elegido.
+function activarListas(grupo, alCambiar) {
+  grupo.addEventListener('click', (ev) => {
+    const boton = ev.target.closest('[data-lista]');
+    if (!boton || boton.getAttribute('aria-pressed') === 'true') return;
+    grupo.querySelectorAll('[data-lista]').forEach((b) => b.setAttribute('aria-pressed', String(b === boton)));
+    alCambiar(boton.dataset.lista);
+  });
+}
+
+// Los filtros de un formulario de búsqueda, como query string (sin los vacíos).
+function filtrosDe(form, extra = {}) {
+  const query = new URLSearchParams(extra);
+  for (const nombre of ['buscar', 'desde', 'hasta']) {
+    const campo = form.elements[nombre];
+    if (campo && !campo.closest('[hidden]') && campo.value.trim()) query.set(nombre, campo.value.trim());
+  }
+  return query;
+}
+
+// Las fechas de los filtros llegan hasta hoy (no hay nada en el futuro), y "hasta" no puede ser
+// anterior a "desde". El navegador respeta min/max en el calendario; escritas a mano, las revisa
+// fechasValidas() antes de pedir la lista.
+function limitarFechas(form) {
+  const { desde, hasta } = form.elements;
+  desde.max = hoy;
+  hasta.max = hoy;
+  desde.addEventListener('change', () => { hasta.min = desde.value; });
+  hasta.addEventListener('change', () => { desde.max = hasta.value || hoy; });
+}
+
+// null si las fechas sirven; si no, el mensaje de error.
+function errorDeFechas(form) {
+  const { desde, hasta } = form.elements;
+  for (const campo of [desde, hasta]) {
+    if (campo.closest('[hidden]') || !campo.value) continue;
+    if (campo.validity.badInput) return 'La fecha no es válida.';
+    if (campo.value > hoy) return 'La fecha no puede ser posterior a hoy.';
+  }
+  if (desde.value && hasta.value && !desde.closest('[hidden]') && desde.value > hasta.value) {
+    return 'La fecha "hasta" no puede ser anterior a "desde".';
+  }
+  return null;
+}
+
+const columnas = (fila, nombres) => $(fila).replaceChildren(...nombres.map((n) => el('th', n, { scope: 'col' })));
+
 /* ---------- Rescatistas ---------- */
 
+const formRescatistas = $('filtro-rescatistas');
+const rescatistas = { lista: 'PENDIENTE' };
+const TEXTOS_RESCATISTAS = {
+  PENDIENTE: { titulo: 'Rescatistas por aprobar', vacio: 'No hay rescatistas esperando la aprobación.', fecha: '' },
+  APROBADO: { titulo: 'Rescatistas aprobados', vacio: 'Todavía no aprobaste a ningún rescatista.', fecha: 'Aprobado' },
+  RECHAZADO: { titulo: 'Rescatistas rechazados', vacio: 'No rechazaste a ningún rescatista.', fecha: 'Rechazado' },
+};
+
+function contacto(r) {
+  const td = el('td');
+  td.append(el('span', r.email), el('span', r.telefono ?? '', { class: 'ayuda' }));
+  return td;
+}
+
+function filaRescatista(r) {
+  const tr = el('tr');
+  const nombre = el('td');
+  nombre.append(enlacePerfil(r));
+  tr.append(nombre, el('td', r.organizacion ?? '—'), contacto(r));
+
+  if (rescatistas.lista === 'PENDIENTE') {
+    const celda = el('td');
+    celda.append(accionesRescatista(r, cargarTodo));
+    tr.append(celda);
+  } else {
+    // Los validados antes de que se guardara la fecha (migración 022) no la tienen.
+    tr.append(el('td', r.validado_en ? fechaHora(r.validado_en) : 'Sin fecha registrada'));
+    if (rescatistas.lista === 'RECHAZADO') tr.append(el('td', r.motivo_rechazo ?? 'Sin motivo registrado'));
+  }
+  return tr;
+}
+
 async function cargarRescatistas() {
+  const { lista } = rescatistas;
+  const textos = TEXTOS_RESCATISTAS[lista];
+  $('error-rescatistas').textContent = errorDeFechas(formRescatistas) ?? '';
+  if ($('error-rescatistas').textContent) return;
   try {
-    const { rescatistas } = await api('/api/rescatistas');
-    contar('rescatistas', rescatistas.length);
-    pintarTabla('rescatistas', rescatistas.map((r) => {
-      const tr = el('tr');
-      const contacto = el('td');
-      contacto.append(el('span', r.email), el('span', r.telefono ?? '', { class: 'ayuda' }));
-      const celda = el('td');
-      const acciones = el('div', '', { class: 'acciones' });
-      const error = el('span', '', { class: 'campo-error', role: 'alert' });
-      acciones.append(
-        botonAccion('Aprobar', { ruta: `/api/rescatistas/${r.id}/aprobar`, error }),
-        botonAccion('Rechazar', { ruta: `/api/rescatistas/${r.id}/rechazar`, error, peligro: true, clase: 'boton boton-borde boton-chico', pregunta: `¿Rechazar la cuenta de ${r.nombre}? No va a poder publicar.` }),
-        error
-      );
-      celda.append(acciones);
-      tr.append(el('td', r.nombre), el('td', r.organizacion ?? '—'), contacto, celda);
-      return tr;
-    }), rescatistas.length ? '' : 'No hay rescatistas esperando la aprobación.');
-  } catch {
-    $('estado-rescatistas').textContent = 'No se pudieron cargar los rescatistas.';
+    // El número de la pestaña siempre es el de pendientes (lo que hay que resolver).
+    const query = filtrosDe(formRescatistas, { estado: lista });
+    const filtrada = query.has('buscar') || query.has('desde') || query.has('hasta');
+    const pedidos = [api('/api/rescatistas?' + query)];
+    if (lista !== 'PENDIENTE' || filtrada) pedidos.push(api('/api/rescatistas'));
+    const [{ rescatistas: filas }, pendientes] = await Promise.all(pedidos);
+    const cuantosPendientes = (pendientes ?? { rescatistas: filas }).rescatistas.length;
+    contar('rescatistas', cuantosPendientes);
+    $('cuenta-rescatistas-por-aprobar').textContent = cuantosPendientes > 0 ? `(${cuantosPendientes})` : '';
+
+    $('titulo-tabla-rescatistas').textContent = textos.titulo;
+    const nombres = ['Nombre', 'Organización', 'Contacto'];
+    if (lista === 'PENDIENTE') nombres.push('Acciones');
+    else nombres.push(textos.fecha + ' el');
+    if (lista === 'RECHAZADO') nombres.push('Motivo');
+    columnas('columnas-rescatistas', nombres);
+
+    const vacio = filtrada ? 'Ningún rescatista coincide con la búsqueda.' : textos.vacio;
+    pintarTabla('rescatistas', filas.map(filaRescatista), filas.length ? '' : vacio);
+  } catch (e) {
+    $('estado-rescatistas').textContent = '';
+    $('error-rescatistas').textContent = errorDeFiltro(e, 'No se pudieron cargar los rescatistas.');
   }
 }
 
-/* ---------- Moderación ---------- */
+activarListas($('lista-rescatistas'), (lista) => {
+  rescatistas.lista = lista;
+  // Las fechas solo tienen sentido en los ya decididos.
+  formRescatistas.querySelectorAll('[data-solo-decididos]').forEach((c) => { c.hidden = lista === 'PENDIENTE'; });
+  formRescatistas.querySelector('[data-etiqueta-desde]').textContent = TEXTOS_RESCATISTAS[lista].fecha + ' desde';
+  cargarRescatistas();
+});
+limitarFechas(formRescatistas);
+formRescatistas.addEventListener('submit', (ev) => {
+  ev.preventDefault();
+  cargarRescatistas();
+});
+
+/* ---------- Publicaciones ---------- */
+
+const formPublicaciones = $('filtro-publicaciones');
+const publicaciones = { lista: 'PENDIENTE' };
+const TEXTOS_PUBLICACIONES = {
+  PENDIENTE: { desde: 'Publicada desde', vacio: 'No hay publicaciones por revisar.', buscar: 'Mascota, rescatista u organización' },
+  APROBADA: { desde: 'Aprobada desde', vacio: 'Todavía no aprobaste ninguna publicación.', buscar: 'Mascota, rescatista u organización' },
+  RECHAZOS: { desde: 'Rechazada desde', vacio: 'No rechazaste ninguna publicación.', buscar: 'Mascota, rescatista o motivo' },
+};
+
+// El animal como enlace a su publicación (la veterinaria la ve en cualquier estado).
+const enlacePublicacion = (id, nombre) => el('a', nombre, {
+  href: '/adopciones/publicacion.html?id=' + encodeURIComponent(id),
+  title: 'Ver la publicación de ' + nombre,
+});
+
+function conEnlace(nodo) {
+  const td = el('td');
+  td.append(nodo);
+  return td;
+}
+
+// Cómo está ahora una publicación del historial: si después se aprobó, en qué quedó su adopción.
+const estadoActual = (publicacion) => insigniaPublicacion(publicacion, publicacion.adopcion_estado);
 
 async function cargarModeracion() {
+  const { lista } = publicaciones;
+  const textos = TEXTOS_PUBLICACIONES[lista];
   const estado = $('estado-moderacion');
+  $('error-publicaciones').textContent = errorDeFechas(formPublicaciones) ?? '';
+  if ($('error-publicaciones').textContent) return;
+  $('ayuda-rechazos').hidden = lista !== 'RECHAZOS';
   try {
-    const { publicaciones } = await api('/api/adopciones/moderacion');
-    contar('moderacion', publicaciones.length);
-    $('publicaciones').replaceChildren(...publicaciones.map(tarjetaModeracion));
-    estado.textContent = publicaciones.length ? '' : 'No hay publicaciones por revisar.';
-  } catch {
-    estado.textContent = 'No se pudieron cargar las publicaciones.';
+    const query = filtrosDe(formPublicaciones, lista === 'RECHAZOS' ? {} : { estado: lista });
+    const filtrada = query.has('buscar') || query.has('desde') || query.has('hasta');
+    const ruta = lista === 'RECHAZOS' ? '/api/adopciones/rechazos?' : '/api/adopciones/moderacion?';
+    const pedidos = [api(ruta + query)];
+    if (lista !== 'PENDIENTE' || filtrada) pedidos.push(api('/api/adopciones/moderacion'));
+    const [respuesta, pendientes] = await Promise.all(pedidos);
+    const cuantas = (pendientes ?? respuesta).publicaciones.length;
+    contar('moderacion', cuantas);
+    $('cuenta-por-revisar').textContent = cuantas > 0 ? `(${cuantas})` : '';
+
+    const vacio = filtrada ? 'Ninguna publicación coincide con la búsqueda.' : textos.vacio;
+    if (lista === 'PENDIENTE') {
+      $('tabla-publicaciones').hidden = true;
+      $('publicaciones').replaceChildren(...respuesta.publicaciones.map(tarjetaModeracion));
+      estado.textContent = respuesta.publicaciones.length ? '' : vacio;
+      return;
+    }
+
+    $('publicaciones').replaceChildren();
+    let filas;
+    if (lista === 'APROBADA') {
+      $('titulo-tabla-publicaciones').textContent = 'Publicaciones aprobadas, las más recientes primero';
+      columnas('columnas-publicaciones', ['Animal', 'Rescatista', 'Aprobada el', 'Adopción', 'Detalle']);
+      filas = respuesta.publicaciones.map((p) => {
+        const tr = el('tr');
+        const adopcion = el('td');
+        if (p.adopcion) adopcion.append(insignia(p.adopcion.estado));
+        const detalle = el('td');
+        if (p.adopcion) detalle.append(el('a', 'Ver la adopción', { href: '/panel/adopcion.html?id=' + p.adopcion.id }));
+        tr.append(conEnlace(enlacePublicacion(p.id, p.mascota.nombre)), conEnlace(enlacePerfil(p.rescatista)),
+          el('td', fechaHora(p.aprobada_en)), adopcion, detalle);
+        return tr;
+      });
+    } else {
+      $('titulo-tabla-publicaciones').textContent = 'Historial de rechazos de publicaciones, los más nuevos primero';
+      columnas('columnas-publicaciones', ['Animal', 'Rescatista', 'Rechazada el', 'Motivo', 'Ahora']);
+      filas = respuesta.rechazos.map((r) => {
+        const tr = el('tr');
+        const ahora = el('td');
+        ahora.append(estadoActual(r.publicacion));
+        tr.append(conEnlace(enlacePublicacion(r.publicacion.id, r.mascota.nombre)), conEnlace(enlacePerfil(r.rescatista)),
+          el('td', fechaHora(r.rechazada_en)), el('td', r.motivo), ahora);
+        return tr;
+      });
+    }
+    $('filas-publicaciones').replaceChildren(...filas);
+    $('tabla-publicaciones').hidden = filas.length === 0;
+    estado.textContent = filas.length ? '' : vacio;
+  } catch (e) {
+    estado.textContent = '';
+    $('error-publicaciones').textContent = errorDeFiltro(e, 'No se pudieron cargar las publicaciones.');
   }
 }
+
+activarListas($('lista-publicaciones'), (lista) => {
+  publicaciones.lista = lista;
+  const textos = TEXTOS_PUBLICACIONES[lista];
+  formPublicaciones.querySelector('[data-etiqueta-desde]').textContent = textos.desde;
+  formPublicaciones.elements.buscar.placeholder = textos.buscar;
+  cargarModeracion();
+});
+limitarFechas(formPublicaciones);
+formPublicaciones.addEventListener('submit', (ev) => {
+  ev.preventDefault();
+  cargarModeracion();
+});
 
 function tarjetaModeracion(publicacion) {
   const { mascota, rescatista } = publicacion;
@@ -155,18 +352,26 @@ function tarjetaModeracion(publicacion) {
     alt: 'Foto de ' + mascota.nombre, width: '400', height: '300', loading: 'lazy'
   }));
   const cuerpo = el('div', '', { class: 'cuerpo' });
+  const deQuien = el('p', 'Rescatista: ', { class: 'datos' });
+  deQuien.append(enlacePerfil(rescatista));
+  if (rescatista.organizacion) deQuien.append(` (${rescatista.organizacion})`);
   cuerpo.append(
     el('h3', publicacion.titulo),
     el('p', [mascota.nombre, textoEspecieMascota(mascota.especie), edad(mascota.edad_meses)].join(' · '), { class: 'datos' }),
     el('p', publicacion.descripcion),
-    el('p', 'Rescatista: ' + rescatista.nombre + (rescatista.organizacion ? ` (${rescatista.organizacion})` : ''), { class: 'datos' })
+    deQuien
   );
+  // Si ya se rechazó antes, el rescatista la corrigió: se avisa para mirar el historial.
+  const veces = publicacion.veces_rechazada ?? 0;
+  if (veces > 0) {
+    cuerpo.append(el('p', veces === 1 ? 'Ya se rechazó 1 vez: está corregida.' : `Ya se rechazó ${veces} veces: está corregida.`, { class: 'ayuda' }));
+  }
 
   const error = el('span', '', { class: 'campo-error', role: 'alert' });
   const acciones = el('div', '', { class: 'acciones' });
   acciones.append(botonAccion('Aprobar', { ruta: `/api/adopciones/publicaciones/${publicacion.id}/aprobar`, error }));
 
-  // Rechazar pide el motivo, que el rescatista ve en sus publicaciones.
+  // Rechazar pide el motivo, que el rescatista ve en sus publicaciones (y queda en el historial).
   const formRechazo = el('form', '', { class: 'form-linea', novalidate: '' });
   const etiqueta = el('label', 'Motivo del rechazo');
   const motivo = el('input', '', { type: 'text', name: 'motivo', maxlength: '255', required: '' });
@@ -231,7 +436,12 @@ function filaEnCurso(adopcion) {
   const tr = el('tr');
 
   const animal = el('td');
-  animal.append(el('strong', publicacion.mascota.nombre), el('span', 'Rescatista: ' + publicacion.rescatista.nombre, { class: 'ayuda' }));
+  // Cada nombre lleva a su información: la ficha del animal, el perfil del rescatista y la ficha del adoptante.
+  const nombreAnimal = el('strong');
+  nombreAnimal.append(conOrigen(enlaceMascota(publicacion.mascota), 'adopciones-en-curso'));
+  const deRescatista = el('span', 'Rescatista: ', { class: 'ayuda' });
+  deRescatista.append(conOrigen(enlacePerfil(publicacion.rescatista), 'adopciones-en-curso'));
+  animal.append(nombreAnimal, deRescatista);
   const celdaEstado = el('td');
   celdaEstado.append(insignia(adopcion.estado));
   if (adopcion.estado === 'CON_POSTULANTES') {
@@ -239,7 +449,7 @@ function filaEnCurso(adopcion) {
   }
 
   const celdaAdoptante = el('td');
-  if (adoptante) celdaAdoptante.append(el('span', adoptante.nombre), el('span', adoptante.telefono ?? '', { class: 'ayuda' }));
+  if (adoptante) celdaAdoptante.append(conOrigen(enlaceAdoptante(adoptante), 'adopciones-en-curso'), el('span', adoptante.telefono ?? '', { class: 'ayuda' }));
   else celdaAdoptante.textContent = '—';
 
   const celdaChequeo = el('td');
@@ -261,10 +471,8 @@ function filaEnCurso(adopcion) {
   } else if (adopcion.estado === 'CHEQUEO_PENDIENTE' && turno?.estado === 'PROGRAMADO') {
     acciones.append(el('a', 'Atender en la agenda', { href: '/panel/agenda.html' }));
   }
-  acciones.append(enlaceDetalle(adopcion), botonAccion('Cancelar', {
-    ruta: `/api/adopciones/${adopcion.id}/cancelar`, error, peligro: true, clase: 'boton boton-borde boton-chico',
-    pregunta: `¿Cancelar la adopción de ${publicacion.mascota.nombre}? Si había un chequeo programado, cancelalo también en la agenda.`
-  }), error);
+  // Sin "Cancelar" (24/11): una adopción solo se corta cuando la rescatista da de baja la publicación.
+  acciones.append(enlaceDetalle(adopcion), error);
   celda.append(acciones);
 
   tr.append(animal, celdaEstado, celdaAdoptante, celdaChequeo, celda);
@@ -313,10 +521,13 @@ const paginasFinalizadas = paginador('finalizadas', (paso) => { finalizadas.pagi
 // Arranca en los últimos 30 días.
 formFinalizadas.elements.desde.value = haceDias(30);
 formFinalizadas.elements.hasta.value = hoy;
+limitarFechas(formFinalizadas);
+formFinalizadas.elements.hasta.min = formFinalizadas.elements.desde.value;
 
 async function cargarFinalizadas() {
   finalizadas.cargada = true;
-  $('error-finalizadas').textContent = '';
+  $('error-finalizadas').textContent = errorDeFechas(formFinalizadas) ?? '';
+  if ($('error-finalizadas').textContent) return;
   const campos = formFinalizadas.elements;
   const filtros = {
     estado: campos.estado.value, desde: campos.desde.value, hasta: campos.hasta.value, buscar: campos.buscar.value.trim(),
@@ -324,16 +535,17 @@ async function cargarFinalizadas() {
   };
   try {
     const respuesta = await pedirPagina(filtros, finalizadas);
-    const terminadas = filtros.estado === 'CANCELADA' ? 'canceladas' : 'finalizadas';
-    const resumen = respuesta.total === 1 ? `1 adopción ${terminadas.slice(0, -1)}.` : `${respuesta.total} adopciones ${terminadas}.`;
+    const [una, varias] = filtros.estado === 'CANCELADA' ? ['dada de baja', 'dadas de baja'] : ['finalizada', 'finalizadas'];
+    const terminadas = varias;
+    const resumen = respuesta.total === 1 ? `1 adopción ${una}.` : `${respuesta.total} adopciones ${varias}.`;
     pintarTabla('finalizadas', respuesta.adopciones.map((a) => {
       const tr = el('tr');
       const detalle = el('td');
       detalle.append(enlaceDetalle(a));
       tr.append(
-        el('td', a.publicacion.mascota.nombre),
-        el('td', a.adoptante?.nombre ?? '—'),
-        el('td', a.publicacion.rescatista.nombre),
+        conEnlace(conOrigen(enlaceMascota(a.publicacion.mascota), 'adopciones-finalizadas')),
+        a.adoptante ? conEnlace(conOrigen(enlaceAdoptante(a.adoptante), 'adopciones-finalizadas')) : el('td', '—'),
+        conEnlace(conOrigen(enlacePerfil(a.publicacion.rescatista), 'adopciones-finalizadas')),
         el('td', fecha(a.fecha_inicio)),
         el('td', fecha(a.fecha_fin)),
         detalle
@@ -365,8 +577,12 @@ function cargarTodo() {
   return Promise.all(pedidos);
 }
 
-const VISTAS = ['rescatistas', 'moderacion', 'en-curso', 'finalizadas'];
-const vistaDelHash = () => (VISTAS.includes(location.hash.slice(1)) ? location.hash.slice(1) : 'en-curso');
+const VISTAS = ['rescatistas', 'publicaciones', 'en-curso', 'finalizadas'];
+// #moderacion era el nombre viejo de Publicaciones (enlaces guardados, otras pantallas).
+function vistaDelHash() {
+  const hash = location.hash.slice(1) === 'moderacion' ? 'publicaciones' : location.hash.slice(1);
+  return VISTAS.includes(hash) ? hash : 'en-curso';
+}
 let iniciando = true;
 
 const elegir = activarPestanas($('pestanas'), (vista) => {

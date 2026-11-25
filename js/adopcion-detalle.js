@@ -11,7 +11,7 @@ import { api } from './api.js';
 import { exigirRol } from './auth.js';
 import { el } from './ui.js';
 import { textoEspecieMascota } from './etiquetas.js';
-import { edad, fecha, insignia, textoEstado } from './etiquetas-adopciones.js';
+import { edad, fecha, insignia, insigniaPostulacion, textoEstado } from './etiquetas-adopciones.js';
 
 await exigirRol(['VETERINARIO']);
 
@@ -88,7 +88,7 @@ function pintarRecorrido(adopcion, postulaciones) {
   if (adopcion.estado === 'FINALIZADA') {
     pasos.push(paso(`Adopción completa: ${publicacion.mascota.nombre} pasó a ser de ${adoptante.nombre}`, fechaHora(adopcion.fecha_fin)));
   } else if (adopcion.estado === 'CANCELADA') {
-    pasos.push(paso('Adopción cancelada', fechaHora(adopcion.fecha_fin)));
+    pasos.push(paso('La rescatista dio de baja la publicación: la adopción no sigue', fechaHora(adopcion.fecha_fin)));
   } else {
     pasos.push(paso('Todavía en curso: ' + textoEstado(adopcion.estado), null, { pendiente: true }));
   }
@@ -96,14 +96,14 @@ function pintarRecorrido(adopcion, postulaciones) {
   $('recorrido').replaceChildren(...pasos);
 }
 
-function pintarPostulaciones(postulaciones) {
+function pintarPostulaciones(postulaciones, estadoAdopcion) {
   $('filas-postulaciones').replaceChildren(...postulaciones.map((p) => {
     const tr = el('tr');
     const cliente = el('td');
     cliente.append(el('span', p.cliente.nombre));
     if (p.cliente.telefono) cliente.append(el('span', p.cliente.telefono, { class: 'ayuda' }));
     const celdaEstado = el('td');
-    celdaEstado.append(insignia(p.estado));
+    celdaEstado.append(insigniaPostulacion(p.estado, { adopcion: estadoAdopcion }));
     tr.append(cliente, el('td', fecha(p.fecha)), el('td', p.tipo_vivienda), el('td', p.otras_mascotas), el('td', p.tiempo_disponible), celdaEstado);
     return tr;
   }));
@@ -151,7 +151,7 @@ async function iniciar() {
   pintarPersona($('rescatista'), publicacion.rescatista, { extra: publicacion.rescatista.organizacion });
   pintarPersona($('adoptante'), adopcion.adoptante);
   pintarRecorrido(adopcion, postulaciones);
-  pintarPostulaciones(postulaciones);
+  pintarPostulaciones(postulaciones, adopcion.estado);
 
   estado.textContent = '';
   $('detalle').hidden = false;

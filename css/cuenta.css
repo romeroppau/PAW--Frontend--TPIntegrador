@@ -126,3 +126,10 @@
   flex-shrink: 0;
   white-space: nowrap;
 }
+
+/* Historial clínico de la veterinaria (panel/historial-clinico.html): las consultas de un paciente se
+   despliegan en una fila debajo de la suya. */
+.fila-detalle > td { background: var(--fondo); }
+.consultas-paciente { margin: 0; padding-left: 1.25rem; display: grid; gap: .75rem; }
+.consulta-paciente { display: grid; gap: .2rem; }
+.consulta-paciente .acciones { margin-top: .15rem; font-size: .95rem; }

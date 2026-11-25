@@ -99,3 +99,25 @@ test('la tarjeta Notificaciones de los paneles lleva al historial', async ({ pag
   await abrirSeccion(page, 'notificaciones');
   await expect(page.locator('#menu-notificaciones').getByRole('link', { name: 'Ver mis notificaciones' })).toHaveAttribute('href', '/cuenta/notificaciones.html');
 });
+
+test('mis notificaciones: las fechas del filtro llegan como mucho hasta hoy', async ({ page }) => {
+  await simularSesion(page, CLIENTE);
+  await page.route('**/api/notificaciones', (route) => responderJson(route, { no_leidas: 0, datos: [] }));
+  let pedidos = 0;
+  await page.route('**/api/notificaciones/historial?*', (route) => {
+    pedidos++;
+    return responderJson(route, { datos: [], pagina: 1, por_pagina: 20, hay_mas: false, desde: null, hasta: null, no_leidas: 0 });
+  });
+  await page.goto('/cuenta/notificaciones.html');
+  await expect.poll(() => pedidos).toBe(1);
+
+  const hoy = new Date(Date.now() - 3 * 3600 * 1000).toISOString().slice(0, 10);
+  await expect(page.locator('#hasta')).toHaveAttribute('max', hoy);
+  await expect(page.locator('#desde')).toHaveAttribute('max', hoy);
+
+  // Aunque se escriba una fecha futura, no se pide: avisa.
+  await page.locator('#hasta').evaluate((input) => { input.value = '2099-01-01'; });
+  await page.getByRole('button', { name: 'Filtrar' }).click();
+  await expect(page.locator('#estado')).toHaveText('Las fechas pueden llegar como mucho hasta hoy.');
+  expect(pedidos).toBe(1);
+});

@@ -23,9 +23,21 @@ const poner = (id, texto) => { document.getElementById(id).textContent = texto; 
 
 const usuario = await exigirRol(['CLIENTE', 'RESCATISTA', 'VETERINARIO']);
 
-// "Volver": la veterinaria vuelve a Ventas; el comprador, a la compra.
+// "Volver": la veterinaria vuelve a Ventas (o a Productos → Movimientos, si llegó desde ahí, con sus
+// filtros); el comprador, a la compra.
 const $volver = document.getElementById('volver');
-if (usuario.rol === 'VETERINARIO') {
+const desdeMovimientos = (() => {
+  try {
+    const url = new URL(document.referrer);
+    return url.origin === location.origin && url.pathname === '/panel/productos-movimientos.html' ? url : null;
+  } catch {
+    return null;
+  }
+})();
+if (usuario.rol === 'VETERINARIO' && desdeMovimientos) {
+  $volver.href = desdeMovimientos.pathname + desdeMovimientos.search;
+  $volver.textContent = '← Volver a movimientos';
+} else if (usuario.rol === 'VETERINARIO') {
   $volver.href = '/panel/ventas.html';
   $volver.textContent = '← Volver a ventas';
 } else if (numero) {

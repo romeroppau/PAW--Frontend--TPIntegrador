@@ -19,38 +19,53 @@ const aTexto = (iso) => iso.split('-').reverse().join('/');
 
 // ---------- Tienda ----------
 
-test('el catálogo muestra la sección Promociones y el precio rebajado en la tarjeta', async ({ page }) => {
+test('Promociones muestra solo los productos en promoción, con el precio rebajado', async ({ page }) => {
   await simularSesion(page, null);
   await page.route('**/api/tienda/promociones', (route) => responderJson(route, { datos: [COLLAR_EN_PROMO] }));
+  await page.goto('/catalogo/promociones.html');
+
+  await expect(page.getByRole('heading', { level: 1, name: 'Promociones' })).toBeVisible();
+  await expect(page.locator('#lista .tarjeta-producto')).toHaveCount(1);
+  const precio = page.locator('#lista .precio');
+  await expect(precio.locator('del')).toHaveText('$ 8.500,00');
+  await expect(precio.locator('ins')).toHaveText('$ 6.800,00');
+  await expect(precio).toContainText('20 % off');
+  await expect(precio).toContainText('Promoción hasta el 10/12');
+  await expect(page.locator('#ir-catalogo')).toBeHidden();
+});
+
+test('sin promociones, la página lo dice y ofrece el catálogo', async ({ page }) => {
+  await simularSesion(page, null);
+  await page.route('**/api/tienda/promociones', (route) => responderJson(route, { datos: [] }));
+  await page.goto('/catalogo/promociones.html');
+  await expect(page.locator('#estado')).toHaveText('No hay promociones por el momento.');
+  await expect(page.getByRole('link', { name: 'Ver todo el catálogo' })).toHaveAttribute('href', '/catalogo/catalogo.html');
+});
+
+test('el catálogo no tiene la sección Promociones: el producto en promoción va con los demás, con su precio rebajado', async ({ page }) => {
+  await simularSesion(page, null);
   await page.route('**/api/tienda/productos?*', (route) => responderJson(route, {
     datos: [PRODUCTOS[0], COLLAR_EN_PROMO], pagina: 1, por_pagina: 12, total: 2,
   }));
   await page.goto('/catalogo/catalogo.html');
 
-  const seccion = page.locator('#promociones');
-  await expect(seccion).toBeVisible();
-  await expect(seccion.getByRole('heading', { name: 'Promociones' })).toBeVisible();
-  await expect(seccion.locator('.tarjeta-producto')).toHaveCount(1);
-  const precio = seccion.locator('.precio');
-  await expect(precio.locator('del')).toHaveText('$ 8.500,00');
-  await expect(precio.locator('ins')).toHaveText('$ 6.800,00');
-  await expect(precio).toContainText('20 % off');
-  await expect(precio).toContainText('Promoción hasta el 10/12');
-
-  // En la lista de siempre, el producto sin promoción tiene un solo precio.
+  await expect(page.locator('#lista .tarjeta-producto')).toHaveCount(2);
+  await expect(page.getByRole('heading', { name: 'Promociones' })).toHaveCount(0);
+  const collar = page.locator('#lista .tarjeta-producto', { hasText: 'Collar' });
+  await expect(collar.locator('del')).toHaveText('$ 8.500,00');
+  await expect(collar.locator('ins')).toHaveText('$ 6.800,00');
+  await expect(collar.locator('.precio')).toContainText('20 % off');
+  await expect(collar.locator('.precio')).toContainText('Promoción hasta el 10/12');
   const alimento = page.locator('#lista .tarjeta-producto', { hasText: 'Alimento cachorro' });
   await expect(alimento.locator('.precio')).toHaveText('$ 15.999,90');
   await expect(alimento.locator('del')).toHaveCount(0);
 });
 
-test('sin promociones, la sección no se muestra', async ({ page }) => {
+test('el enlace viejo catalogo.html#promociones lleva a la página de promociones', async ({ page }) => {
   await simularSesion(page, null);
   await page.route('**/api/tienda/promociones', (route) => responderJson(route, { datos: [] }));
-  await page.route('**/api/tienda/productos?*', (route) => responderJson(route, { datos: PRODUCTOS, pagina: 1, por_pagina: 12, total: 3 }));
-  await page.goto('/catalogo/catalogo.html');
-
-  await expect(page.locator('#lista .tarjeta-producto')).toHaveCount(3);
-  await expect(page.locator('#promociones')).toBeHidden();
+  await page.goto('/catalogo/catalogo.html#promociones');
+  await expect(page).toHaveURL(/\/catalogo\/promociones\.html$/);
 });
 
 test('el detalle del producto muestra la promoción', async ({ page }) => {
@@ -182,7 +197,7 @@ test('las sugerencias son tres pestañas, con un solo pedido, y los enlaces viej
   await page.goto('/panel/reportes.html#sugerencias');
 
   await expect(page.getByRole('tablist', { name: 'Secciones de reportes' }).getByRole('tab'))
-    .toHaveText(['Qué promocionar', 'Qué liquidar', 'Promociones publicadas', 'Turnos atendidos', 'Stock y movimientos']);
+    .toHaveText(['Qué promocionar', 'Qué liquidar', 'Promociones publicadas', 'Turnos atendidos']);
   await expect(page.getByRole('tab', { name: 'Qué promocionar' })).toHaveAttribute('aria-selected', 'true');
   await expect(page.getByRole('heading', { name: 'Qué liquidar' })).toBeHidden();
 

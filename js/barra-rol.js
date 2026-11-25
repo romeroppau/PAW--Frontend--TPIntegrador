@@ -37,24 +37,27 @@ export const MENUS = {
       ['pacientes', 'Mis pacientes', 'Clientes, mascotas y su historia clínica.', [
         ['Clientes', '/panel/clientes.html'],
         ['Ficha de mascotas', '/cliente/mascotas.html'],
-        ['Historial clínico', '/cliente/historial.html'],
+        ['Historial clínico', '/panel/historial-clinico.html'],
         ['Calendario sanitario', '/cliente/calendario.html']]],
-      ['productos', 'Tienda', 'Productos, stock y pedidos de la tienda.', [
+      // Inventario (24/11): Productos e Insumos, cada uno con su stock y sus movimientos. La Tienda
+      // queda solo con las ventas, y Reportes con el análisis (sin el stock).
+      ['productos', 'Productos', 'Los productos, su stock y sus movimientos.', [
         ['Productos y stock', '/panel/productos.html'],
-        ['Ventas y pedidos para retirar', '/panel/ventas.html']]],
+        ['Movimientos', '/panel/productos-movimientos.html']]],
       ['insumos', 'Insumos', 'Lo que se usa en las consultas.', [
         ['Insumos y stock', '/panel/insumos.html'],
         ['Movimientos', '/panel/insumo-movimientos.html']]],
-      ['reportes', 'Reportes', 'Sugerencias, turnos atendidos y stock.', [
+      ['tienda', 'Tienda', 'Las ventas de la tienda web.', [
+        ['Ventas y pedidos para retirar', '/panel/ventas.html']]],
+      ['reportes', 'Reportes', 'Sugerencias y turnos atendidos.', [
         ['Qué promocionar', '/panel/reportes.html#promocionar'],
         ['Qué liquidar', '/panel/reportes.html#liquidar'],
         ['Promociones publicadas', '/panel/reportes.html#promociones'],
-        ['Turnos atendidos', '/panel/reportes.html#turnos-atendidos'],
-        ['Stock / movimientos de inventario', '/panel/reportes.html#stock']]],
-      ['rescatistas', 'Rescatistas', 'Cuentas de rescatistas por aprobar.', [
-        ['Solicitudes pendientes', '/panel/adopciones.html#rescatistas']]],
+        ['Turnos atendidos', '/panel/reportes.html#turnos-atendidos']]],
+      ['rescatistas', 'Rescatistas', 'Por aprobar, aprobados y rechazados.', [
+        ['Rescatistas por aprobar, aprobados y rechazados', '/panel/adopciones.html#rescatistas']]],
       ['adopcion', 'Adopción', 'Publicaciones y adopciones.', [
-        ['Moderar publicaciones', '/panel/adopciones.html#moderacion'],
+        ['Publicaciones por revisar, aprobadas y rechazos', '/panel/adopciones.html#publicaciones'],
         ['Adopciones en curso', '/panel/adopciones.html#en-curso'],
         ['Adopciones finalizadas', '/panel/adopciones.html#finalizadas']]],
       ['notificaciones', 'Notificaciones', 'Alertas y novedades administrativas.', [
@@ -71,9 +74,8 @@ export const MENUS = {
     carrito: true,
     contacto: true,
     secciones: [
-      ['cuenta', 'Mi cuenta', 'Tus datos y tus compras.', [
-        ['Datos personales', '/cuenta/mis-datos.html'],
-        ['Mis compras', '/tienda/compras.html']]],
+      ['cuenta', 'Mi cuenta', 'Tus datos personales.', [
+        ['Datos personales', '/cuenta/mis-datos.html']]],
       ['mascotas', 'Mis mascotas', 'Fichas, historia clínica, facturas y vacunas.', [
         ['Fichas de mis mascotas', '/cliente/mascotas.html'],
         ['Historial clínico y facturas', '/cliente/historial.html'],
@@ -82,12 +84,14 @@ export const MENUS = {
         ['Mis turnos', '/cliente/turnos.html'],
         ['Ver descuentos', '/cliente/descuentos.html'],
         ['Pedir turno por WhatsApp', WA_TURNO, true]]],
-      ['tienda', 'Tienda', 'Productos para tu mascota.', [
-        ['Promociones', '/catalogo/catalogo.html#promociones'],
+      // Tienda (24/11): promociones, catálogo y Mis compras (antes estaba en Mi cuenta).
+      ['tienda', 'Tienda', 'Productos para tu mascota y tus compras.', [
+        ['Promociones', '/catalogo/promociones.html'],
         ['Ver catálogo de productos', '/catalogo/catalogo.html', false, [
           ['Medicamentos', '/catalogo/catalogo.html?categoria=MEDICAMENTO'],
           ['Alimento balanceado', '/catalogo/catalogo.html?categoria=ALIMENTO'],
-          ['Accesorios', '/catalogo/catalogo.html?categoria=ACCESORIO']]]]],
+          ['Accesorios', '/catalogo/catalogo.html?categoria=ACCESORIO']]],
+        ['Mis compras', '/tienda/compras.html']]],
       ['adopcion', 'Adopción', 'Animales que buscan familia.', [
         ['Animales disponibles', '/adopciones/adopciones.html'],
         ['Mis postulaciones', '/adopciones/adopciones.html#seccion-mias']]],
@@ -110,7 +114,11 @@ export const MENUS = {
         ['Publicaciones, postulantes y adopciones', '/rescatista/publicaciones.html'],
         ['Mis mascotas', '/cliente/mascotas.html']]],
       ['tienda', 'Tienda', 'También podés comprar en la tienda.', [
-        ['Ver catálogo de productos', '/catalogo/catalogo.html'],
+        ['Promociones', '/catalogo/promociones.html'],
+        ['Ver catálogo de productos', '/catalogo/catalogo.html', false, [
+          ['Medicamentos', '/catalogo/catalogo.html?categoria=MEDICAMENTO'],
+          ['Alimento balanceado', '/catalogo/catalogo.html?categoria=ALIMENTO'],
+          ['Accesorios', '/catalogo/catalogo.html?categoria=ACCESORIO']]],
         ['Mis compras', '/tienda/compras.html']]],
       ['notificaciones', 'Notificaciones', 'Publicaciones, postulaciones y adopciones.', [
         ['Ver mis notificaciones', '/cuenta/notificaciones.html']]],
@@ -119,6 +127,33 @@ export const MENUS = {
         ['Ver reseñas', '/resenas/resenas.html']]],
     ],
   },
+};
+
+// Lo que pide iniciar sesión lleva al login, que después vuelve a esa pantalla (?volver=).
+const conSesion = (destino) => '/login/login.html?volver=' + encodeURIComponent(destino);
+
+/**
+ * Menú de quien no inició sesión (24/11): las mismas secciones y el mismo diseño que el del cliente,
+ * sin lo que es de una cuenta (Mis compras, Mi cuenta, Mis mascotas…). "Mis postulaciones" y
+ * "Escribir reseña" piden iniciar sesión. "Contactanos" lleva a esa sección de la portada.
+ */
+export const MENU_PUBLICO = {
+  inicio: '/index.html',
+  contacto: true,
+  secciones: [
+    ['tienda', 'Tienda', 'Productos para tu mascota.', [
+      ['Promociones', '/catalogo/promociones.html'],
+      ['Ver catálogo de productos', '/catalogo/catalogo.html', false, [
+        ['Medicamentos', '/catalogo/catalogo.html?categoria=MEDICAMENTO'],
+        ['Alimento balanceado', '/catalogo/catalogo.html?categoria=ALIMENTO'],
+        ['Accesorios', '/catalogo/catalogo.html?categoria=ACCESORIO']]]]],
+    ['adopcion', 'Adopción', 'Animales que buscan familia.', [
+      ['Animales disponibles', '/adopciones/adopciones.html'],
+      ['Mis postulaciones', conSesion('/adopciones/adopciones.html#seccion-mias')]]],
+    ['resenas', 'Reseñas', 'Lo que opinan nuestros clientes.', [
+      ['Escribir reseña', conSesion('/resenas/escribir.html')],
+      ['Ver reseñas', '/resenas/resenas.html']]],
+  ],
 };
 
 /** Página de inicio ("Mi panel") de un rol, o null si no tiene. */
@@ -164,16 +199,37 @@ function seccion([id, titulo, descripcion, enlaces]) {
  */
 export function dibujarBarra(usuario) {
   const menu = MENUS[usuario?.rol];
+  if (!menu) return false;
+  return dibujar(menu, [
+    el('a', 'HuellaVet', { class: 'panel-marca', href: menu.inicio, title: 'Mi panel' }),
+    el('a', menu.nombre, { class: 'panel-usuario', href: menu.inicio }),
+    // auth.js lo rellena con el nombre del usuario y "Salir"; notificaciones.js agrega la campana.
+    el('div', '', { class: 'sesion', id: 'sesion' }),
+  ]);
+}
+
+/**
+ * Sin sesión (24/11): la misma cabecera y la misma barra que con sesión, con el menú público
+ * (MENU_PUBLICO) y los botones "Inicia sesión" y "Registro". Si después resulta que hay sesión,
+ * dibujarBarra() la reemplaza por la del rol.
+ */
+export function dibujarBarraPublica() {
+  const sesion = h('div', '', { class: 'sesion', id: 'sesion' }, [
+    el('a', 'Inicia sesión', { class: 'boton boton-borde', href: '/login/login.html' }),
+    el('a', 'Registro', { class: 'boton', href: '/registros/registro.html' }),
+  ]);
+  return dibujar(MENU_PUBLICO, [
+    el('a', 'HuellaVet', { class: 'panel-marca', href: '/index.html', title: 'Inicio' }),
+    sesion,
+  ]);
+}
+
+function dibujar(menu, contenidoCabecera) {
   const actual = document.querySelector('header.encabezado, header.panel-cabecera');
-  if (!menu || !actual) return false;
+  if (!actual) return false;
 
   const cabecera = h('header', '', { class: 'panel-cabecera' }, [
-    h('div', '', { class: 'contenedor' }, [
-      el('a', 'HuellaVet', { class: 'panel-marca', href: menu.inicio, title: 'Mi panel' }),
-      el('a', menu.nombre, { class: 'panel-usuario', href: menu.inicio }),
-      // auth.js lo rellena con el nombre del usuario y "Salir"; notificaciones.js agrega la campana.
-      el('div', '', { class: 'sesion', id: 'sesion' }),
-    ]),
+    h('div', '', { class: 'contenedor' }, contenidoCabecera),
   ]);
 
   // id="menu": las pruebas y otras pantallas buscan acá los enlaces del rol.
@@ -185,7 +241,7 @@ export function dibujarBarra(usuario) {
   if (menu.contacto) {
     lista.append(h('li', '', {}, [el('a', 'Contactanos', { class: 'panel-menu-enlace', href: `${menu.inicio}#contacto` })]));
   }
-  const barra = h('nav', '', { class: 'panel-nav', 'aria-label': `Menú: ${menu.nombre}` }, [lista]);
+  const barra = h('nav', '', { class: 'panel-nav', 'aria-label': menu.nombre ? `Menú: ${menu.nombre}` : 'Menú principal' }, [lista]);
 
   document.querySelector('nav.panel-nav')?.remove();   // la de un panel, si la página ya traía una
   actual.replaceWith(cabecera, barra);
@@ -195,7 +251,45 @@ export function dibujarBarra(usuario) {
 
   activarDesplegables();
   aplicarContacto(barra);
+  document.querySelectorAll('.pestanas-seccion').forEach((n) => n.remove());   // si se redibuja
+  pestanasDeSeccion(menu);
   return true;
+}
+
+/**
+ * Pestañas de la sección: si la página es una de las opciones de una sección del menú que tiene
+ * varias páginas (por ejemplo Productos: "Productos y stock" y "Movimientos"), arriba del contenido
+ * aparecen todas como pestañas, con la actual marcada. Salen del mismo MENUS, así nunca se
+ * desincronizan del desplegable. Las secciones cuyas opciones son partes de una misma página
+ * (Reportes, Adopción: #liquidar, #en-curso…) no las necesitan: esa página ya tiene sus pestañas.
+ * Los enlaces externos (WhatsApp) no son pestañas.
+ */
+function pestanasDeSeccion(menu) {
+  const contenedor = document.querySelector('main .contenedor') ?? document.querySelector('main');
+  if (!contenedor) return;
+
+  for (const [, titulo, , enlaces] of menu.secciones) {
+    // Ni los externos (WhatsApp) ni los que piden iniciar sesión (llevan al login) son pestañas.
+    const internos = enlaces.filter(([, destino, externo]) => !externo)
+      .map(([texto, destino]) => ({ texto, url: new URL(destino, location.origin) }))
+      .filter((e) => e.url.pathname !== '/login/login.html');
+    const paginas = new Set(internos.map((e) => e.url.pathname));
+    if (paginas.size < 2) continue;
+    const actual = internos.find((e) => e.url.pathname === location.pathname);
+    if (!actual) continue;
+
+    const nav = el('nav', '', { class: 'pestanas pestanas-seccion', 'aria-label': `Secciones de ${titulo}` });
+    for (const e of internos) {
+      const a = el('a', e.texto, { href: e.url.pathname + e.url.search + e.url.hash });
+      if (e === actual) a.setAttribute('aria-current', 'page');
+      nav.append(a);
+    }
+    // Después del "← Volver a mi panel" del principio, si lo hay; si no, al principio.
+    const primero = contenedor.firstElementChild;
+    const esVolver = primero?.tagName === 'P' && primero.children.length === 1 && primero.firstElementChild.tagName === 'A';
+    if (esVolver) primero.after(nav); else contenedor.prepend(nav);
+    return;
+  }
 }
 
 /**
