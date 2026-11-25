@@ -376,8 +376,25 @@ test('en "Mis mascotas", la rescatista no ve el calendario ni el historial', asy
 async function simularPanelVet(page, datos) {
   await simularSesion(page, VETERINARIO);
   datos.pedidos = [];
-  await page.route('**/api/rescatistas', (route) => responderJson(route, { rescatistas: datos.rescatistas ?? [] }));
-  await page.route('**/api/adopciones/moderacion', (route) => responderJson(route, { publicaciones: datos.moderacion ?? [] }));
+  // Rescatistas y publicaciones: según el estado pedido (sin estado, los pendientes).
+  await page.route(/\/api\/rescatistas(\?.*)?$/, (route) => {
+    const query = new URL(route.request().url()).searchParams;
+    datos.pedidos.push(Object.fromEntries(query));
+    const estado = query.get('estado') ?? 'PENDIENTE';
+    const lista = { PENDIENTE: datos.rescatistas, APROBADO: datos.aprobados, RECHAZADO: datos.rechazados }[estado] ?? [];
+    const buscar = (query.get('buscar') ?? '').toLowerCase();
+    return responderJson(route, { rescatistas: lista.filter((r) => r.nombre.toLowerCase().includes(buscar)) });
+  });
+  await page.route(/\/api\/adopciones\/moderacion(\?.*)?$/, (route) => {
+    const query = new URL(route.request().url()).searchParams;
+    datos.pedidos.push(Object.fromEntries(query));
+    const lista = query.get('estado') === 'APROBADA' ? datos.aprobadas : datos.moderacion;
+    return responderJson(route, { publicaciones: lista ?? [] });
+  });
+  await page.route(/\/api\/adopciones\/rechazos(\?.*)?$/, (route) => {
+    datos.pedidos.push({ rechazos: true, ...Object.fromEntries(new URL(route.request().url()).searchParams) });
+    return responderJson(route, { rechazos: datos.historial ?? [] });
+  });
   await page.route(/\/api\/adopciones(\?.*)?$/, (route) => {
     const query = new URL(route.request().url()).searchParams;
     datos.pedidos.push(Object.fromEntries(query));
@@ -410,15 +427,29 @@ function adopcionEnCurso(estado, turno = null) {
   };
 }
 
-test('la veterinaria aprueba un rescatista y rechaza una publicación con su motivo', async ({ page }) => {
+function rescatista(id, nombre, extra = {}) {
+  return {
+    id, nombre, email: `r${id}@prueba.huellavet`, telefono: '1155550105', organizacion: 'Patitas al Rescate',
+    estado_validacion: 'PENDIENTE', validado_en: null, motivo_rechazo: null, ...extra,
+  };
+}
+
+test('la veterinaria aprueba un rescatista, rechaza otro con motivo y rechaza una publicación con su motivo', async ({ page }) => {
   const datos = {
-    rescatistas: [{ id: 105, nombre: 'Rescatista Pendiente', email: 'r2@prueba.huellavet', telefono: '1155550105', organizacion: 'Patitas al Rescate', estado_validacion: 'PENDIENTE' }],
+    rescatistas: [rescatista(105, 'Rescatista Pendiente'), rescatista(106, 'Otro Pendiente')],
     moderacion: [publicacion(2, 'Rocco', { estado_moderacion: 'PENDIENTE', adopcion: null })],
   };
   await simularPanelVet(page, datos);
   const pedidos = [];
   await page.route('**/api/rescatistas/105/aprobar', (route) => {
     pedidos.push('aprobar 105');
+    datos.rescatistas = datos.rescatistas.filter((r) => r.id !== 105);
+    return responderJson(route, { rescatista: {} });
+  });
+  await page.route('**/api/rescatistas/106/rechazar', (route) => {
+    const { motivo } = route.request().postDataJSON();
+    if (!motivo) return responderJson(route, { error: 'Revisá el motivo del rechazo', campos: { motivo: 'Escribí el motivo del rechazo' } }, 400);
+    pedidos.push('rechazar 106: ' + motivo);
     datos.rescatistas = [];
     return responderJson(route, { rescatista: {} });
   });
@@ -433,23 +464,174 @@ test('la veterinaria aprueba un rescatista y rechaza una publicación con su mot
   await page.goto('/panel/adopciones.html');
   // Cada pestaña dice cuántos hay esperando.
   const pestanaRescatistas = page.getByRole('tab', { name: /Rescatistas/ });
-  await expect(pestanaRescatistas).toContainText('(1)');
-  await expect(page.getByRole('tab', { name: /Publicaciones por revisar/ })).toContainText('(1)');
+  await expect(pestanaRescatistas).toContainText('(2)');
+  await expect(page.getByRole('tab', { name: /Publicaciones/ })).toContainText('(1)');
 
   await pestanaRescatistas.click();
   await expect(page).toHaveURL(/#rescatistas$/);
-  await page.locator('#filas-rescatistas').getByRole('button', { name: 'Aprobar' }).click();
+  const filas = page.locator('#filas-rescatistas');
+  // El nombre lleva a su perfil.
+  await expect(filas.getByRole('link', { name: 'Rescatista Pendiente' })).toHaveAttribute('href', '/panel/rescatista.html?id=105');
+  await filas.locator('tr', { hasText: 'Rescatista Pendiente' }).getByRole('button', { name: 'Aprobar' }).click();
+  await expect(pestanaRescatistas).toContainText('(1)');
+
+  // Rechazar pide el motivo: sin motivo, el error del servidor; con motivo, se rechaza.
+  const fila = filas.locator('tr', { hasText: 'Otro Pendiente' });
+  await fila.getByRole('button', { name: 'Rechazar' }).click();
+  await fila.getByRole('button', { name: 'Confirmar rechazo' }).click();
+  await expect(fila.locator('.campo-error')).toHaveText('Escribí el motivo del rechazo');
+  await fila.getByLabel('Motivo del rechazo').fill('No pudimos verificar el refugio');
+  await fila.getByRole('button', { name: 'Confirmar rechazo' }).click();
   await expect(page.locator('#estado-rescatistas')).toHaveText('No hay rescatistas esperando la aprobación.');
   await expect(pestanaRescatistas).not.toContainText('(');
 
-  await page.getByRole('tab', { name: /Publicaciones por revisar/ }).click();
+  await page.getByRole('tab', { name: /Publicaciones/ }).click();
+  await expect(page).toHaveURL(/#publicaciones$/);
   const tarjeta = page.locator('.tarjeta-adopcion', { hasText: 'Rocco' });
+  await expect(tarjeta.getByRole('link', { name: 'Rescatista Aprobada' })).toHaveAttribute('href', '/panel/rescatista.html?id=104');
   await tarjeta.getByRole('button', { name: 'Rechazar' }).click();
   await expect(tarjeta.locator('.campo-error')).toHaveText('El motivo es obligatorio');
   await tarjeta.getByLabel('Motivo del rechazo').fill('La foto no se ve bien');
   await tarjeta.getByRole('button', { name: 'Rechazar' }).click();
   await expect(page.locator('#estado-moderacion')).toHaveText('No hay publicaciones por revisar.');
-  expect(pedidos).toEqual(['aprobar 105', 'rechazar 2: La foto no se ve bien']);
+  expect(pedidos).toEqual(['aprobar 105', 'rechazar 106: No pudimos verificar el refugio', 'rechazar 2: La foto no se ve bien']);
+});
+
+test('el enlace viejo #moderacion abre la pestaña Publicaciones', async ({ page }) => {
+  await simularPanelVet(page, { moderacion: [publicacion(2, 'Rocco', { estado_moderacion: 'PENDIENTE', adopcion: null, veces_rechazada: 1 })] });
+  await page.goto('/panel/adopciones.html#moderacion');
+  await expect(page.getByRole('tab', { name: /Publicaciones/ })).toHaveAttribute('aria-selected', 'true');
+  // Si ya se rechazó antes, se avisa.
+  await expect(page.locator('.tarjeta-adopcion', { hasText: 'Rocco' })).toContainText('Ya se rechazó 1 vez');
+});
+
+test('rescatistas aprobados y rechazados: con fecha, hora y motivo, y con búsqueda', async ({ page }) => {
+  const datos = {
+    aprobados: [rescatista(107, 'Paula Herrera', { estado_validacion: 'APROBADO', validado_en: '2026-11-20 09:15:00' })],
+    rechazados: [
+      rescatista(108, 'Juan Falso', { estado_validacion: 'RECHAZADO', validado_en: '2026-11-21 18:40:00', motivo_rechazo: 'Datos falsos' }),
+      rescatista(109, 'Ana Vieja', { estado_validacion: 'RECHAZADO' }),
+    ],
+  };
+  await simularPanelVet(page, datos);
+  await page.goto('/panel/adopciones.html#rescatistas');
+
+  // Las fechas solo están en aprobados y rechazados.
+  await expect(page.getByLabel('Hasta', { exact: true }).first()).toBeHidden();
+  await page.getByRole('button', { name: 'Aprobados' }).click();
+  await expect(page.getByRole('button', { name: 'Aprobados' })).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('#columnas-rescatistas')).toContainText('Aprobado el');
+  await expect(page.locator('#filas-rescatistas')).toContainText('20/11/2026 09:15');
+  await expect(page.getByLabel('Aprobado desde')).toBeVisible();
+
+  await page.getByRole('button', { name: 'Rechazados' }).click();
+  const filas = page.locator('#filas-rescatistas tr');
+  await expect(filas).toHaveCount(2);
+  await expect(filas.nth(0)).toContainText('21/11/2026 18:40');
+  await expect(filas.nth(0)).toContainText('Datos falsos');
+  // Los rechazados antes de que se guardara el motivo lo dicen.
+  await expect(filas.nth(1)).toContainText('Sin fecha registrada');
+  await expect(filas.nth(1)).toContainText('Sin motivo registrado');
+
+  await page.locator('#buscar-rescatistas').fill('juan');
+  await page.getByLabel('Rechazado desde').fill('2026-11-01');
+  await page.locator('#filtro-rescatistas').getByRole('button', { name: 'Buscar' }).click();
+  await expect(filas).toHaveCount(1);
+  expect(datos.pedidos).toContainEqual({ estado: 'RECHAZADO', buscar: 'juan', desde: '2026-11-01' });
+
+  await page.locator('#buscar-rescatistas').fill('nadie');
+  await page.locator('#filtro-rescatistas').getByRole('button', { name: 'Buscar' }).click();
+  await expect(page.locator('#estado-rescatistas')).toHaveText('Ningún rescatista coincide con la búsqueda.');
+});
+
+test('publicaciones aprobadas y el historial de rechazos, con motivo, fecha, hora y cómo está ahora', async ({ page }) => {
+  const datos = {
+    aprobadas: [publicacion(3, 'Mishi', { aprobada_en: '2026-11-18 11:05:00' })],
+    historial: [
+      { id: 2, motivo: 'La foto no se ve bien', rechazada_en: '2026-11-15 16:30:00', veterinaria: 'Vet',
+        publicacion: { id: 3, titulo: 'Mishi busca familia', estado_moderacion: 'APROBADA', activa: true },
+        mascota: { id: 903, nombre: 'Mishi', especie: 'GATO' },
+        rescatista: { id: 104, nombre: 'Rescatista Aprobada', organizacion: null } },
+      { id: 1, motivo: 'Falta la descripción', rechazada_en: '2026-11-10 10:00:00', veterinaria: null,
+        publicacion: { id: 4, titulo: 'Toby', estado_moderacion: 'RECHAZADA', activa: false },
+        mascota: { id: 904, nombre: 'Toby', especie: 'PERRO' },
+        rescatista: { id: 104, nombre: 'Rescatista Aprobada', organizacion: null } },
+    ],
+  };
+  await simularPanelVet(page, datos);
+  await page.goto('/panel/adopciones.html#publicaciones');
+
+  await page.getByRole('button', { name: 'Aprobadas' }).click();
+  const filas = page.locator('#filas-publicaciones tr');
+  await expect(filas).toHaveCount(1);
+  await expect(filas.first()).toContainText('18/11/2026 11:05');
+  await expect(filas.first().getByRole('link', { name: 'Mishi' })).toHaveAttribute('href', '/adopciones/publicacion.html?id=3');
+  await expect(filas.first().getByRole('link', { name: 'Ver la adopción' })).toHaveAttribute('href', '/panel/adopcion.html?id=3');
+  await expect(page.getByLabel('Aprobada desde')).toBeVisible();
+
+  await page.getByRole('button', { name: 'Rechazos' }).click();
+  await expect(filas).toHaveCount(2);
+  // Mishi se rechazó y después se aprobó: el rechazo sigue en el historial.
+  await expect(filas.nth(0)).toContainText('15/11/2026 16:30');
+  await expect(filas.nth(0)).toContainText('La foto no se ve bien');
+  await expect(filas.nth(0)).toContainText('Aprobada');
+  await expect(filas.nth(1)).toContainText('Dada de baja');
+  await expect(page.locator('#ayuda-rechazos')).toBeVisible();
+
+  await page.locator('#buscar-publicaciones').fill('foto');
+  await page.locator('#filtro-publicaciones').getByRole('button', { name: 'Buscar' }).click();
+  await expect.poll(() => datos.pedidos.some((q) => q.rechazos && q.buscar === 'foto')).toBe(true);
+});
+
+test('el perfil del rescatista muestra sus datos, el motivo del rechazo, sus publicaciones y sus rechazos', async ({ page }) => {
+  await simularSesion(page, VETERINARIO);
+  await page.route('**/api/rescatistas/108', (route) => responderJson(route, {
+    rescatista: rescatista(108, 'Juan Falso', { estado_validacion: 'RECHAZADO', validado_en: '2026-11-21 18:40:00', motivo_rechazo: 'Datos falsos' }),
+  }));
+  await page.route(/\/api\/adopciones\/moderacion\?/, (route) => {
+    const query = new URL(route.request().url()).searchParams;
+    expect(Object.fromEntries(query)).toEqual({ estado: 'TODAS', rescatista_id: '108' });
+    return responderJson(route, { publicaciones: [publicacion(5, 'Canela', { estado_moderacion: 'RECHAZADA', adopcion: null })] });
+  });
+  await page.route(/\/api\/adopciones\/rechazos\?rescatista_id=108$/, (route) => responderJson(route, { rechazos: [
+    { id: 9, motivo: 'La foto está borrosa', rechazada_en: '2026-11-19 12:00:00', veterinaria: 'Vet',
+      publicacion: { id: 5, titulo: 'Canela', estado_moderacion: 'RECHAZADA', activa: true },
+      mascota: { id: 905, nombre: 'Canela', especie: 'GATO' }, rescatista: { id: 108, nombre: 'Juan Falso', organizacion: null } },
+  ] }));
+
+  await page.goto('/panel/rescatista.html?id=108');
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Juan Falso');
+  await expect(page.locator('#validacion')).toHaveText('Rechazada el 21/11/2026 18:40');
+  await expect(page.locator('#motivo')).toHaveText('Datos falsos');
+  await expect(page.getByRole('link', { name: /Ver su ficha/ })).toHaveAttribute('href', '/panel/cliente.html?id=108');
+  await expect(page.locator('#filas-publicaciones').getByRole('link', { name: 'Canela' })).toHaveAttribute('href', '/adopciones/publicacion.html?id=5');
+  await expect(page.locator('#filas-rechazos')).toContainText('La foto está borrosa');
+  // Ya está decidido: no se lo vuelve a aprobar.
+  await expect(page.getByRole('button', { name: 'Aprobar' })).toHaveCount(0);
+});
+
+test('desde el perfil se aprueba a un rescatista pendiente', async ({ page }) => {
+  await simularSesion(page, VETERINARIO);
+  let estado = 'PENDIENTE';
+  await page.route('**/api/rescatistas/105', (route) => responderJson(route, {
+    rescatista: rescatista(105, 'Rescatista Pendiente', estado === 'APROBADO' ? { estado_validacion: 'APROBADO', validado_en: '2026-11-24 10:00:00' } : {}),
+  }));
+  await page.route('**/api/rescatistas/105/aprobar', (route) => { estado = 'APROBADO'; return responderJson(route, { rescatista: {} }); });
+  await page.route(/\/api\/adopciones\/(moderacion|rechazos)\?/, (route) => responderJson(route, { publicaciones: [], rechazos: [] }));
+
+  await page.goto('/panel/rescatista.html?id=105');
+  await expect(page.locator('#validacion')).toHaveText('Esperando tu aprobación');
+  await expect(page.locator('#estado-publicaciones')).toHaveText('Todavía no publicó ninguna mascota.');
+  await page.getByRole('button', { name: 'Aprobar' }).click();
+  await expect(page.locator('#validacion')).toHaveText('Aprobada el 24/11/2026 10:00');
+  await expect(page.getByRole('button', { name: 'Aprobar' })).toHaveCount(0);
+});
+
+test('el perfil de un rescatista que no existe lo avisa', async ({ page }) => {
+  await simularSesion(page, VETERINARIO);
+  await page.route('**/api/rescatistas/999', (route) => responderJson(route, { error: 'Rescatista no encontrado' }, 404));
+  await page.goto('/panel/rescatista.html?id=999');
+  await expect(page.locator('#estado')).toHaveText('No encontramos ese rescatista.');
 });
 
 test('programar el chequeo crea el turno en la agenda y lo asocia a la adopción', async ({ page }) => {
@@ -545,15 +727,15 @@ test('la búsqueda de en curso filtra por nombre y avisa si no hay ninguna', asy
 
   await page.goto('/panel/adopciones.html');
   await expect(page.getByRole('tab', { name: /En curso/ })).toContainText('(2)');
-  await page.getByLabel('Buscar', { exact: true }).first().fill('rocco');
-  await page.getByRole('button', { name: 'Buscar' }).click();
+  await page.locator('#buscar-curso').fill('rocco');
+  await page.locator('#filtro-curso').getByRole('button', { name: 'Buscar' }).click();
   await expect(page.locator('#filas-curso tr')).toHaveCount(1);
   await expect(page.locator('#filas-curso')).toContainText('Rocco');
   // El número de la pestaña sigue contando todas.
   await expect(page.getByRole('tab', { name: /En curso/ })).toContainText('(2)');
 
-  await page.getByLabel('Buscar', { exact: true }).first().fill('nadie');
-  await page.getByRole('button', { name: 'Buscar' }).click();
+  await page.locator('#buscar-curso').fill('nadie');
+  await page.locator('#filtro-curso').getByRole('button', { name: 'Buscar' }).click();
   await expect(page.locator('#estado-curso')).toHaveText('Ninguna adopción en curso coincide con los filtros.');
 });
 

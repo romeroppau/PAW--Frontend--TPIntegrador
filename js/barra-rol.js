@@ -54,10 +54,10 @@ export const MENUS = {
         ['Qué liquidar', '/panel/reportes.html#liquidar'],
         ['Promociones publicadas', '/panel/reportes.html#promociones'],
         ['Turnos atendidos', '/panel/reportes.html#turnos-atendidos']]],
-      ['rescatistas', 'Rescatistas', 'Cuentas de rescatistas por aprobar.', [
-        ['Solicitudes pendientes', '/panel/adopciones.html#rescatistas']]],
+      ['rescatistas', 'Rescatistas', 'Por aprobar, aprobados y rechazados.', [
+        ['Rescatistas por aprobar, aprobados y rechazados', '/panel/adopciones.html#rescatistas']]],
       ['adopcion', 'Adopción', 'Publicaciones y adopciones.', [
-        ['Moderar publicaciones', '/panel/adopciones.html#moderacion'],
+        ['Publicaciones por revisar, aprobadas y rechazos', '/panel/adopciones.html#publicaciones'],
         ['Adopciones en curso', '/panel/adopciones.html#en-curso'],
         ['Adopciones finalizadas', '/panel/adopciones.html#finalizadas']]],
       ['notificaciones', 'Notificaciones', 'Alertas y novedades administrativas.', [
