@@ -57,7 +57,7 @@ export function insigniaPostulacion(codigo, { mira = 'veterinaria' } = {}) {
  */
 export async function cancelarPostulacion(p) {
   const pregunta = `¿Cancelar tu postulación para adoptar a ${p.publicacion.mascota.nombre}? `
-    + 'No vas a poder volver a postularte por este animal.';
+    + 'Si cambiás de idea, podés volver a postularte mientras siga disponible.';
   if (!await confirmar(pregunta, { aceptar: 'Cancelar postulación', peligro: true })) return null;
   const { postulacion } = await api(`/api/adopciones/postulaciones/${encodeURIComponent(p.id)}/cancelar`, { metodo: 'POST' });
   return postulacion;
@@ -111,7 +111,7 @@ export function diaCorto(f) {
 export function seguimiento(p) {
   if (p.estado === 'PENDIENTE') return 'La rescatista todavía está eligiendo.';
   if (p.estado === 'RECHAZADA') return 'La rescatista eligió a otra persona o cerró la publicación.';
-  if (p.estado === 'CANCELADA') return 'La cancelaste: no te podés volver a postular por este animal.';
+  if (p.estado === 'CANCELADA') return 'La cancelaste. Si cambiás de idea, podés volver a postularte mientras siga disponible.';
   if (p.estado !== 'ELEGIDA') return '';
   const { estado: estadoAdopcion, turno_chequeo: turno } = p.adopcion;
   if (estadoAdopcion === 'FINALIZADA') return '¡Adopción completa! Ya está en Mis mascotas.';

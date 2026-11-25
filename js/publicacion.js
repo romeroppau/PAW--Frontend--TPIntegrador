@@ -68,11 +68,15 @@ async function cargar() {
   }
 
   if (mia) {
-    document.getElementById('disponibilidad').hidden = true;
-    acciones.replaceWith(bloquePostulacion(mia, { cancelable: true }));
     document.getElementById('volver').href = '/adopciones/adopciones.html#seccion-mias';
     document.getElementById('volver').textContent = '← Volver a mis postulaciones';
+  }
+  // Si la canceló y sigue disponible, puede volver a postularse (24/11).
+  if (mia && !(mia.estado === 'CANCELADA' && disponible(publicacion))) {
+    document.getElementById('disponibilidad').hidden = true;
+    acciones.replaceWith(bloquePostulacion(mia, { cancelable: true }));
   } else if (disponible(publicacion)) {
+    if (mia) acciones.before(bloquePostulacion(mia));
     poner('disponibilidad', 'Busca familia.');
     if (esCliente) {
       acciones.append(el('a', 'Quiero adoptarlo', {

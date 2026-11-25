@@ -65,10 +65,10 @@ function tarjeta(publicacion) {
     el('p', 'Lo cuida: ' + (rescatista.organizacion || rescatista.nombre), { class: 'datos' })
   );
 
+  // Si ya se postuló, ve el estado; si la había cancelado, también "Quiero adoptarlo" (24/11).
   const mia = misPostulaciones.get(publicacion.id);
-  if (esCliente && mia) {
-    cuerpo.append(bloquePostulacion(mia));
-  } else if (esCliente) {
+  if (esCliente && mia) cuerpo.append(bloquePostulacion(mia));
+  if (esCliente && (!mia || mia.estado === 'CANCELADA')) {
     const acciones = el('div', '', { class: 'acciones' });
     const boton = el('button', 'Quiero adoptarlo', { type: 'button', class: 'boton', 'aria-label': 'Postularme para adoptar a ' + mascota.nombre });
     boton.addEventListener('click', () => abrirFormulario(publicacion));
@@ -202,5 +202,6 @@ if (esCliente && postular) {
   await cargas[0];
   await cargas[1];
   const publicacion = ultimasPublicaciones.find((p) => String(p.id) === postular);
-  if (publicacion && !misPostulaciones.has(publicacion.id)) abrirFormulario(publicacion);
+  const mia = publicacion && misPostulaciones.get(publicacion.id);
+  if (publicacion && (!mia || mia.estado === 'CANCELADA')) abrirFormulario(publicacion);
 }
