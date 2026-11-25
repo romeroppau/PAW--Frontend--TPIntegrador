@@ -709,12 +709,16 @@ test('el cliente cancela su postulación pendiente desde Mis postulaciones (con 
   await page.getByRole('button', { name: 'Cancelar mi postulación para adoptar a Pipa' }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Cancelar postulación' }).click();
   await expect(filas.nth(0)).toContainText('Cancelada por vos');
-  await expect(filas.nth(0)).toContainText('no te podés volver a postular');
+  await expect(filas.nth(0)).toContainText('podés volver a postularte');
   await expect(filas.nth(0).getByRole('button')).toHaveCount(0);
   expect(pedidos).toEqual(['POST']);
   // La tarjeta del animal tampoco ofrece postularse.
   await page.getByRole('tab', { name: 'Animales que buscan familia' }).click();
-  await expect(page.locator('.tarjeta-adopcion', { hasText: 'Pipa' }).locator('.tu-postulacion')).toContainText('Cancelada por vos');
+  const pipa = page.locator('.tarjeta-adopcion', { hasText: 'Pipa' });
+  await expect(pipa.locator('.tu-postulacion')).toContainText('Cancelada por vos');
+  // Y puede volver a postularse (24/11).
+  await pipa.getByRole('button', { name: 'Postularme para adoptar a Pipa' }).click();
+  await expect(page.locator('#titulo-postulacion')).toHaveText('Postularme para adoptar a Pipa');
 });
 
 test('desde la publicación también se cancela, y si la rescatista ya eligió avisa el error', async ({ page }) => {
@@ -739,4 +743,65 @@ test('la rescatista y la veterinaria ven quién canceló cada postulación', asy
     return [t('CANCELADA', 'rescatista'), t('RECHAZADA', 'rescatista'), t('CANCELADA', 'veterinaria'), t('RECHAZADA', 'veterinaria'), t('CANCELADA', 'postulante'), t('RECHAZADA', 'postulante')];
   });
   expect(textos).toEqual(['Cancelada por el postulante', 'Cancelada por vos', 'Cancelada por el postulante', 'Cancelada por la rescatista', 'Cancelada por vos', 'Cancelada por la rescatista']);
+});
+
+test('en la publicación, una postulación cancelada deja volver a postularse si el animal sigue disponible', async ({ page }) => {
+  await simularSesion(page, CLIENTE);
+  await page.route('**/api/adopciones/publicaciones/1', (route) => responderJson(route, { publicacion: publicacion(1, 'Pipa') }));
+  await page.route(/\/api\/adopciones\/publicaciones(\?.*)?$/, (route) => responderJson(route, { publicaciones: [publicacion(1, 'Pipa')] }));
+  await page.route('**/api/adopciones/mis-postulaciones', (route) => responderJson(route, { postulaciones: [postulacion(7, 'Cliente Dos', { estado: 'CANCELADA' })] }));
+
+  await page.goto('/adopciones/publicacion.html?id=1');
+  await expect(page.locator('.tu-postulacion')).toContainText('Tu postulación: Cancelada por vos');
+  await expect(page.locator('.tu-postulacion').getByRole('button')).toHaveCount(0);
+  await page.getByRole('link', { name: 'Quiero adoptarlo' }).click();
+  await expect(page).toHaveURL(/\/adopciones\/adopciones\.html\?postular=1$/);
+  await expect(page.locator('#titulo-postulacion')).toHaveText('Postularme para adoptar a Pipa');
+});
+
+test('con el adoptante ya elegido, la rescatista ve "Ver adoptante elegido" con sus datos y lo que contestó', async ({ page }) => {
+  await simularSesion(page, RESCATISTA);
+  await page.route('**/api/adopciones/mis-publicaciones', (route) => responderJson(route, { publicaciones: [
+    publicacion(1, 'Pipa', { adopcion: { id: 1, estado: 'FINALIZADA', postulaciones_pendientes: 0 } }),
+    publicacion(2, 'Toby'),
+  ] }));
+  await page.route('**/api/adopciones/1/postulaciones', (route) => responderJson(route, {
+    adopcion: { id: 1, estado: 'FINALIZADA' },
+    postulaciones: [
+      postulacion(1, 'Cliente de Prueba', { estado: 'RECHAZADA' }),
+      postulacion(2, 'Cliente Dos', { estado: 'ELEGIDA', tipo_vivienda: 'Departamento', cliente: { id: 103, nombre: 'Cliente Dos', telefono: '1155550103' } }),
+    ],
+  }));
+
+  await page.goto('/rescatista/publicaciones.html');
+  const pipa = page.locator('article', { hasText: 'Pipa busca familia' });
+  await expect(pipa.getByRole('button', { name: /Postulantes/ })).toHaveCount(0);
+  await expect(page.locator('article', { hasText: 'Toby busca familia' }).getByRole('button', { name: /Postulantes/ })).toBeVisible();
+
+  await pipa.getByRole('button', { name: 'Ver el adoptante elegido para Pipa' }).click();
+  await expect(page.locator('#titulo-postulantes')).toHaveText('Adoptante elegido para Pipa');
+  const ficha = page.locator('#adoptante-elegido');
+  await expect(ficha).toContainText('Cliente Dos');
+  await expect(ficha).toContainText('1155550103');
+  await expect(ficha).toContainText('Departamento');
+  await expect(ficha).toContainText('Toda la tarde');
+  await expect(ficha).toContainText('Adoptado');
+  await expect(ficha).not.toContainText('Cliente de Prueba');
+  await expect(page.locator('#tabla-postulantes')).toBeHidden();
+});
+
+test('el panel de la rescatista tiene las secciones de la portada y la Tienda con sus categorías', async ({ page }) => {
+  await simularSesion(page, RESCATISTA);
+  await page.goto('/paneles/panel-rescatista.html');
+  await expect(page.getByRole('link', { name: 'Reservar turno' })).toBeVisible();
+  // En celular la portada oculta la ubicación (como en el panel del cliente): solo se pide que esté.
+  await expect(page.getByRole('heading', { name: '¿Dónde nos encontramos?', includeHidden: true })).toBeAttached();
+  await expect(page.getByRole('heading', { name: 'Nuestros servicios' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '¿Qué opinan nuestros clientes?' })).toBeVisible();
+  await expect(page.locator('#seccion-destacados')).toBeAttached();
+  await expect(page.locator('#contacto')).toBeVisible();
+
+  await page.locator('#menu-tienda summary').click();
+  await expect(page.locator('#menu-tienda .panel-opciones').getByRole('link'))
+    .toHaveText(['Promociones', 'Ver catálogo de productos', 'Medicamentos', 'Alimento balanceado', 'Accesorios', 'Mis compras']);
 });
