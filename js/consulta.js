@@ -4,8 +4,8 @@
  * Se abre con ?id=<consulta>, o con ?turno=<turno> para iniciar la atención de ese turno.
  * Contrato: docs/api/contrato-consultas.md del repo Pacientes.
  *
- * 25/11: un turno de vacunación o desparasitación dice qué se da (consulta.evento_sanitario). La
- * consulta tiene que llevar esa dosis en los insumos para finalizar, y si no hay stock se carga acá
+ * 25/11: el turno puede tener varios motivos (consulta.motivos) y cada vacuna o desparasitación dice
+ * qué se da (consulta.eventos_sanitarios). La consulta tiene que llevar cada dosis en los insumos para finalizar, y si no hay stock se carga acá
  * mismo (POST /api/inventario/insumos/{id}/stock), sin salir de la consulta. Lo mismo con cualquier
  * insumo o producto que falte al finalizar.
  *
@@ -16,7 +16,7 @@
 import { api } from './api.js';
 import { exigirRol } from './auth.js';
 import { confirmar, el, limpiarErrores, mostrarErrores } from './ui.js';
-import { textoEstadoConsulta, textoEstadoFactura } from './etiquetas.js';
+import { textoEstadoConsulta, textoEstadoFactura, textoMotivos } from './etiquetas.js';
 
 await exigirRol('VETERINARIO');
 
@@ -272,59 +272,68 @@ function formCargarStock(tipo, id, nombre, sugerida, idMensaje) {
   return form;
 }
 
-// Qué se da en esta consulta y si su dosis ya está en los insumos. Si no está, cada insumo que sirve
-// (los de esa aplicación) con su stock: "Agregar 1" y, si no hay stock, "Cargar stock".
+// Qué se da en esta consulta (una o varias vacunas o desparasitaciones) y si cada dosis ya está en los
+// insumos. Si no está, cada insumo que sirve (los de esa aplicación) con su stock: "Agregar 1" y, si no
+// hay stock, "Cargar stock".
 function pintarCalendario() {
-  const evento = consulta.evento_sanitario;
+  const eventos = consulta.eventos_sanitarios ?? [];
   const bloque = document.getElementById('bloque-calendario');
-  bloque.hidden = !evento;
-  if (!evento) return;
+  bloque.hidden = eventos.length === 0;
+  document.getElementById('motivos-consulta').textContent = textoMotivos(consulta);
+  if (eventos.length === 0) return;
 
-  const cargado = (consulta.insumos ?? []).find((i) => i.aplicacion && i.aplicacion === evento.aplicacion);
   const texto = document.getElementById('texto-calendario');
   const lista = document.getElementById('insumos-calendario');
   lista.replaceChildren();
+  const nombres = eventos.map((e) => e.nombre).join(', ');
 
   if (cerrada()) {
-    texto.textContent = `Se dio ${evento.nombre}: quedó registrada en el calendario de la mascota.`;
+    texto.textContent = `Se dio: ${nombres}. Quedó registrado en el calendario de la mascota.`;
     return;
   }
-  if (cargado) {
-    texto.textContent = `Esta consulta es para ${evento.nombre}. La dosis ya está en los insumos (${cargado.nombre}). Al finalizar, queda dada en el calendario.`;
-    if (cargado.stock !== undefined && cargado.stock < cargado.cantidad) {
-      lista.append(el('p', `No alcanza el stock de ${cargado.nombre}: hay ${cargado.stock}.`),
-        formCargarStock('insumos', cargado.insumo_id, cargado.nombre, cargado.cantidad - cargado.stock, 'mensaje-calendario'));
-    }
-    return;
-  }
+  texto.textContent = `Esta consulta es para: ${nombres}. Cada dosis tiene que estar en los insumos; al finalizar, queda dada en el calendario.`;
 
-  texto.textContent = `Esta consulta es para ${evento.nombre}: cargá la dosis en los insumos. Sin eso no se puede finalizar.`;
-  if (evento.insumos.length === 0) {
-    lista.append(el('p', 'No hay ningún insumo activo para darla: dalo de alta (o reactivalo) en Insumos.', { class: 'mensaje mensaje-error' }));
-    return;
-  }
-  for (const insumo of evento.insumos) {
-    const fila = el('div', '', { class: 'acciones' });
-    fila.append(el('span', `${insumo.nombre} · stock: ${insumo.stock}`));
-    if (insumo.stock > 0) {
-      const agregar = el('button', 'Agregar 1 a la consulta', { type: 'button', class: 'boton boton-chico', 'aria-label': `Agregar ${insumo.nombre} a la consulta` });
-      agregar.addEventListener('click', async () => {
-        agregar.disabled = true;
-        try {
-          consulta = desenvolver(await api(`${API}/consultas/${consulta.id}/insumos`, { metodo: 'POST', cuerpo: { insumo_id: insumo.id, cantidad: 1 } }));
-          avisar('mensaje-calendario', '');
-          avisar('mensaje-finalizar', '');
-          pintarItems();
-        } catch (e) {
-          avisar('mensaje-calendario', e.datos?.error ?? 'No se pudo agregar el insumo.');
-          agregar.disabled = false;
-        }
-      });
-      fila.append(agregar);
-    } else {
-      fila.append(el('span', 'Sin stock', { class: 'insignia insignia-falta' }), formCargarStock('insumos', insumo.id, insumo.nombre, 1, 'mensaje-calendario'));
+  for (const evento of eventos) {
+    const caja = el('div', '', { class: 'bloque-dosis' });
+    const cargado = (consulta.insumos ?? []).find((i) => i.aplicacion && i.aplicacion === evento.aplicacion);
+    if (cargado) {
+      caja.append(el('p', `${evento.nombre}: cargada (${cargado.nombre}).`, { class: 'mensaje mensaje-ok' }));
+      if (cargado.stock !== undefined && cargado.stock < cargado.cantidad) {
+        caja.append(el('p', `No alcanza el stock de ${cargado.nombre}: hay ${cargado.stock}.`),
+          formCargarStock('insumos', cargado.insumo_id, cargado.nombre, cargado.cantidad - cargado.stock, 'mensaje-calendario'));
+      }
+      lista.append(caja);
+      continue;
     }
-    lista.append(fila);
+
+    caja.append(el('p', `${evento.nombre}: falta cargar la dosis.`, { class: 'mensaje mensaje-error' }));
+    if (evento.insumos.length === 0) {
+      caja.append(el('p', 'No hay ningún insumo activo para darla: dalo de alta (o reactivalo) en Insumos.'));
+    }
+    for (const insumo of evento.insumos) {
+      const fila = el('div', '', { class: 'acciones' });
+      fila.append(el('span', `${insumo.nombre} · stock: ${insumo.stock}`));
+      if (insumo.stock > 0) {
+        const agregar = el('button', 'Agregar 1 a la consulta', { type: 'button', class: 'boton boton-chico', 'aria-label': `Agregar ${insumo.nombre} a la consulta` });
+        agregar.addEventListener('click', async () => {
+          agregar.disabled = true;
+          try {
+            consulta = desenvolver(await api(`${API}/consultas/${consulta.id}/insumos`, { metodo: 'POST', cuerpo: { insumo_id: insumo.id, cantidad: 1 } }));
+            avisar('mensaje-calendario', '');
+            avisar('mensaje-finalizar', '');
+            pintarItems();
+          } catch (e) {
+            avisar('mensaje-calendario', e.datos?.error ?? 'No se pudo agregar el insumo.');
+            agregar.disabled = false;
+          }
+        });
+        fila.append(agregar);
+      } else {
+        fila.append(el('span', 'Sin stock', { class: 'insignia insignia-falta' }), formCargarStock('insumos', insumo.id, insumo.nombre, 1, 'mensaje-calendario'));
+      }
+      caja.append(fila);
+    }
+    lista.append(caja);
   }
 }
 

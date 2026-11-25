@@ -9,7 +9,7 @@
 
 import { api } from './api.js';
 import { el } from './ui.js';
-import { textoEstadoFactura, textoMotivoTurno } from './etiquetas.js';
+import { textoEstadoFactura, textoMotivos } from './etiquetas.js';
 
 const estado = document.getElementById('estado');
 const consulta = new URLSearchParams(location.search).get('consulta');
@@ -51,7 +51,7 @@ function mostrar(f) {
   poner('fecha', fecha(f.fecha));
   poner('cliente', f.cliente?.nombre ?? '—');
   poner('mascota', f.mascota?.nombre ?? '—');
-  poner('atencion', `${textoMotivoTurno(c.motivo)} del ${fecha(c.fecha)}${c.hora ? ' a las ' + c.hora : ''}`);
+  poner('atencion', `${textoMotivos(c)} del ${fecha(c.fecha)}${c.hora ? ' a las ' + c.hora : ''}`);
   poner('diagnostico', c.diagnostico || '—');
 
   // Una fila por concepto: la consulta (valor base) y cada insumo y producto con su precio copiado.

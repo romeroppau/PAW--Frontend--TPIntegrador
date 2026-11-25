@@ -13,7 +13,7 @@
 import { api, debounce } from './api.js';
 import { exigirRol } from './auth.js';
 import { el } from './ui.js';
-import { textoEspecieMascota, textoEstadoFactura, textoMotivoTurno } from './etiquetas.js';
+import { textoEspecieMascota, textoEstadoFactura, textoMotivos } from './etiquetas.js';
 import { enlaceMascota } from './mascota-datos.js';
 import { enlaceDuenio } from './personas.js';
 
@@ -134,7 +134,7 @@ async function desplegar(mascota, boton, detalle, celda) {
 function consulta(c) {
   const li = el('li', '', { class: 'consulta-paciente' });
   li.append(el('strong', fecha(c.fecha ?? c.finalizada_en)), ' ');
-  if (c.motivo && c.motivo !== 'CONSULTA') li.append(el('span', textoMotivoTurno(c.motivo), { class: 'insignia' }), ' ');
+  if (c.motivo && textoMotivos(c) !== 'Consulta') li.append(el('span', textoMotivos(c), { class: 'insignia' }), ' ');
   li.append(el('span', c.diagnostico || 'Sin diagnóstico'));
   if (c.observaciones) li.append(el('span', c.observaciones, { class: 'ayuda' }));
 

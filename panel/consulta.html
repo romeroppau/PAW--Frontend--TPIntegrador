@@ -26,6 +26,8 @@
       <div class="barra-titulo">
         <h1>Consulta</h1>
         <p id="estado-consulta" class="etiqueta"></p>
+        <!-- Los motivos del turno (25/11: puede tener varios). -->
+        <p>Motivos: <strong id="motivos-consulta"></strong></p>
       </div>
       <p class="estado" id="estado" role="status"></p>
 
@@ -59,7 +61,7 @@
         <!-- Turno de vacunación o desparasitación (25/11): qué se da, y la dosis que tiene que estar en los
              insumos (con su stock, que se puede cargar acá mismo). js/consulta.js lo arma. -->
         <section class="bloque tarjeta" id="bloque-calendario" aria-labelledby="t-calendario" hidden>
-          <h2 id="t-calendario">Vacuna o desparasitación</h2>
+          <h2 id="t-calendario">Vacunas y desparasitaciones</h2>
           <p id="texto-calendario"></p>
           <div id="insumos-calendario"></div>
           <p class="mensaje" id="mensaje-calendario" role="alert" hidden></p>

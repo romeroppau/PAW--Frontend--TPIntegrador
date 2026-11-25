@@ -125,7 +125,8 @@ test('"Nuevo turno" lo carga y muestra su día en la agenda, sin recargar; un ho
     if (cuerpo.hora === '08:00') {
       return responderJson(route, { error: 'Ya hay un turno a esa hora', campos: { hora: 'Ya tenés un turno a esa hora' } }, 409);
     }
-    const nuevo = turno(110, cuerpo.hora, 'Firulais', 'PROGRAMADO', { fecha: cuerpo.fecha, motivo: cuerpo.motivo });
+    const motivos = cuerpo.motivos.map((m) => ({ motivo: m.motivo, evento_sanitario: null }));
+    const nuevo = turno(110, cuerpo.hora, 'Firulais', 'PROGRAMADO', { fecha: cuerpo.fecha, motivo: motivos[0].motivo, motivos });
     turnosManiana.push(nuevo);
     return responderJson(route, { turno: nuevo }, 201);
   });
@@ -144,14 +145,17 @@ test('"Nuevo turno" lo carga y muestra su día en la agenda, sin recargar; un ho
 
   await page.fill('#turno-fecha', MANIANA);
   await page.fill('#hora', '10:30');
-  await page.selectOption('#motivo', 'CASTRACION');
+  // Varios motivos (25/11): castración y control, sin la consulta general que viene marcada.
+  await page.getByLabel('Consulta general').uncheck();
+  await page.getByLabel('Castración').check();
+  await page.getByLabel('Control / seguimiento').check();
   await page.getByRole('button', { name: 'Guardar turno' }).click();
 
   await expect(page.locator('#seccion-turno')).toBeHidden();
   await expect(page).toHaveURL(new RegExp('\\?fecha=' + MANIANA + '$'));
-  await expect(page.locator('tr[data-id="110"]')).toContainText('Castración');
+  await expect(page.locator('tr[data-id="110"]')).toContainText('Castración · Control / seguimiento');
   await expect(page.locator('#estado')).toContainText('Turno cargado: Firulais');
-  expect(cuerpos.at(-1)).toEqual({ mascota_id: 101, fecha: MANIANA, hora: '10:30', motivo: 'CASTRACION' });
+  expect(cuerpos.at(-1)).toEqual({ mascota_id: 101, fecha: MANIANA, hora: '10:30', motivos: [{ motivo: 'CASTRACION' }, { motivo: 'CONTROL' }] });
   expect(await page.evaluate(() => window.sinRecargar)).toBe(true);
 });
 
@@ -173,7 +177,7 @@ test('"Reprogramar" usa el mismo formulario solo con fecha y hora, y muestra el 
 
   await expect(page.locator('#titulo-turno')).toHaveText('Reprogramar el turno de Firulais');
   await expect(page.locator('#mascota_id')).toBeHidden();
-  await expect(page.locator('#motivo')).toBeHidden();
+  await expect(page.locator('#campo-motivos')).toBeHidden();
   await expect(page.locator('#turno-fecha')).toHaveValue(HOY);
   await expect(page.locator('#hora')).toHaveValue('08:00');
 

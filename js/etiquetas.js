@@ -33,10 +33,15 @@ export const MOTIVOS_TURNO = {
   CHEQUEO_ADOPCION: 'Chequeo de adopción'
 };
 
-// "Vacunación: Antirrábica" si el turno es para algo del calendario.
-export const textoMotivoConEvento = (turno) => turno.evento_sanitario
-  ? `${MOTIVOS_TURNO[turno.motivo] ?? turno.motivo}: ${turno.evento_sanitario.nombre}`
-  : (MOTIVOS_TURNO[turno.motivo] ?? turno.motivo);
+// Todos los motivos de un turno o consulta (migración 026), con la vacuna de cada uno:
+// "Vacunación: Antirrábica · Control / seguimiento". Sin la lista, el motivo solo.
+export function textoMotivos(x) {
+  const lista = x.motivos?.length ? x.motivos : [{ motivo: x.motivo, evento_sanitario: null }];
+  return lista.map((m) => {
+    const texto = MOTIVOS_TURNO[m.motivo] ?? m.motivo;
+    return m.evento_sanitario ? `${texto}: ${m.evento_sanitario.nombre}` : texto;
+  }).join(' · ');
+}
 
 export const ESTADOS_INSUMO = {
   DISPONIBLE: 'Disponible',
