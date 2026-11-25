@@ -847,6 +847,23 @@ test('la veterinaria ya no cancela adopciones en curso: solo la rescatista, dand
   await expect(page.locator('#filas-curso').getByRole('link', { name: /Ver el detalle/ })).toHaveCount(2);
 });
 
+test('en curso y finalizadas: el animal, el rescatista y el adoptante llevan a su información', async ({ page }) => {
+  const finalizada = { ...adopcionEnCurso('FINALIZADA'), id: 3, fecha_fin: '2026-11-20 10:00:00' };
+  await simularPanelVet(page, { enCurso: [adopcionEnCurso('ADOPTANTE_ELEGIDO')], finalizadas: [finalizada] });
+  await page.goto('/panel/adopciones.html');
+
+  const fila = page.locator('#filas-curso tr').first();
+  await expect(fila.getByRole('link', { name: 'Ver la ficha de Pipa' })).toHaveAttribute('href', '/cliente/mascota.html?id=901');
+  await expect(fila.getByRole('link', { name: 'Rescatista Aprobada' })).toHaveAttribute('href', '/panel/rescatista.html?id=104');
+  await expect(fila.getByRole('link', { name: 'Cliente Dos' })).toHaveAttribute('href', '/panel/cliente.html?id=103');
+
+  await page.getByRole('tab', { name: /Finalizadas/ }).click();
+  const terminada = page.locator('#filas-finalizadas tr').first();
+  await expect(terminada.getByRole('link', { name: 'Ver la ficha de Pipa' })).toHaveAttribute('href', '/cliente/mascota.html?id=901');
+  await expect(terminada.getByRole('link', { name: 'Cliente Dos' })).toHaveAttribute('href', '/panel/cliente.html?id=103');
+  await expect(terminada.getByRole('link', { name: 'Rescatista Aprobada' })).toHaveAttribute('href', '/panel/rescatista.html?id=104');
+});
+
 test('la búsqueda de en curso filtra por nombre y avisa si no hay ninguna', async ({ page }) => {
   const datos = { enCurso: [adopcionEnCurso('ADOPTANTE_ELEGIDO'), { ...adopcionEnCurso('CON_POSTULANTES'), id: 2, adoptante: null, publicacion: publicacion(2, 'Rocco') }] };
   await simularPanelVet(page, datos);
