@@ -187,3 +187,33 @@ test('"Reprogramar" usa el mismo formulario solo con fecha y hora, y muestra el 
   expect(cuerpo).toEqual({ fecha: MANIANA, hora: '10:30' });
   expect(await page.evaluate(() => window.sinRecargar)).toBe(true);
 });
+
+test('"Nuevo turno" busca la mascota por nombre o dueño en el servidor (la lista trae hasta 100)', async ({ page }) => {
+  await simularSesion(page, VETERINARIO);
+  await simularAgenda(page, { [HOY]: TURNOS_HOY });
+  const pedidos = [];
+  await page.route(/\/api\/pacientes\/mascotas(\?.*)?$/, (route) => {
+    const buscar = new URL(route.request().url()).searchParams.get('buscar') ?? '';
+    pedidos.push(buscar);
+    const todas = [
+      { id: 101, nombre: 'Firulais', especie: 'PERRO', duenio: { id: 102, nombre: 'Sofía Benítez' } },
+      { id: 30001, nombre: 'Rocco', especie: 'PERRO', duenio: { id: 102, nombre: 'Sofía Benítez' } },
+    ];
+    // Sin buscar, como si Rocco hubiera quedado afuera de las primeras 100.
+    const mascotas = buscar ? todas.filter((m) => (m.nombre + ' ' + m.duenio.nombre).toLowerCase().includes(buscar.toLowerCase())) : [todas[0]];
+    return responderJson(route, { mascotas });
+  });
+
+  await page.goto('/panel/agenda.html');
+  await page.getByRole('button', { name: 'Nuevo turno' }).click();
+  await expect(page.locator('#buscar-mascota')).toBeFocused();
+  await expect(page.locator('#mascota_id option')).toHaveCount(2);
+
+  await page.fill('#buscar-mascota', 'rocco');
+  await expect(page.locator('#mascota_id')).toHaveValue('30001');
+  await expect(page.locator('#mascota_id option')).toHaveText(['Elegí la mascota', 'Rocco (Perro) · Sofía Benítez']);
+  expect(pedidos.at(-1)).toBe('rocco');
+
+  await page.fill('#buscar-mascota', 'zzz');
+  await expect(page.locator('#mascota_id option')).toHaveText(['Ninguna mascota coincide con "zzz"']);
+});
