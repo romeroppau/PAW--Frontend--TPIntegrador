@@ -32,6 +32,22 @@
           <input id="costo" name="costo" type="number" min="0" step="0.01" aria-describedby="error-costo" required>
           <span class="campo-error" id="error-costo"></span>
         </div>
+        <!-- 25/11: si es una vacuna o un antiparasitario del calendario sanitario. La consulta de esa
+             vacuna tiene que llevar un insumo marcado así. -->
+        <div class="campo">
+          <label for="aplicacion">¿Es una vacuna o antiparasitario del calendario?</label>
+          <select id="aplicacion" name="aplicacion" aria-describedby="ayuda-aplicacion error-aplicacion">
+            <option value="">No</option>
+            <option value="SEXTUPLE">Vacuna séxtuple (perro)</option>
+            <option value="ANTIRRABICA">Vacuna antirrábica</option>
+            <option value="TOS_PERRERAS">Vacuna tos de las perreras (perro)</option>
+            <option value="TRIPLE_FELINA">Vacuna triple felina (gato)</option>
+            <option value="LEUCEMIA_FELINA">Vacuna leucemia felina (gato)</option>
+            <option value="ANTIPARASITARIO">Antiparasitario interno</option>
+          </select>
+          <span class="ayuda" id="ayuda-aplicacion">Las consultas de esa vacuna o desparasitación tienen que llevar este insumo.</span>
+          <span class="campo-error" id="error-aplicacion"></span>
+        </div>
         <div class="campo">
           <label for="stock">Stock inicial</label>
           <input id="stock" name="stock" type="number" min="0" step="1" aria-describedby="ayuda-stock error-stock" required>

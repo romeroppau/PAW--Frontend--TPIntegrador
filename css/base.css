@@ -240,6 +240,8 @@ th { background: var(--menta); color: var(--pino-oscuro); }
 .acciones { display: flex; gap: .5rem 1rem; align-items: center; flex-wrap: wrap; }
 .form-stock { display: flex; gap: .35rem; }
 .form-stock input { width: 5rem; font: inherit; padding: .35rem .5rem; border: 2px solid var(--borde); border-radius: 8px; }
+.form-stock input[type="date"] { width: auto; }
+.form-item .ancho-completo { flex-basis: 100%; margin: 0 0 .5rem; }
 .boton-chico { padding: .35rem .8rem; font-size: .9rem; }
 .sesion-nombre { font-weight: 700; color: var(--pino-oscuro); }
 form .boton + .boton { margin-left: .5rem; }

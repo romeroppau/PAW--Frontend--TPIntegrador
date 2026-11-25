@@ -144,14 +144,14 @@ test('"Nuevo turno" lo carga y muestra su día en la agenda, sin recargar; un ho
 
   await page.fill('#turno-fecha', MANIANA);
   await page.fill('#hora', '10:30');
-  await page.selectOption('#motivo', 'VACUNACION');
+  await page.selectOption('#motivo', 'CASTRACION');
   await page.getByRole('button', { name: 'Guardar turno' }).click();
 
   await expect(page.locator('#seccion-turno')).toBeHidden();
   await expect(page).toHaveURL(new RegExp('\\?fecha=' + MANIANA + '$'));
-  await expect(page.locator('tr[data-id="110"]')).toContainText('Vacunación');
+  await expect(page.locator('tr[data-id="110"]')).toContainText('Castración');
   await expect(page.locator('#estado')).toContainText('Turno cargado: Firulais');
-  expect(cuerpos.at(-1)).toEqual({ mascota_id: 101, fecha: MANIANA, hora: '10:30', motivo: 'VACUNACION' });
+  expect(cuerpos.at(-1)).toEqual({ mascota_id: 101, fecha: MANIANA, hora: '10:30', motivo: 'CASTRACION' });
   expect(await page.evaluate(() => window.sinRecargar)).toBe(true);
 });
 

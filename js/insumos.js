@@ -228,6 +228,7 @@ async function formulario() {
       const insumo = await api(`${base}/${encodeURIComponent(id)}`);   // GET .../{id}
       form.elements.nombre.value = insumo.nombre;
       form.elements.costo.value = insumo.costo;
+      form.elements.aplicacion.value = insumo.aplicacion ?? '';
       form.elements.stock.value = insumo.stock;
     } catch (e) {
       if (e.estado === 404) { location.replace('/panel/insumos.html'); return; }   // no existe: al listado
@@ -243,7 +244,10 @@ async function formulario() {
     // El JSON tiene que llevar números, no texto. Un campo vacío se manda como null,
     // así el backend responde "es obligatorio".
     const numero = (valor) => (valor === '' ? null : Number(valor));
-    const cuerpo = { nombre: form.elements.nombre.value, costo: numero(form.elements.costo.value) };
+    const cuerpo = {
+      nombre: form.elements.nombre.value, costo: numero(form.elements.costo.value),
+      aplicacion: form.elements.aplicacion.value || null,      // vacuna o antiparasitario del calendario (25/11)
+    };
     if (!id) cuerpo.stock = numero(form.elements.stock.value);   // el stock solo va en el alta
 
     // Se deshabilita el botón mientras se envía, para no crear el insumo dos veces con un doble clic.
