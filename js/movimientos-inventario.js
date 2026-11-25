@@ -9,6 +9,7 @@
  * Todo texto de la API va con el() (textContent).
  */
 import { api } from './api.js';
+import { errorDeRango, limitarAHoy } from './rango-fechas.js';
 import { el } from './ui.js';
 
 export const TIPOS = { ENTRADA: 'Entrada', SALIDA: 'Salida', AJUSTE: 'Ajuste' };
@@ -81,14 +82,16 @@ export async function pantallaMovimientos({ urlItems, urlMovimientos, campoItem,
   hace30.setDate(hace30.getDate() - 30);
   form.elements.desde.value = aISO(hace30);
   form.elements.hasta.value = aISO(new Date());
+  limitarAHoy(form.elements.desde, form.elements.hasta);   // los movimientos ya pasaron: nada posterior a hoy
 
   let pedido = 0;
   async function mostrar() {
     const desde = form.elements.desde.value;
     const hasta = form.elements.hasta.value;
     error.hidden = true;
-    if (desde && hasta && desde > hasta) {
-      error.textContent = 'La fecha "Desde" no puede ser posterior a "Hasta".';
+    const problema = errorDeRango(form.elements.desde, form.elements.hasta);
+    if (problema) {
+      error.textContent = problema;
       error.hidden = false;
       return;
     }

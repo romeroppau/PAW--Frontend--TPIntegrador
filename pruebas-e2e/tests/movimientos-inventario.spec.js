@@ -63,8 +63,8 @@ test('las fechas al revés avisan sin pedir a la API', async ({ page }) => {
 
   await page.goto('/panel/insumo-movimientos.html');
   await expect(page.locator('#estado')).toHaveText('No hay movimientos de insumos con ese filtro.');
-  await page.fill('#mov-desde', '2026-11-30');
-  await page.fill('#mov-hasta', '2026-11-01');
+  await page.fill('#mov-desde', '2026-10-30');
+  await page.fill('#mov-hasta', '2026-10-01');
   await page.getByRole('button', { name: 'Filtrar' }).click();
   await expect(page.locator('#error-fechas')).toHaveText('La fecha "Desde" no puede ser posterior a "Hasta".');
   expect(pedidos).toBe(1);

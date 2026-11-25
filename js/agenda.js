@@ -59,10 +59,9 @@ function sumarDias(fecha, dias) {
   return d.toISOString().slice(0, 10);
 }
 
-// "jueves 5 de noviembre de 2026"
-const textoDia = (fecha) => new Intl.DateTimeFormat('es-AR', {
-  weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC'
-}).format(new Date(fecha + 'T12:00:00Z'));
+// "jueves 05/11/2026" (el día de la semana y la fecha en DD/MM/AAAA)
+const DIAS_SEMANA = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+const textoDia = (fecha) => `${DIAS_SEMANA[new Date(fecha + 'T12:00:00Z').getUTCDay()]} ${fecha.split('-').reverse().join('/')}`;
 
 const esFechaValida = (texto) => /^\d{4}-\d{2}-\d{2}$/.test(texto ?? '') && !Number.isNaN(Date.parse(texto));
 

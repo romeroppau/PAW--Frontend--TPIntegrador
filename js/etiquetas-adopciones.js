@@ -116,11 +116,11 @@ export function leerComoDataUrl(archivo) {
 // El mensaje de error de un pedido fallido (el backend lo manda en "error").
 export const mensajeDeError = (e, porDefecto) => e?.datos?.error ?? porDefecto;
 
-// "2026-11-26" → "jue 26/11" (al mediodía UTC, para que la zona horaria no corra el día).
+// "2026-11-26" → "jue 26/11/2026" (al mediodía UTC, para que la zona horaria no corra el día).
 const DIAS = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
 export function diaCorto(f) {
-  const [, mes, dia] = f.split('-');
-  return `${DIAS[new Date(f + 'T12:00:00Z').getUTCDay()]} ${dia}/${mes}`;
+  const [anio, mes, dia] = f.split('-');
+  return `${DIAS[new Date(f + 'T12:00:00Z').getUTCDay()]} ${dia}/${mes}/${anio}`;
 }
 
 // En qué paso está la postulación: para la elegida, el de la adopción y el turno del chequeo.

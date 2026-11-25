@@ -174,7 +174,7 @@ test('el carrito: cambiar cantidad, quitar, y "Ir a pagar" solo después de acep
   // El resumen: productos, plazos con la fecha concreta.
   await expect(page.locator('#unidades')).toHaveText('3 productos');
   await expect(page.locator('#minutos')).toHaveText('15 minutos');
-  await expect(page.locator('#retirar-hasta')).toHaveText('miércoles 25/11');
+  await expect(page.locator('#retirar-hasta')).toHaveText('miércoles 25/11/2026');
 
   // − está apagado con 1 unidad; + suma de a uno.
   await expect(page.getByRole('button', { name: 'Restar uno de Collar ajustable' })).toBeDisabled();
@@ -365,12 +365,12 @@ test('una compra pagada dice hasta cuándo retirarla, con la política', async (
   }));
   await page.goto('/tienda/compra.html?numero=V-000101');
   await expect(page.locator('#estado-compra')).toHaveText('Lista para retirar');
-  await expect(page.locator('#aviso')).toHaveText('Ya podés retirarla en el local, hasta el miércoles 25/11 inclusive.');
+  await expect(page.locator('#aviso')).toHaveText('Ya podés retirarla en el local, hasta el miércoles 25/11/2026 inclusive.');
   await expect(page.locator('#politica')).toContainText('no se reintegra');
   await expect(page.locator('#pendiente')).toBeHidden();
 });
 
-// La política de reintegro de una compra pagada de $ 14.500 (último día miércoles 25/11).
+// La política de reintegro de una compra pagada de $ 14.500 (último día miércoles 25/11/2026).
 const POLITICA_REINTEGRO = {
   anticipado: 75, ultimo_momento: 50, horas: 48, anticipado_hasta: '2026-11-23 23:59:59',
   monto_anticipado: 10875, monto_ultimo_momento: 7250, porcentaje_hoy: 75, monto_hoy: 10875,
@@ -396,7 +396,7 @@ test('una compra pagada se puede cancelar con anticipación: se devuelve el 75 %
   await page.goto('/tienda/compra.html?numero=V-000099');
 
   await expect(page.locator('#politica')).toContainText('con 48 horas o más antes del final del último día para retirar, te devolvemos el 75 % del importe; si cancelás después, el 50 %.');
-  await expect(page.locator('#ayuda-cancelar')).toHaveText('Si lo cancelás hasta el lunes 23/11 a las 23:59, te devolvemos $ 10.875,00 (el 75 %); después, $ 7.250,00 (el 50 %).');
+  await expect(page.locator('#ayuda-cancelar')).toHaveText('Si lo cancelás hasta el lunes 23/11/2026 a las 23:59, te devolvemos $ 10.875,00 (el 75 %); después, $ 7.250,00 (el 50 %).');
   await page.getByRole('button', { name: 'Cancelar pedido' }).click();
   await expect(page.getByRole('dialog')).toContainText('¿Cancelás el pedido V-000099? Los productos vuelven a la tienda y te devolvemos $ 10.875,00 (el 75 % de lo que pagaste).');
   await page.getByRole('dialog').getByRole('button', { name: 'Volver' }).click();
@@ -477,7 +477,7 @@ test('mis compras: cada una con su estado y lo que hay que hacer; la factura est
   await expect(filas).toHaveCount(3);
   await expect(filas.nth(0)).toContainText('Esperando el pago');
   await expect(filas.nth(0)).toContainText('Pagá antes de las 10:45');
-  await expect(filas.nth(1)).toContainText('Retirala hasta el martes 24/11');
+  await expect(filas.nth(1)).toContainText('Retirala hasta el martes 24/11/2026');
   await expect(filas.nth(2)).toContainText('Cancelada');
   await expect(filas.nth(2)).toContainText('Venció el plazo de retiro');
   await expect(page.getByRole('link', { name: 'V-000101', exact: true })).toHaveAttribute('href', '/tienda/compra.html?numero=V-000101');
@@ -518,10 +518,10 @@ test('mis compras: filtro por fechas y "Ver más"', async ({ page }) => {
   expect(consultas).toEqual(['pagina=1', 'pagina=2']);
 
   // Desde después de Hasta: no se pide nada y se avisa.
-  await page.getByLabel('Desde').fill('2026-11-30');
-  await page.getByLabel('Hasta').fill('2026-11-01');
+  await page.getByLabel('Desde').fill('2026-10-30');
+  await page.getByLabel('Hasta').fill('2026-10-01');
   await page.getByRole('button', { name: 'Filtrar' }).click();
-  await expect(page.locator('#estado')).toHaveText('La fecha "Desde" tiene que ser anterior o igual a "Hasta".');
+  await expect(page.locator('#estado')).toHaveText('La fecha "Desde" no puede ser posterior a "Hasta".');
   expect(consultas).toHaveLength(2);
 
   await page.getByLabel('Desde').fill('2020-01-01');
@@ -558,7 +558,7 @@ test('factura de una compra pagada: el pedido para mostrar al retirar, el pago y
   await expect(page.locator('#comprador')).toHaveText('Cliente de Prueba');
   await expect(page.locator('#medio-pago')).toHaveText('Mercado Pago · operación N° 123456789');
   await expect(page.locator('#dato-estado')).toContainText('Retirar hasta');
-  await expect(page.locator('#dato-estado')).toContainText('martes 24/11 inclusive');
+  await expect(page.locator('#dato-estado')).toContainText('martes 24/11/2026 inclusive');
   await expect(page.locator('#filas')).toContainText('Alimento cachorro 3 kg');
   await expect(page.locator('#total')).toContainText('31.999,80');
   await expect(page.getByRole('button', { name: 'Imprimir' })).toBeVisible();
@@ -635,7 +635,7 @@ test('ventas: para retirar arranca con el buscador y sin la lista; vencen hoy y 
   await expect(fila).toContainText('V-000101');
   await expect(fila).toContainText('Cliente de Prueba');
   await expect(fila).toContainText('Alimento cachorro 3 kg × 2');
-  await expect(fila).toContainText('martes 24/11');
+  await expect(fila).toContainText('martes 24/11/2026');
   await expect(fila.getByRole('link', { name: 'Ver la factura del pedido V-000101' })).toHaveAttribute('href', '/tienda/factura.html?numero=V-000101');
 
   // "Ver todos".
@@ -755,7 +755,7 @@ test('la política del carrito usa los días que configuró la veterinaria', asy
   await page.goto('/tienda/carrito.html');
   await expect(page.locator('#minutos')).toHaveText('20 minutos');
   await expect(page.locator('#politica')).toContainText('Tenés 7 días hábiles');
-  await expect(page.locator('#retirar-hasta')).toHaveText('viernes 27/11');
+  await expect(page.locator('#retirar-hasta')).toHaveText('viernes 27/11/2026');
 });
 
 test('la política del carrito usa el reintegro que configuró la veterinaria', async ({ page }) => {

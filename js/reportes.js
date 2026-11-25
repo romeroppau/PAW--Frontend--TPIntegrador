@@ -15,6 +15,7 @@
 import { api } from './api.js';
 import { exigirRol } from './auth.js';
 import { confirmar, el, limpiarErrores, mostrarErrores } from './ui.js';
+import { errorDeRango, limitarAHoy } from './rango-fechas.js';
 
 await exigirRol('VETERINARIO');
 
@@ -125,8 +126,9 @@ function consulta(form, errorId) {
   const desde = form.elements.desde.value;
   const hasta = form.elements.hasta.value;
   error.hidden = true;
-  if (desde && hasta && desde > hasta) {
-    error.textContent = 'La fecha "Desde" no puede ser posterior a "Hasta".';
+  const problema = errorDeRango(form.elements.desde, form.elements.hasta);
+  if (problema) {
+    error.textContent = problema;
     error.hidden = false;
     return null;
   }
@@ -182,7 +184,7 @@ function filaFranja(f, sugerida) {
   if (candidata) {
     const vigente = promoTurnos.find((p) => p.dia_semana === candidata.dia_numero && p.franja === candidata.franja_codigo);
     if (vigente) {
-      celdaPromo.append(el('span', `${vigente.porcentaje} % hasta el ${fecha(vigente.hasta).slice(0, 5)}`, { class: 'insignia insignia-promo' }));
+      celdaPromo.append(el('span', `${vigente.porcentaje} % hasta el ${fecha(vigente.hasta)}`, { class: 'insignia insignia-promo' }));
     } else {
       const nombre = `${f.dia_semana} a la ${f.franja}`;
       const boton = el('button', 'Publicitar', { type: 'button', class: 'boton boton-chico', 'aria-label': `Publicitar ${nombre}` });
@@ -336,7 +338,7 @@ function filaLiquidar(p) {
   const promo = promociones.find((x) => x.producto_id === p.producto_id);
   const celda = el('td', '', { class: 'celda-promo' });
   if (promo) {
-    celda.append(el('span', `${promo.porcentaje} % hasta el ${fecha(promo.hasta).slice(0, 5)}`, { class: 'insignia insignia-promo' }));
+    celda.append(el('span', `${promo.porcentaje} % hasta el ${fecha(promo.hasta)}`, { class: 'insignia insignia-promo' }));
   } else {
     const boton = el('button', 'Publicitar', { type: 'button', class: 'boton boton-chico', 'aria-label': `Publicitar ${p.nombre}` });
     boton.addEventListener('click', () => abrirPublicitar(p, boton));
@@ -583,6 +585,7 @@ window.addEventListener('hashchange', () => mostrar(desdeHash()));
 for (const form of [formTurnos]) {
   form.elements.desde.value = haceDias(30);
   form.elements.hasta.value = aISO(new Date());
+  limitarAHoy(form.elements.desde, form.elements.hasta);   // turnos atendidos: nada posterior a hoy
 }
 
 // Los enlaces de antes al stock (#stock, #stock-insumos, #stock-movimientos) llevan a donde está ahora.

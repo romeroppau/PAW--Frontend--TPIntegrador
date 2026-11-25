@@ -30,7 +30,7 @@ test('Promociones muestra solo los productos en promoción, con el precio rebaja
   await expect(precio.locator('del')).toHaveText('$ 8.500,00');
   await expect(precio.locator('ins')).toHaveText('$ 6.800,00');
   await expect(precio).toContainText('20 % off');
-  await expect(precio).toContainText('Promoción hasta el 10/12');
+  await expect(precio).toContainText('Promoción hasta el 10/12/2026');
   await expect(page.locator('#ir-catalogo')).toBeHidden();
 });
 
@@ -55,7 +55,7 @@ test('el catálogo no tiene la sección Promociones: el producto en promoción v
   await expect(collar.locator('del')).toHaveText('$ 8.500,00');
   await expect(collar.locator('ins')).toHaveText('$ 6.800,00');
   await expect(collar.locator('.precio')).toContainText('20 % off');
-  await expect(collar.locator('.precio')).toContainText('Promoción hasta el 10/12');
+  await expect(collar.locator('.precio')).toContainText('Promoción hasta el 10/12/2026');
   const alimento = page.locator('#lista .tarjeta-producto', { hasText: 'Alimento cachorro' });
   await expect(alimento.locator('.precio')).toHaveText('$ 15.999,90');
   await expect(alimento.locator('del')).toHaveCount(0);
@@ -152,7 +152,7 @@ test('"Publicitar" propone el descuento sugerido hasta el vencimiento y publica 
   await expect(page.locator('#aviso-promociones')).toHaveText(`Listo: "Pipeta antipulgas" ya está en las promociones de la tienda, con 30 % hasta el ${aTexto(vence)}.`);
   // La fila de "Qué liquidar" ya no ofrece Publicitar, y la promoción aparece en la lista.
   await expect(page.getByRole('button', { name: 'Publicitar Pipeta antipulgas' })).toHaveCount(0);
-  await expect(page.locator('#filas-liquidar')).toContainText(`30 % hasta el ${aTexto(vence).slice(0, 5)}`);
+  await expect(page.locator('#filas-liquidar')).toContainText(`30 % hasta el ${aTexto(vence)}`);
   await page.getByRole('tab', { name: 'Promociones publicadas' }).click();
   await expect(page.locator('#filas-promociones tr')).toHaveCount(1);
   await expect(page.locator('#filas-promociones')).toContainText('$4.550,00 (antes $6.500,00)');

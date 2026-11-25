@@ -19,6 +19,7 @@ import { api } from './api.js';                                  // fetch común
 import { exigirRol } from './auth.js';                          // guardia de acceso compartida (ver auth.js)
 import { confirmar, el, limpiarErrores, mostrarErrores } from './ui.js';    // utilidades de interfaz
 import { textoCategoria } from './etiquetas.js';                // texto de cada código de categoría
+import { fecha } from './tienda.js';                            // "2027-10-25" -> "25/10/2027"
 import { filtrarPorNombre, filtroStockBajo } from './buscar-lista.js'; // buscador y "solo stock bajo"
 
 /* ------------------------------------------------------------------ */
@@ -99,7 +100,7 @@ function fila(p) {
     el('td', p.categoria ? textoCategoria(p.categoria) : ''),
     el('td', '$' + p.precio),
     el('td', p.stock),
-    el('td', p.vencimiento || '—'),               // sin vencimiento se muestra un guion
+    el('td', p.vencimiento ? fecha(p.vencimiento) : '—'),   // DD/MM/AAAA; sin vencimiento, un guion
     el('td', p.activo ? 'Activo' : 'De baja')
   );
 
@@ -112,25 +113,36 @@ function fila(p) {
     el('a', 'Movimientos', { href: '/panel/productos-movimientos.html?producto=' + p.id, 'aria-label': 'Movimientos de ' + p.nombre })
   );
 
-  // --- Carga de stock: formulario pequeño dentro de la fila ---
+  // --- Carga y retiro de stock: un casillero de cantidad y dos botones, como en insumos ---
+  // Cargar suma (movimiento de entrada); Retirar resta a mano un producto vencido, roto o usado en
+  // el local (salida por ajuste: "Retiro manual" en Movimientos).
   const f = el('form', '', { class: 'form-stock' });
   const cant = el('input', '', {
     type: 'number', min: '1', step: '1', required: '',
-    'aria-label': 'Cantidad a cargar de ' + p.nombre
+    'aria-label': 'Cantidad de ' + p.nombre
   });
-  f.append(cant, el('button', 'Cargar stock', { type: 'submit', class: 'boton boton-borde boton-chico' }));
+  f.append(
+    cant,
+    el('button', 'Cargar', { type: 'submit', value: 'stock', class: 'boton boton-borde boton-chico', 'aria-label': 'Cargar stock de ' + p.nombre }),
+    el('button', 'Retirar', { type: 'submit', value: 'retiro', class: 'boton boton-borde boton-chico', 'aria-label': 'Retirar unidades de ' + p.nombre })
+  );
   f.addEventListener('submit', async (ev) => {
     ev.preventDefault();                            // evita que el navegador recargue la página
+    const accion = ev.submitter?.value === 'retiro' ? 'retiro' : 'stock';   // Enter en el casillero = Cargar
     try {
-      // POST .../{id}/stock: el backend suma al producto y registra un movimiento de entrada.
-      await api(`${base}/${p.id}/stock`, { metodo: 'POST', cuerpo: { cantidad: Number(cant.value) } });
+      // POST .../{id}/stock o .../{id}/retiro: el backend cambia el stock y registra el movimiento.
+      await api(`${base}/${p.id}/${accion}`, { metodo: 'POST', cuerpo: { cantidad: Number(cant.value) } });
       listado();                                    // refresca la tabla con el stock nuevo
     } catch (e) {
-      // Si el backend devuelve un error para "cantidad" (campos) o uno general (error), se muestra ese texto.
-      estado.textContent = e.datos?.campos?.cantidad ?? e.datos?.error ?? 'No se pudo cargar el stock.';
+      // 400 (cantidad inválida) o 409 ("Stock insuficiente", con cuántas hay, o "dado de baja").
+      // Como el mensaje va arriba de la tabla, lleva el nombre del producto.
+      const mensaje = e.datos?.campos?.cantidad ?? e.datos?.error
+        ?? (accion === 'retiro' ? 'No se pudo retirar el stock' : 'No se pudo cargar el stock');
+      const hay = e.datos?.stock !== undefined ? ` (hay ${e.datos.stock})` : '';
+      estado.textContent = `${p.nombre}: ${mensaje}${hay}.`;
     }
   });
-  // A un producto dado de baja no se le carga stock (la API responde 409): solo se reactiva.
+  // A un producto dado de baja no se le carga ni se le retira stock (la API responde 409): solo se reactiva.
   if (p.activo) acc.append(f);
 
   // --- Reactivar: deshace la baja y el producto vuelve a la tienda con su stock e historial ---
