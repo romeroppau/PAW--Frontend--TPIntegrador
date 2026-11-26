@@ -17,9 +17,9 @@ const MOV_PRODUCTOS = [
   { id: 1, fecha: '2026-11-10 09:00:00', tipo: 'ENTRADA', motivo: 'CARGA_VETERINARIO', cantidad: 20, producto_id: 7, producto: 'Collar reflectivo', usuario: 'Vet', consulta_id: null, compra: null },
 ];
 
+// Hoy en Argentina, como lo calcula la página (no con la fecha de la computadora, que en CI está en UTC).
 const hoy = () => {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' }).format(new Date());
 };
 
 test('productos: los movimientos enlazan a la consulta y a la factura, y filtran por producto y fechas', async ({ page }) => {

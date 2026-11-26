@@ -9,7 +9,7 @@
  * Todo texto de la API va con el() (textContent).
  */
 import { api } from './api.js';
-import { errorDeRango, limitarAHoy } from './rango-fechas.js';
+import { diaArgentina, errorDeRango, limitarAHoy } from './rango-fechas.js';
 import { el } from './ui.js';
 
 export const TIPOS = { ENTRADA: 'Entrada', SALIDA: 'Salida', AJUSTE: 'Ajuste' };
@@ -77,11 +77,9 @@ export async function pantallaMovimientos({ urlItems, urlMovimientos, campoItem,
   const estado = document.getElementById('estado');
   const error = document.getElementById('error-fechas');
 
-  // Arranca en los últimos 30 días (se pueden borrar las fechas para ver todo).
-  const hace30 = new Date();
-  hace30.setDate(hace30.getDate() - 30);
-  form.elements.desde.value = aISO(hace30);
-  form.elements.hasta.value = aISO(new Date());
+  // Arranca en los últimos 30 días (se pueden borrar las fechas para ver todo), contados en hora de Argentina.
+  form.elements.desde.value = diaArgentina(-30);
+  form.elements.hasta.value = diaArgentina(0);
   limitarAHoy(form.elements.desde, form.elements.hasta);   // los movimientos ya pasaron: nada posterior a hoy
 
   let pedido = 0;
