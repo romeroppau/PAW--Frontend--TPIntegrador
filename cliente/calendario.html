@@ -62,7 +62,9 @@
           </div>
           <div class="campo">
             <label for="fecha_programada">Le toca el</label>
-            <input id="fecha_programada" name="fecha_programada" type="date" required>
+            <input id="fecha_programada" name="fecha_programada" type="date" required aria-describedby="ayuda-fecha_programada">
+            <!-- Desde cuándo se puede dar según la dosis anterior (días mínimos de Configuración → Vacunas). -->
+            <span class="campo-ayuda" id="ayuda-fecha_programada"></span>
             <span class="campo-error" id="error-fecha_programada"></span>
           </div>
           <p class="campo-error" id="error-general" role="alert" hidden></p>
