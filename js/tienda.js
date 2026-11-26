@@ -110,7 +110,9 @@ export function bloquePrecio(producto, clases = '') {
   insignia.textContent = `${promo.porcentaje} % off`;
   const hasta = document.createElement('span');
   hasta.className = 'promo-hasta';
-  hasta.textContent = `Promoción hasta el ${diaMes(promo.hasta)}`;
+  // La promoción es de un lote (26/11): dura hasta su fecha o hasta que se terminan sus unidades.
+  hasta.textContent = `Promoción hasta el ${diaMes(promo.hasta)}`
+    + (promo.quedan ? ` o hasta agotar ${promo.quedan === 1 ? 'la última unidad' : `las ${promo.quedan} unidades`}` : '');
   // Para los lectores de pantalla, <del> e <ins> no siempre se anuncian: se aclara con texto.
   const leerAntes = document.createElement('span');
   leerAntes.className = 'solo-lectores';
