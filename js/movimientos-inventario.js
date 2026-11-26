@@ -52,11 +52,11 @@ export function celdaMotivo(m, nombreItem) {
 export function filaMovimiento(m, campoItem) {
   const tr = el('tr');
   const nombre = m[campoItem] ?? '—';
-  // De qué lote fue (productos, 26/11): debajo del nombre.
+  // De qué lote fue (productos 26/11, insumos 26/11): debajo del nombre, "Lote L2 (FL-2612) (vence el …)".
   const item = el('td', nombre);
   if (m.lote) {
     const vence = m.lote.vencimiento ? 'vence el ' + m.lote.vencimiento.split('-').reverse().join('/') : 'no vence';
-    item.append(el('span', `${m.lote.codigo ? 'Lote ' + m.lote.codigo : 'Lote sin número'} (${vence})`, { class: 'ayuda' }));
+    item.append(el('span', `Lote ${m.lote.nombre ?? 'L' + m.lote.numero} (${vence})`, { class: 'ayuda' }));
   }
   tr.append(
     el('td', fechaHora(m.fecha)),

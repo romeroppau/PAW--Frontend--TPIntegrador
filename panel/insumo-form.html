@@ -54,6 +54,29 @@
           <span class="ayuda" id="ayuda-stock">En la edición no se cambia: usá "Cargar" o "Retirar" en el listado.</span>
           <span class="campo-error" id="error-stock"></span>
         </div>
+        <!-- 26/11: si el insumo vence, cada lote (L1, L2, L3…) lleva su vencimiento; si no vence, ninguno.
+             Se cambia solo sin stock. El alta crea el primer lote; los demás se cargan desde Insumos → "Lotes". -->
+        <div class="campo">
+          <label for="vence">¿Vence?</label>
+          <select id="vence" name="vence" aria-describedby="ayuda-vence error-vence">
+            <option value="">Elegí si vence</option>
+            <option value="si">Sí: cada lote tiene su fecha de vencimiento</option>
+            <option value="no">No (por ejemplo, guantes o vendas)</option>
+          </select>
+          <span class="ayuda" id="ayuda-vence">Se puede cambiar solo mientras no tenga stock.</span>
+          <span class="campo-error" id="error-vence"></span>
+        </div>
+        <div class="campo" id="campo-vencimiento">
+          <label for="vencimiento">Vencimiento del primer lote (L1)</label>
+          <input id="vencimiento" name="vencimiento" type="date" aria-describedby="ayuda-vencimiento error-vencimiento">
+          <span class="ayuda" id="ayuda-vencimiento">Obligatorio si cargás stock inicial.</span>
+          <span class="campo-error" id="error-vencimiento"></span>
+        </div>
+        <div class="campo" id="campo-lote">
+          <label for="lote">Número de lote del fabricante (opcional)</label>
+          <input id="lote" name="lote" type="text" maxlength="40" autocomplete="off" aria-describedby="error-lote">
+          <span class="campo-error" id="error-lote"></span>
+        </div>
         <p class="mensaje mensaje-error" id="error-general" role="alert" hidden></p>
         <button class="boton" type="submit">Guardar</button>
         <a class="boton boton-borde" href="/panel/insumos.html">Cancelar</a>

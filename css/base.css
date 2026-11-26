@@ -113,6 +113,9 @@ a { color: var(--pino); text-underline-offset: 3px; }
 .mensaje-error { border-color: var(--error); color: var(--error); }
 .mensaje-ok { border-color: var(--ok); color: var(--ok); }
 .estado { color: var(--tinta-suave); min-height: 1.5em; }
+/* Un aviso arriba de una lista (por ejemplo, "se cargaron 5 unidades"): con el color del mensaje. */
+.estado.mensaje-ok { color: var(--ok); }
+.estado.mensaje-error { color: var(--error); }
 
 /* Tarjetas, listas y tablas */
 .tarjeta { background: var(--blanco); border: 1px solid var(--borde); border-radius: var(--radio); padding: 1.25rem; }
@@ -248,6 +251,10 @@ th { background: var(--menta); color: var(--pino-oscuro); }
 .tabla-lotes caption { text-align: left; font-weight: 700; padding-bottom: .35rem; }
 .form-lote .campo { margin: 0; }
 .form-lote input, .form-lote select { min-width: 8rem; }
+/* 26/11: el aviso de lo que se acaba de cargar o retirar, y el lote donde fue. */
+.lotes > .mensaje { margin: 0; }
+.tabla-lotes .lote-resaltado > * { background: #e3f4e8; font-weight: 700; }
+.form-stock input[aria-invalid="true"], .form-lote input[aria-invalid="true"] { border-color: var(--error); }
 .form-item .ancho-completo { flex-basis: 100%; margin: 0 0 .5rem; }
 .boton-chico { padding: .35rem .8rem; font-size: .9rem; }
 .sesion-nombre { font-weight: 700; color: var(--pino-oscuro); }

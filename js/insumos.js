@@ -17,6 +17,8 @@ import { confirmar, el, limpiarErrores, mostrarErrores } from './ui.js'; // util
 import { textoEstadoInsumo } from './etiquetas.js';          // "DISPONIBLE" -> "Disponible"
 import { filtrarPorNombre, filtroStockBajo } from './buscar-lista.js'; // buscador y "solo stock bajo"
 import { pantallaMovimientos } from './movimientos-inventario.js'; // pantalla de movimientos
+import { filaDeLotes, leerCantidad, mensajeDeError } from './lotes.js'; // los lotes (26/11)
+import { fecha } from './tienda.js';                       // "2027-10-25" -> "25/10/2027"
 
 // Espera a confirmar que es veterinario (y a tener el token CSRF). Si no, redirige al login
 // y el resto del archivo no corre.
@@ -37,35 +39,70 @@ const pesos = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS
 /* Pantalla: listado (panel/insumos.html)                              */
 /* ------------------------------------------------------------------ */
 
-async function listado() {
+// despues (opcional): qué mostrar al terminar de recargar: {texto} (un aviso arriba de la tabla) o
+// {id, aviso} (vuelve a abrir los lotes de ese insumo, con el aviso de lo que se hizo).
+async function listado(despues = null) {
   const filas = document.getElementById('filas');
-  estado.textContent = 'Cargando…';
+  avisar('Cargando…', '');
   try {
     const respuesta = await api(base);                       // GET /api/inventario/insumos
     const { datos } = respuesta;
     const bajo = filtroStockBajo(respuesta);
     // El buscador filtra por nombre lo que ya se trajo; la casilla deja solo los de stock bajo.
     filtrarPorNombre(document.getElementById('buscar'), datos, (visibles, texto) => {
+      abridores.clear();
       filas.replaceChildren(...visibles.map(fila));
-      estado.textContent = datos.length === 0 ? 'No hay insumos cargados.'
+      avisar(datos.length === 0 ? 'No hay insumos cargados.'
         : visibles.length > 0 ? ''
         : bajo.casilla?.checked ? (texto ? `Ningún insumo con stock bajo se llama "${texto}".` : 'Ningún insumo tiene stock bajo.')
-        : `Ningún insumo se llama "${texto}".`;
+        : `Ningún insumo se llama "${texto}".`, '');
     }, bajo);
+    if (despues?.aviso) abridores.get(despues.id)?.({ aviso: despues.aviso });
+    else if (despues?.texto) avisar(despues.texto, 'ok');
   } catch {
-    estado.textContent = 'No se pudo cargar el listado.';
+    avisar('No se pudo cargar el listado.', 'error');
   }
 }
 
-// La fila <tr> de un insumo: sus datos, su estado con color y sus acciones.
+// El mensaje arriba de la tabla, con el estilo del sitio: tipo 'ok' (verde), 'error' (rojo) o '' (común).
+function avisar(texto, tipo) {
+  estado.textContent = texto;
+  estado.className = tipo && texto ? `estado mensaje mensaje-${tipo}` : 'estado';
+}
+
+// Columnas de la tabla (para la fila de los lotes, que ocupa todo el ancho).
+const COLUMNAS = 6;
+
+// La función que abre los lotes de cada insumo de la tabla (para volver a abrirlos después de cargar).
+const abridores = new Map();
+
+// La fila <tr> de un insumo: sus datos, su estado con color y sus acciones. Si vence (26/11),
+// "Lotes" agrega debajo la fila de sus lotes, como en Productos.
 function fila(insumo) {
   const tr = el('tr', '', insumo.activo ? {} : { class: 'fila-baja' });
+  const lotes = insumo.lotes ?? [];
+  const vencidos = lotes.filter((l) => l.vencido && l.stock > 0);
+  // El stock es el de todos los lotes; si hay vencidos, se dice cuánto se puede usar.
+  const stock = el('td', insumo.stock);
+  if (insumo.stock_sin_vencer !== undefined && insumo.stock_sin_vencer !== insumo.stock) {
+    stock.append(el('span', `${insumo.stock_sin_vencer} sin vencer`, { class: 'ayuda' }));
+  }
+  const vence = el('td', insumo.vencimiento ? fecha(insumo.vencimiento) : insumo.vence === false ? 'No vence' : '—');
+  if (vencidos.length) {
+    const cuantas = vencidos.reduce((suma, l) => suma + l.stock, 0);
+    vence.append(el('span', `${cuantas} vencida${cuantas === 1 ? '' : 's'}: retiralas`, { class: 'campo-error' }));
+  }
   tr.append(
     el('td', insumo.nombre),
-    el('td', insumo.stock),
+    stock,
+    vence,
     el('td', pesos.format(insumo.costo)),
     celdaEstado(insumo)
   );
+  const lotesDeI = insumo.vence ? filaDeLotes(tr, insumo, COLUMNAS, {
+    base, que: 'insumo', alCambiar: (aviso) => listado({ id: insumo.id, aviso }),
+  }) : null;
+  if (lotesDeI) abridores.set(insumo.id, lotesDeI.abrir);
 
   // Cada acción lleva aria-label con el nombre, así el lector de pantalla distingue
   // "Editar Gasa" de "Editar Jeringa".
@@ -83,7 +120,8 @@ function fila(insumo) {
   // Un insumo dado de baja solo se puede reactivar.
   const error = el('span', '', { class: 'campo-error', role: 'alert' });
   if (insumo.activo) {
-    acciones.append(formularioStock(insumo, tr, error));
+    acciones.append(formularioStock(insumo, error, lotesDeI));
+    if (lotesDeI) acciones.append(lotesDeI.boton);
     // Con stock bajo se puede marcar que ya se pidió al proveedor (o desmarcarlo).
     if (insumo.stock_bajo) acciones.append(botonPedido(insumo, tr, error));
     acciones.append(botonBaja(insumo), error);
@@ -119,11 +157,13 @@ function celdaEstado(insumo) {
 }
 
 // Un casillero de cantidad y dos botones: Cargar (suma) y Retirar (resta sin consulta).
-// error: el lugar de la fila donde se muestra un error (lo crea fila()).
-function formularioStock(insumo, tr, error) {
-  const form = el('form', '', { class: 'form-stock' });
+// error: el lugar de la fila donde se muestra un error (lo crea fila()). lotesDeI: los lotes, si vence
+// (la carga es en un lote, que se elige en la fila de los lotes). novalidate: los errores se muestran
+// con el estilo del sitio, no con el globo del navegador.
+function formularioStock(insumo, error, lotesDeI) {
+  const form = el('form', '', { class: 'form-stock', novalidate: '' });
   const cantidad = el('input', '', {
-    type: 'number', min: '1', step: '1', required: '',
+    type: 'number', min: '1', step: '1', inputmode: 'numeric',
     'aria-label': 'Cantidad de ' + insumo.nombre
   });
   form.append(
@@ -134,23 +174,32 @@ function formularioStock(insumo, tr, error) {
 
   form.addEventListener('submit', async (ev) => {
     ev.preventDefault();                                     // sin recargar la página
-    const accion = ev.submitter.value;                       // qué botón se tocó: "stock" o "retiro"
+    const accion = ev.submitter?.value === 'retiro' ? 'retiro' : 'stock';   // Enter en el casillero = Cargar
     error.textContent = '';
+    if (accion === 'stock' && lotesDeI) {
+      lotesDeI.abrir({ cantidad: cantidad.value.trim() });
+      return;
+    }
+    const n = leerCantidad(cantidad);
+    if (typeof n === 'string') {
+      error.textContent = n;
+      cantidad.setAttribute('aria-invalid', 'true');
+      cantidad.focus();
+      return;
+    }
+    cantidad.removeAttribute('aria-invalid');
     try {
-      // POST .../{id}/stock o .../{id}/retiro. Responde { id, stock, estado, stock_bajo }.
-      const nuevo = await api(`${base}/${insumo.id}/${accion}`, {
-        metodo: 'POST',
-        cuerpo: { cantidad: Number(cantidad.value) }
-      });
-      // Si sale bien no se muestra ningún mensaje: se reemplaza solo esta fila con los datos
-      // nuevos, y a la vista cambian el stock, el estado y el color.
-      tr.replaceWith(fila({ ...insumo, ...nuevo }));
+      // POST .../{id}/stock o .../{id}/retiro. Responde { id, stock, estado, stock_bajo, ... }. El
+      // retiro sin elegir lote sale de lo que vence primero (lo vencido antes que nada).
+      const nuevo = await api(`${base}/${insumo.id}/${accion}`, { metodo: 'POST', cuerpo: { cantidad: n } });
+      // Se recarga la lista (cambian el stock, el estado y el color) y se dice qué se hizo.
+      listado({ texto: accion === 'stock'
+        ? `${insumo.nombre}: se ${n === 1 ? 'cargó 1 unidad' : `cargaron ${n} unidades`}. Ahora tiene ${nuevo.stock}.`
+        : `${insumo.nombre}: se ${n === 1 ? 'retiró 1 unidad' : `retiraron ${n} unidades`}${lotesDeI ? ' (de lo vencido y de lo que vence antes)' : ''}. Ahora tiene ${nuevo.stock}.` });
     } catch (e) {
       // 400 (cantidad inválida), 409 ("Stock insuficiente" o "dado de baja") u otro error:
       // se muestra en la misma fila, debajo de los botones.
-      const mensaje = e.datos?.campos?.cantidad ?? e.datos?.error ?? 'No se pudo cambiar el stock';
-      const hay = e.datos?.stock !== undefined ? ` (hay ${e.datos.stock})` : '';
-      error.textContent = mensaje + hay;
+      error.textContent = mensajeDeError(e, 'No se pudo cambiar el stock');
     }
   });
   return form;
@@ -221,8 +270,9 @@ async function formulario() {
   if (id) {
     document.getElementById('titulo').textContent = 'Editar insumo';
     // El stock no se edita: solo cambia con Cargar o Retirar, para que quede en los movimientos.
-    // Un campo disabled no se envía.
+    // Un campo disabled no se envía. Los lotes se cargan desde Insumos → "Lotes".
     form.elements.stock.disabled = true;
+    for (const c of ['vencimiento', 'lote']) document.getElementById('campo-' + c).hidden = true;
 
     try {
       const insumo = await api(`${base}/${encodeURIComponent(id)}`);   // GET .../{id}
@@ -230,11 +280,27 @@ async function formulario() {
       form.elements.costo.value = insumo.costo;
       form.elements.aplicacion.value = insumo.aplicacion ?? '';
       form.elements.stock.value = insumo.stock;
+      // "Vence" (26/11) se cambia solo sin stock: con stock queda deshabilitado (y no se envía).
+      form.elements.vence.value = insumo.vence ? 'si' : 'no';
+      if (insumo.stock > 0) {
+        form.elements.vence.disabled = true;
+        document.getElementById('ayuda-vence').textContent =
+          `Se puede cambiar solo sin stock: tiene ${insumo.stock}. Retirá o usá esas unidades primero.`;
+      }
     } catch (e) {
       if (e.estado === 404) { location.replace('/panel/insumos.html'); return; }   // no existe: al listado
       estado.textContent = 'No se pudo cargar el insumo.';
       return;
     }
+  }
+
+  // En el alta, el vencimiento del primer lote se pide solo si vence.
+  if (!id) {
+    const mostrar = () => {
+      for (const c of ['vencimiento', 'lote']) document.getElementById('campo-' + c).hidden = form.elements.vence.value !== 'si';
+    };
+    form.elements.vence.addEventListener('change', mostrar);
+    mostrar();
   }
 
   form.addEventListener('submit', async (ev) => {
@@ -248,7 +314,16 @@ async function formulario() {
       nombre: form.elements.nombre.value, costo: numero(form.elements.costo.value),
       aplicacion: form.elements.aplicacion.value || null,      // vacuna o antiparasitario del calendario (25/11)
     };
-    if (!id) cuerpo.stock = numero(form.elements.stock.value);   // el stock solo va en el alta
+    // Si vence (26/11): true o false (sin elegir, null: la API dice que falta). Deshabilitado, no va.
+    if (!form.elements.vence.disabled) {
+      cuerpo.vence = form.elements.vence.value === 'si' ? true : form.elements.vence.value === 'no' ? false : null;
+    }
+    // El stock y el primer lote (L1) solo van en el alta. Si no vence, sin fecha ni número.
+    if (!id) {
+      cuerpo.stock = numero(form.elements.stock.value);
+      cuerpo.vencimiento = cuerpo.vence ? (form.elements.vencimiento.value || null) : null;
+      cuerpo.lote = cuerpo.vence ? (form.elements.lote.value.trim() || null) : null;
+    }
 
     // Se deshabilita el botón mientras se envía, para no crear el insumo dos veces con un doble clic.
     const boton = form.querySelector('button[type="submit"]');

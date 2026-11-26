@@ -58,16 +58,28 @@
         <input id="stock" name="stock" type="number" aria-describedby="error-stock" min="0" step="1" required>
         <span class="campo-error" id="error-stock"></span>
       </div>
-      <!-- El stock está en lotes, cada uno con su vencimiento (26/11): el alta crea el primero. En la
-           edición no se muestran: los lotes se cargan y se retiran desde Productos → "Lotes". -->
+      <!-- 26/11: si el producto vence, cada lote lleva su vencimiento; si no vence, ninguno. Se cambia
+           solo sin stock. -->
+      <div class="campo">
+        <label for="vence">¿Vence?</label>
+        <select id="vence" name="vence" aria-describedby="ayuda-vence error-vence">
+          <option value="">Elegí si vence</option>
+          <option value="si">Sí: cada lote tiene su fecha de vencimiento</option>
+          <option value="no">No (por ejemplo, un accesorio)</option>
+        </select>
+        <span class="ayuda" id="ayuda-vence">Se puede cambiar solo mientras no tenga stock.</span>
+        <span class="campo-error" id="error-vence"></span>
+      </div>
+      <!-- El stock está en lotes (L1, L2, L3…), cada uno con su vencimiento (26/11): el alta crea el
+           primero. En la edición no se muestran: los lotes se cargan y se retiran desde Productos → "Lotes". -->
       <div class="campo" id="campo-vencimiento">
-        <label for="vencimiento">Vencimiento del primer lote</label>
+        <label for="vencimiento">Vencimiento del primer lote (L1)</label>
         <input id="vencimiento" name="vencimiento" type="date" aria-describedby="ayuda-vencimiento error-vencimiento">
-        <span class="ayuda" id="ayuda-vencimiento">Vacío si no vence. Los lotes que lleguen después se cargan desde Productos → "Lotes".</span>
+        <span class="ayuda" id="ayuda-vencimiento">Obligatorio si cargás stock inicial. Los lotes que lleguen después se cargan desde Productos → "Lotes".</span>
         <span class="campo-error" id="error-vencimiento"></span>
       </div>
       <div class="campo" id="campo-lote">
-        <label for="lote">Número del primer lote (opcional)</label>
+        <label for="lote">Número de lote del fabricante (opcional)</label>
         <input id="lote" name="lote" type="text" maxlength="40" autocomplete="off" aria-describedby="error-lote">
         <span class="campo-error" id="error-lote"></span>
       </div>

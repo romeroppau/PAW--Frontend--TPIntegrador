@@ -63,9 +63,10 @@ test('insumos: las acciones quedan dentro de la tabla, en su columna', async ({ 
   ] }));
   await page.goto('/panel/insumos.html');
 
-  // Cada fila tiene sus 5 celdas, y la de acciones es una celda de tabla (no una caja flex suelta).
+  // Cada fila tiene sus 6 celdas (26/11: con el vencimiento), y la de acciones es una celda de tabla
+  // (no una caja flex suelta).
   const celdas = page.locator('#filas tr').first().locator('td');
-  await expect(celdas).toHaveCount(5);
+  await expect(celdas).toHaveCount(6);
   expect(await celdas.last().evaluate((td) => getComputedStyle(td).display)).toBe('table-cell');
   const tabla = await page.locator('table').boundingBox();
   const acciones = await celdas.last().boundingBox();
