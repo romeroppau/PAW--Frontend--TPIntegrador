@@ -13,6 +13,16 @@ const ZONA = 'America/Argentina/Buenos_Aires';
 export const hoyArgentina = () => new Intl.DateTimeFormat('en-CA', { timeZone: ZONA }).format(new Date());
 
 /**
+ * Hoy en Argentina más n días (n negativo: hacia atrás), como "2026-10-26". No usa la fecha de la
+ * computadora: con otra zona horaria (o de 21 a 24 h, cuando en UTC ya es el día siguiente) daría otro día.
+ */
+export function diaArgentina(n = 0) {
+  const d = new Date(hoyArgentina() + 'T12:00:00Z');
+  d.setUTCDate(d.getUTCDate() + n);
+  return d.toISOString().slice(0, 10);
+}
+
+/**
  * Pone hoy como máximo en los dos campos: el calendario del navegador no deja elegir días futuros.
  * Además, al elegir una fecha el otro campo se acota ("Hasta" no antes de "Desde").
  */
