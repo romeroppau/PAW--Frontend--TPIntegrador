@@ -37,5 +37,7 @@ export function filtrarPorNombre(input, items, pintar, soloSi = null) {
 export function filtroStockBajo(respuesta) {
   const limite = Number.isInteger(respuesta?.limite_stock_bajo) ? respuesta.limite_stock_bajo : 10;
   document.querySelectorAll('[data-limite-stock]').forEach((s) => { s.textContent = limite; });
-  return { casilla: document.getElementById('solo-bajo'), cumple: (x) => x.stock <= limite, limite };
+  // Cuenta lo que se puede vender o usar: sin los lotes vencidos (26/11).
+  const sinVencer = (x) => x.stock_vendible ?? x.stock_sin_vencer ?? x.stock;
+  return { casilla: document.getElementById('solo-bajo'), cumple: (x) => sinVencer(x) <= limite, limite };
 }

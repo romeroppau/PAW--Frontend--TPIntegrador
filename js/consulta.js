@@ -17,6 +17,7 @@ import { api } from './api.js';
 import { exigirRol } from './auth.js';
 import { confirmar, el, limpiarErrores, mostrarErrores } from './ui.js';
 import { textoEstadoConsulta, textoEstadoFactura, textoMotivos } from './etiquetas.js';
+import { hoyArgentina } from './tienda.js';                   // la fecha de hoy en Argentina (26/11)
 
 await exigirRol('VETERINARIO');
 
@@ -54,6 +55,9 @@ const TIPOS = {
 
 // Consulta actual, tal como la devolvió el servidor por última vez.
 let consulta = null;
+
+// Los insumos y productos activos de Inventario, por tipo e id (para saber si vencen al cargar stock, 26/11).
+const catalogo = { insumos: new Map(), productos: new Map() };
 
 // Ítems que Inventario informó como dados de baja al intentar finalizar ("insumos:103").
 const bajas = new Set();
@@ -226,6 +230,7 @@ async function cargarCatalogos() {
       const r = await api(cfg.origen);
       const activos = (r.datos ?? r.insumos ?? r.productos ?? [])
         .filter((x) => x.activo === undefined || x.activo);
+      catalogo[tipo] = new Map(activos.map((x) => [x.id, x]));
       // Se vuelve a llamar después de cargar stock: se arma de cero, sin perder la elegida.
       const elegida = select.value;
       select.replaceChildren(select.options[0], ...activos.map((x) => el('option', `${x.nombre} (stock: ${x.stock})`, { value: x.id })));
@@ -243,27 +248,47 @@ async function cargarCatalogos() {
 
 // Un formulario chico para cargar stock de un insumo o producto sin salir de la consulta.
 // Al cargarlo, se vuelve a pedir la consulta (trae el stock nuevo) y las listas de insumos y productos.
+// Si vence (26/11), el stock va a un lote nuevo con la fecha de vencimiento que se escribe acá.
 function formCargarStock(tipo, id, nombre, sugerida, idMensaje) {
   const form = el('form', '', { class: 'form-stock', novalidate: '' });
   const cantidad = el('input', '', { type: 'number', min: '1', step: '1', 'aria-label': `Cantidad a cargar de ${nombre}` });
   cantidad.value = String(Math.max(1, sugerida));
+  // Si todavía no se sabe si vence (no llegó la lista), se muestra la fecha igual: vacía, no se manda.
+  const vence = catalogo[tipo].get(Number(id))?.vence;
+  const fecha = el('input', '', { type: 'date', min: hoyArgentina(), 'aria-label': `Vencimiento del lote de ${nombre}`, title: 'Vence el' });
   const boton = el('button', 'Cargar stock', { type: 'submit', class: 'boton boton-chico', 'aria-label': `Cargar stock de ${nombre}` });
-  form.append(cantidad, boton);
+  form.append(cantidad);
+  if (vence !== false) form.append(el('span', 'vence el', { class: 'ayuda', 'aria-hidden': 'true' }), fecha);
+  form.append(boton);
   form.addEventListener('submit', async (ev) => {
     ev.preventDefault();
     const n = Number(cantidad.value);
     if (!Number.isInteger(n) || n < 1) {
-      avisar(idMensaje, 'La cantidad tiene que ser un número entero mayor a 0.');
+      avisar(idMensaje, 'La cantidad tiene que ser un número entero mayor o igual a 1.');
+      cantidad.focus();
       return;
     }
+    if (vence && !fecha.value) {
+      avisar(idMensaje, `${nombre} vence: poné la fecha de vencimiento del lote que cargás.`);
+      fecha.focus();
+      return;
+    }
+    if (fecha.value && fecha.value < hoyArgentina()) {
+      avisar(idMensaje, 'La fecha de vencimiento no puede ser anterior a hoy.');
+      fecha.focus();
+      return;
+    }
+    const cuerpo = { cantidad: n };
+    if (fecha.value) cuerpo.lote = { vencimiento: fecha.value };
     boton.disabled = true;
     try {
-      const r = await api(`/api/inventario/${tipo}/${id}/stock`, { metodo: 'POST', cuerpo: { cantidad: n } });
+      const r = await api(`/api/inventario/${tipo}/${id}/stock`, { metodo: 'POST', cuerpo });
       consulta = desenvolver(await api(`${API}/consultas/${consulta.id}`));
       document.getElementById('cargar-faltantes').replaceChildren();
       pintarItems();
       await cargarCatalogos();
-      avisar(idMensaje, `Stock cargado: ${nombre} tiene ${r.stock} ahora.`, 'ok');
+      const lote = r.lote ? ` en el lote ${r.lote.nombre}${r.lote.vencimiento ? ` (vence el ${r.lote.vencimiento.split('-').reverse().join('/')})` : ''}` : '';
+      avisar(idMensaje, `Stock cargado${lote}: ${nombre} tiene ${r.stock} ahora.`, 'ok');
     } catch (e) {
       avisar(idMensaje, e.datos?.error ?? 'No se pudo cargar el stock.');
       boton.disabled = false;

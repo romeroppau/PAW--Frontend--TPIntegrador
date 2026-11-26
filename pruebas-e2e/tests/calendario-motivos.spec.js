@@ -214,7 +214,11 @@ test('insumos: el alta manda qué vacuna es', async ({ page }) => {
   await page.fill('#costo', '4500');
   await page.fill('#stock', '10');
   await page.selectOption('#aplicacion', 'ANTIRRABICA');
+  // 26/11: una vacuna vence, y el primer lote lleva su vencimiento.
+  await page.selectOption('#vence', 'si');
+  await page.fill('#vencimiento', '2027-09-30');
   await page.getByRole('button', { name: /Guardar/ }).click();
   await expect.poll(() => cuerpos.length).toBe(1);
-  expect(cuerpos[0]).toEqual({ nombre: 'Vacuna antirrábica marca B', costo: 4500, aplicacion: 'ANTIRRABICA', stock: 10 });
+  expect(cuerpos[0]).toEqual({ nombre: 'Vacuna antirrábica marca B', costo: 4500, aplicacion: 'ANTIRRABICA', stock: 10,
+    vence: true, vencimiento: '2027-09-30', lote: null });
 });
