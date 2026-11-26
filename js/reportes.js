@@ -15,7 +15,7 @@
 import { api } from './api.js';
 import { exigirRol } from './auth.js';
 import { confirmar, el, limpiarErrores, mostrarErrores } from './ui.js';
-import { errorDeRango, limitarAHoy } from './rango-fechas.js';
+import { diaArgentina, errorDeRango, limitarAHoy } from './rango-fechas.js';
 
 await exigirRol('VETERINARIO');
 
@@ -28,7 +28,8 @@ const dinero = (v) => '$' + Number(v || 0).toLocaleString('es-AR', { minimumFrac
 // "2026-11-28" -> "28/11/2026", sin pasar por Date para evitar corrimientos de zona horaria.
 const fecha = (v) => String(v ?? '').split('-').reverse().join('/');
 const aISO = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-const haceDias = (n) => { const d = new Date(); d.setDate(d.getDate() - n); return aISO(d); };
+// Los días se cuentan en hora de Argentina, no con la fecha de la computadora.
+const haceDias = (n) => diaArgentina(-n);
 
 /* ------------------------------------------------------------------ */
 /* Pestañas (patrón ARIA: flechas, Inicio y Fin mueven entre pestañas)  */
@@ -272,7 +273,7 @@ function abrirFranja(franja, boton) {
   $('error-franja-general').hidden = true;
   $('franja-texto').textContent = `${franja.dia_semana} a la ${franja.franja}: ${franja.cantidad_turnos} turnos en las últimas 4 semanas. Consulta: ${dinero(precioConsulta)}.`;
   const hasta = formFranja.elements.hasta;
-  const enDias = (n) => { const d = new Date(); d.setDate(d.getDate() + n); return aISO(d); };
+  const enDias = (n) => diaArgentina(n);
   hasta.min = enDias(0);
   hasta.max = enDias(90);
   hasta.value = enDias(30);
@@ -421,7 +422,7 @@ let publicitando = null;   // { producto, boton } de la fila que abrió el cuadr
 
 // Hasta cuándo puede durar: el vencimiento del producto o, si es más lejos, 90 días desde hoy.
 function hastaMaximo(p) {
-  const maximo = (() => { const d = new Date(); d.setDate(d.getDate() + 90); return aISO(d); })();
+  const maximo = diaArgentina(90);
   return p.fecha_vencimiento && p.fecha_vencimiento < maximo ? p.fecha_vencimiento : maximo;
 }
 
@@ -430,7 +431,7 @@ function abrirPublicitar(p, boton) {
   limpiarErrores(formPublicitar);
   $('publicitar-producto').textContent = `${p.nombre}: ${dinero(p.precio)}, quedan ${p.stock}. Vence el ${fecha(p.fecha_vencimiento)}.`;
   const hasta = formPublicitar.elements.hasta;
-  hasta.min = aISO(new Date());
+  hasta.min = diaArgentina(0);
   hasta.max = hastaMaximo(p);
   hasta.value = hasta.max;
   $('ayuda-hasta').textContent = `Por defecto, hasta el día que vence. Como mucho el ${fecha(hasta.max)}.`;
@@ -584,7 +585,7 @@ window.addEventListener('hashchange', () => mostrar(desdeHash()));
 // El filtro de fechas de los turnos arranca en los últimos 30 días.
 for (const form of [formTurnos]) {
   form.elements.desde.value = haceDias(30);
-  form.elements.hasta.value = aISO(new Date());
+  form.elements.hasta.value = diaArgentina(0);
   limitarAHoy(form.elements.desde, form.elements.hasta);   // turnos atendidos: nada posterior a hoy
 }
 

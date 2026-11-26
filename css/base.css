@@ -240,6 +240,8 @@ th { background: var(--menta); color: var(--pino-oscuro); }
 .acciones { display: flex; gap: .5rem 1rem; align-items: center; flex-wrap: wrap; }
 .form-stock { display: flex; gap: .35rem; }
 .form-stock input { width: 5rem; font: inherit; padding: .35rem .5rem; border: 2px solid var(--borde); border-radius: 8px; }
+.form-stock input[type="date"] { width: auto; }
+.form-item .ancho-completo { flex-basis: 100%; margin: 0 0 .5rem; }
 .boton-chico { padding: .35rem .8rem; font-size: .9rem; }
 .sesion-nombre { font-weight: 700; color: var(--pino-oscuro); }
 form .boton + .boton { margin-left: .5rem; }
@@ -309,6 +311,11 @@ form .boton + .boton { margin-left: .5rem; }
 .foto-mascota { width: 120px; height: 120px; object-fit: cover; border-radius: var(--radio); }
 .campo .casilla { display: flex; align-items: center; gap: .5rem; font-weight: 600; }
 .campo .casilla input { width: auto; margin: 0; padding: 0; accent-color: var(--pino); }
+/* Agenda (25/11): los motivos del turno y las vacunas que se dan, en casillas. */
+.campo-motivos { border: 0; padding: 0; margin-inline: 0; }
+.campo-motivos legend { font-weight: 700; margin-bottom: .35rem; padding: 0; }
+.campo-motivos .casilla { font-weight: 400; margin: .2rem 0; }
+.campo-motivos .casilla .ayuda { margin-left: .25rem; }
 
 /* Cuadro de confirmación (confirmar() en js/ui.js) */
 .dialogo { border: 0; border-radius: var(--radio); padding: 1.5rem; width: min(28rem, calc(100vw - 2rem)); color: var(--tinta); background: var(--blanco); }

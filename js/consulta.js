@@ -4,6 +4,11 @@
  * Se abre con ?id=<consulta>, o con ?turno=<turno> para iniciar la atención de ese turno.
  * Contrato: docs/api/contrato-consultas.md del repo Pacientes.
  *
+ * 25/11: el turno puede tener varios motivos (consulta.motivos) y cada vacuna o desparasitación dice
+ * qué se da (consulta.eventos_sanitarios). La consulta tiene que llevar cada dosis en los insumos para finalizar, y si no hay stock se carga acá
+ * mismo (POST /api/inventario/insumos/{id}/stock), sin salir de la consulta. Lo mismo con cualquier
+ * insumo o producto que falte al finalizar.
+ *
  * Seguridad: la guardia de acceso es solo comodidad de interfaz; la autorización real
  * la hace el backend. Todo texto que viene de la API se inserta con textContent (el() lo hace).
  */
@@ -11,7 +16,7 @@
 import { api } from './api.js';
 import { exigirRol } from './auth.js';
 import { confirmar, el, limpiarErrores, mostrarErrores } from './ui.js';
-import { textoEstadoConsulta, textoEstadoFactura } from './etiquetas.js';
+import { textoEstadoConsulta, textoEstadoFactura, textoMotivos } from './etiquetas.js';
 
 await exigirRol('VETERINARIO');
 
@@ -146,6 +151,7 @@ function pintarItems() {
     document.getElementById('vacio-' + tipo).hidden = items.length > 0;
   }
   pintarTotales();
+  pintarCalendario();
 }
 
 function filaItem(tipo, cfg, it) {
@@ -220,11 +226,114 @@ async function cargarCatalogos() {
       const r = await api(cfg.origen);
       const activos = (r.datos ?? r.insumos ?? r.productos ?? [])
         .filter((x) => x.activo === undefined || x.activo);
-      select.append(...activos.map((x) => el('option', `${x.nombre} (stock: ${x.stock})`, { value: x.id })));
+      // Se vuelve a llamar después de cargar stock: se arma de cero, sin perder la elegida.
+      const elegida = select.value;
+      select.replaceChildren(select.options[0], ...activos.map((x) => el('option', `${x.nombre} (stock: ${x.stock})`, { value: x.id })));
+      select.value = elegida;
     } catch {
       select.disabled = true;
       estado.textContent = 'No se pudo cargar el listado de ' + tipo + '.';
     }
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Vacuna o desparasitación del calendario y carga de stock (25/11)    */
+/* ------------------------------------------------------------------ */
+
+// Un formulario chico para cargar stock de un insumo o producto sin salir de la consulta.
+// Al cargarlo, se vuelve a pedir la consulta (trae el stock nuevo) y las listas de insumos y productos.
+function formCargarStock(tipo, id, nombre, sugerida, idMensaje) {
+  const form = el('form', '', { class: 'form-stock', novalidate: '' });
+  const cantidad = el('input', '', { type: 'number', min: '1', step: '1', 'aria-label': `Cantidad a cargar de ${nombre}` });
+  cantidad.value = String(Math.max(1, sugerida));
+  const boton = el('button', 'Cargar stock', { type: 'submit', class: 'boton boton-chico', 'aria-label': `Cargar stock de ${nombre}` });
+  form.append(cantidad, boton);
+  form.addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    const n = Number(cantidad.value);
+    if (!Number.isInteger(n) || n < 1) {
+      avisar(idMensaje, 'La cantidad tiene que ser un número entero mayor a 0.');
+      return;
+    }
+    boton.disabled = true;
+    try {
+      const r = await api(`/api/inventario/${tipo}/${id}/stock`, { metodo: 'POST', cuerpo: { cantidad: n } });
+      consulta = desenvolver(await api(`${API}/consultas/${consulta.id}`));
+      document.getElementById('cargar-faltantes').replaceChildren();
+      pintarItems();
+      await cargarCatalogos();
+      avisar(idMensaje, `Stock cargado: ${nombre} tiene ${r.stock} ahora.`, 'ok');
+    } catch (e) {
+      avisar(idMensaje, e.datos?.error ?? 'No se pudo cargar el stock.');
+      boton.disabled = false;
+    }
+  });
+  return form;
+}
+
+// Qué se da en esta consulta (una o varias vacunas o desparasitaciones) y si cada dosis ya está en los
+// insumos. Si no está, cada insumo que sirve (los de esa aplicación) con su stock: "Agregar 1" y, si no
+// hay stock, "Cargar stock".
+function pintarCalendario() {
+  const eventos = consulta.eventos_sanitarios ?? [];
+  const bloque = document.getElementById('bloque-calendario');
+  bloque.hidden = eventos.length === 0;
+  document.getElementById('motivos-consulta').textContent = textoMotivos(consulta);
+  if (eventos.length === 0) return;
+
+  const texto = document.getElementById('texto-calendario');
+  const lista = document.getElementById('insumos-calendario');
+  lista.replaceChildren();
+  const nombres = eventos.map((e) => e.nombre).join(', ');
+
+  if (cerrada()) {
+    texto.textContent = `Se dio: ${nombres}. Quedó registrado en el calendario de la mascota.`;
+    return;
+  }
+  texto.textContent = `Esta consulta es para: ${nombres}. Cada dosis tiene que estar en los insumos; al finalizar, queda dada en el calendario.`;
+
+  for (const evento of eventos) {
+    const caja = el('div', '', { class: 'bloque-dosis' });
+    const cargado = (consulta.insumos ?? []).find((i) => i.aplicacion && i.aplicacion === evento.aplicacion);
+    if (cargado) {
+      caja.append(el('p', `${evento.nombre}: cargada (${cargado.nombre}).`, { class: 'mensaje mensaje-ok' }));
+      if (cargado.stock !== undefined && cargado.stock < cargado.cantidad) {
+        caja.append(el('p', `No alcanza el stock de ${cargado.nombre}: hay ${cargado.stock}.`),
+          formCargarStock('insumos', cargado.insumo_id, cargado.nombre, cargado.cantidad - cargado.stock, 'mensaje-calendario'));
+      }
+      lista.append(caja);
+      continue;
+    }
+
+    caja.append(el('p', `${evento.nombre}: falta cargar la dosis.`, { class: 'mensaje mensaje-error' }));
+    if (evento.insumos.length === 0) {
+      caja.append(el('p', 'No hay ningún insumo activo para darla: dalo de alta (o reactivalo) en Insumos.'));
+    }
+    for (const insumo of evento.insumos) {
+      const fila = el('div', '', { class: 'acciones' });
+      fila.append(el('span', `${insumo.nombre} · stock: ${insumo.stock}`));
+      if (insumo.stock > 0) {
+        const agregar = el('button', 'Agregar 1 a la consulta', { type: 'button', class: 'boton boton-chico', 'aria-label': `Agregar ${insumo.nombre} a la consulta` });
+        agregar.addEventListener('click', async () => {
+          agregar.disabled = true;
+          try {
+            consulta = desenvolver(await api(`${API}/consultas/${consulta.id}/insumos`, { metodo: 'POST', cuerpo: { insumo_id: insumo.id, cantidad: 1 } }));
+            avisar('mensaje-calendario', '');
+            avisar('mensaje-finalizar', '');
+            pintarItems();
+          } catch (e) {
+            avisar('mensaje-calendario', e.datos?.error ?? 'No se pudo agregar el insumo.');
+            agregar.disabled = false;
+          }
+        });
+        fila.append(agregar);
+      } else {
+        fila.append(el('span', 'Sin stock', { class: 'insignia insignia-falta' }), formCargarStock('insumos', insumo.id, insumo.nombre, 1, 'mensaje-calendario'));
+      }
+      caja.append(fila);
+    }
+    lista.append(caja);
   }
 }
 
@@ -324,10 +433,27 @@ botonFinalizar.addEventListener('click', async () => {
     }
     pintarItems();
     avisar('mensaje-finalizar', mensajeFinalizar(e));
+    pintarFaltantes(e);
   } finally {
     botonFinalizar.disabled = false;
   }
 });
+
+// 409 de stock: un "Cargar stock" por cada insumo o producto que no alcanza, ahí mismo.
+function pintarFaltantes(e) {
+  const caja = document.getElementById('cargar-faltantes');
+  caja.replaceChildren();
+  if (!(e.estado === 409 && !e.datos?.motivo && Array.isArray(e.datos?.items))) return;
+  for (const i of e.datos.items) {
+    const esInsumo = i.tipo === 'INSUMO';
+    const campo = esInsumo ? 'insumo_id' : 'producto_id';
+    const item = (consulta[esInsumo ? 'insumos' : 'productos'] ?? []).find((x) => x[campo] === i.id);
+    const faltan = item ? item.cantidad - (i.stock ?? 0) : 1;
+    const fila = el('div', '', { class: 'acciones' });
+    fila.append(el('span', `${nombreItem(i)}: hay ${i.stock ?? 0}`), formCargarStock(esInsumo ? 'insumos' : 'productos', i.id, nombreItem(i), faltan, 'mensaje-finalizar'));
+    caja.append(fila);
+  }
+}
 
 // Traduce el error de "finalizar" a un mensaje; en el 409 de stock indica qué falta.
 function mensajeFinalizar(e) {

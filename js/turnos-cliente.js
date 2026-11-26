@@ -15,7 +15,7 @@
 import { api } from './api.js';
 import { exigirRol } from './auth.js';
 import { el } from './ui.js';
-import { textoEstadoTurno, textoMotivoTurno } from './etiquetas.js';
+import { textoEstadoTurno, textoMotivoTurno, textoMotivos } from './etiquetas.js';
 import { activarPestanas } from './pestanas.js';
 import { textoPrecio } from './precio-turno.js';
 
@@ -44,7 +44,7 @@ const esProximo = (t) => t.fecha >= hoy && (t.estado === 'PROGRAMADO' || t.estad
 
 // El motivo y, en los turnos que todavía no se atendieron, el precio que guardó al sacarse.
 function motivoYPrecio(turno) {
-  const td = el('td', textoMotivoTurno(turno.motivo));
+  const td = el('td', textoMotivos(turno));
   if (turno.precio && (turno.estado === 'PROGRAMADO' || turno.estado === 'EN_ATENCION')) {
     td.append(el('span', textoPrecio(turno.precio), { class: 'ayuda' }));
   }

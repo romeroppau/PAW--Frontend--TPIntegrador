@@ -21,11 +21,27 @@ export const ESTADOS_TURNO = {
   AUSENTE: 'Ausente'
 };
 
+// 25/11 (migración 025): más motivos. Vacunación y desparasitación dicen además cuál (del calendario).
 export const MOTIVOS_TURNO = {
   CONSULTA: 'Consulta',
   VACUNACION: 'Vacunación',
+  DESPARASITACION: 'Desparasitación',
+  CASTRACION: 'Castración',
+  CIRUGIA: 'Cirugía',
+  CONTROL: 'Control / seguimiento',
+  URGENCIA: 'Urgencia',
   CHEQUEO_ADOPCION: 'Chequeo de adopción'
 };
+
+// Todos los motivos de un turno o consulta (migración 026), con la vacuna de cada uno:
+// "Vacunación: Antirrábica · Control / seguimiento". Sin la lista, el motivo solo.
+export function textoMotivos(x) {
+  const lista = x.motivos?.length ? x.motivos : [{ motivo: x.motivo, evento_sanitario: null }];
+  return lista.map((m) => {
+    const texto = MOTIVOS_TURNO[m.motivo] ?? m.motivo;
+    return m.evento_sanitario ? `${texto}: ${m.evento_sanitario.nombre}` : texto;
+  }).join(' · ');
+}
 
 export const ESTADOS_INSUMO = {
   DISPONIBLE: 'Disponible',

@@ -57,15 +57,31 @@
             <p class="campo-ayuda precio-turno" id="precio-turno" role="status"></p>
             <span class="campo-error" id="error-hora"></span>
           </div>
-          <div class="campo">
-            <label for="motivo">Motivo</label>
-            <select id="motivo" name="motivo">
-              <option value="CONSULTA">Consulta</option>
-              <option value="VACUNACION">Vacunación</option>
-              <option value="CHEQUEO_ADOPCION">Chequeo de adopción</option>
-            </select>
-            <span class="campo-error" id="error-motivo"></span>
-          </div>
+          <!-- 25/11: un turno puede tener varios motivos (migración 026). Vacunación y desparasitación
+               dicen además cuáles, del calendario de la mascota: si alguna no está sin dar (o falta una
+               dosis anterior), js/agenda.js avisa con el enlace al calendario y no deja guardar. -->
+          <fieldset class="campo campo-motivos" id="campo-motivos">
+            <legend>Motivos</legend>
+            <label class="casilla"><input type="checkbox" name="motivo" value="CONSULTA" checked> Consulta general</label>
+            <label class="casilla"><input type="checkbox" name="motivo" value="VACUNACION"> Vacunación</label>
+            <label class="casilla"><input type="checkbox" name="motivo" value="DESPARASITACION"> Desparasitación</label>
+            <label class="casilla"><input type="checkbox" name="motivo" value="CASTRACION"> Castración</label>
+            <label class="casilla"><input type="checkbox" name="motivo" value="CIRUGIA"> Cirugía</label>
+            <label class="casilla"><input type="checkbox" name="motivo" value="CONTROL"> Control / seguimiento</label>
+            <label class="casilla"><input type="checkbox" name="motivo" value="URGENCIA"> Urgencia</label>
+            <label class="casilla"><input type="checkbox" name="motivo" value="CHEQUEO_ADOPCION"> Chequeo de adopción</label>
+            <span class="campo-error" id="error-motivos"></span>
+          </fieldset>
+          <fieldset class="campo campo-motivos" id="campo-VACUNA" hidden>
+            <legend>Vacunas que se dan</legend>
+            <div class="lista-plan"></div>
+          </fieldset>
+          <fieldset class="campo campo-motivos" id="campo-DESPARASITACION" hidden>
+            <legend>Desparasitaciones que se dan</legend>
+            <div class="lista-plan"></div>
+          </fieldset>
+          <p class="ayuda" id="aviso-plan" role="status"></p>
+          <span class="campo-error" id="error-plan_sanitario_id"></span>
           <p class="campo-error" id="error-general" role="alert" hidden></p>
           <button type="submit" class="boton" id="guardar-turno">Guardar turno</button>
           <button type="button" class="boton boton-borde" id="cancelar-turno">Cancelar</button>

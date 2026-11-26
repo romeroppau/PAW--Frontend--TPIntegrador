@@ -26,6 +26,8 @@
       <div class="barra-titulo">
         <h1>Consulta</h1>
         <p id="estado-consulta" class="etiqueta"></p>
+        <!-- Los motivos del turno (25/11: puede tener varios). -->
+        <p>Motivos: <strong id="motivos-consulta"></strong></p>
       </div>
       <p class="estado" id="estado" role="status"></p>
 
@@ -54,6 +56,15 @@
             <button type="submit" class="boton" id="guardar">Guardar cambios</button>
             <p class="mensaje" id="mensaje-guardar" role="status" hidden></p>
           </form>
+        </section>
+
+        <!-- Turno de vacunación o desparasitación (25/11): qué se da, y la dosis que tiene que estar en los
+             insumos (con su stock, que se puede cargar acá mismo). js/consulta.js lo arma. -->
+        <section class="bloque tarjeta" id="bloque-calendario" aria-labelledby="t-calendario" hidden>
+          <h2 id="t-calendario">Vacunas y desparasitaciones</h2>
+          <p id="texto-calendario"></p>
+          <div id="insumos-calendario"></div>
+          <p class="mensaje" id="mensaje-calendario" role="alert" hidden></p>
         </section>
 
         <section class="bloque tarjeta" aria-labelledby="t-insumos">
@@ -120,6 +131,8 @@
           <p id="factura" class="mensaje mensaje-ok" role="status" hidden></p>
           <p><button type="button" class="boton boton-acento" id="finalizar">Finalizar consulta</button></p>
           <p class="mensaje" id="mensaje-finalizar" role="alert" hidden></p>
+          <!-- Si falta stock al finalizar: cargarlo acá, sin salir de la consulta (25/11). -->
+          <div id="cargar-faltantes"></div>
         </section>
       </div>
     </div>
