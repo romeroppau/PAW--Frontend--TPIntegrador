@@ -92,7 +92,8 @@ function mostrar(f) {
   document.getElementById('filas').replaceChildren(...(f.items ?? []).map((item) => {
     const fila = el('tr');
     fila.append(
-      el('td', item.nombre),
+      // Lo que se llevó con el descuento de la promoción va en su propia línea (26/11).
+      el('td', item.en_promocion ? `${item.nombre} (con descuento)` : item.nombre),
       el('td', item.cantidad, { class: 'numero' }),
       el('td', precio(item.precio_unitario), { class: 'numero' }),
       el('td', precio(item.subtotal), { class: 'numero' }),

@@ -58,10 +58,18 @@
         <input id="stock" name="stock" type="number" aria-describedby="error-stock" min="0" step="1" required>
         <span class="campo-error" id="error-stock"></span>
       </div>
-      <div class="campo">
-        <label for="vencimiento">Vencimiento</label>
-        <input id="vencimiento" name="vencimiento" type="date" aria-describedby="error-vencimiento">
+      <!-- El stock está en lotes, cada uno con su vencimiento (26/11): el alta crea el primero. En la
+           edición no se muestran: los lotes se cargan y se retiran desde Productos → "Lotes". -->
+      <div class="campo" id="campo-vencimiento">
+        <label for="vencimiento">Vencimiento del primer lote</label>
+        <input id="vencimiento" name="vencimiento" type="date" aria-describedby="ayuda-vencimiento error-vencimiento">
+        <span class="ayuda" id="ayuda-vencimiento">Vacío si no vence. Los lotes que lleguen después se cargan desde Productos → "Lotes".</span>
         <span class="campo-error" id="error-vencimiento"></span>
+      </div>
+      <div class="campo" id="campo-lote">
+        <label for="lote">Número del primer lote (opcional)</label>
+        <input id="lote" name="lote" type="text" maxlength="40" autocomplete="off" aria-describedby="error-lote">
+        <span class="campo-error" id="error-lote"></span>
       </div>
       <div class="campo">
         <label for="imagen">Imagen (máximo 1 MB)</label>

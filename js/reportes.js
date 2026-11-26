@@ -167,6 +167,14 @@ async function cargarSugerencias() {
 
     liquidar = datos.que_liquidar ?? [];
     $('vacio-liquidar').hidden = liquidar.length > 0;
+    // Los lotes vencidos con stock (26/11): ya no se venden, hay que retirarlos desde Productos.
+    const vencidos = datos.lotes_vencidos ?? [];
+    $('caja-vencidos').hidden = vencidos.length === 0;
+    $('lista-vencidos').replaceChildren(...vencidos.map((v) => {
+      const li = el('li', v.sugerencia + ' ');
+      li.append(el('a', 'Ir a Productos', { href: '/panel/productos.html', 'aria-label': `Ir a Productos para retirar ${v.nombre}` }));
+      return li;
+    }));
     await cargarPromociones();
     estado.textContent = '';
   } catch {
@@ -333,20 +341,27 @@ formFranja.addEventListener('submit', async (ev) => {
   }
 });
 
-// Una fila de "Qué liquidar". La última columna: la promoción vigente del producto, o "Publicitar".
+// "Lote L-0425" o "Lote sin número" (26/11: "Qué liquidar" es por lote).
+const nombreLote = (codigo) => codigo ? 'Lote ' + codigo : 'Lote sin número';
+
+// Una fila de "Qué liquidar" (un lote que vence pronto). La última columna: la promoción vigente del
+// producto (si es de este lote, o "en otro lote"), o "Publicitar" (sobre este lote).
 function filaLiquidar(p) {
   const tr = el('tr');
   const promo = promociones.find((x) => x.producto_id === p.producto_id);
   const celda = el('td', '', { class: 'celda-promo' });
   if (promo) {
-    celda.append(el('span', `${promo.porcentaje} % hasta el ${fecha(promo.hasta)}`, { class: 'insignia insignia-promo' }));
+    const enOtro = promo.lote && p.lote_id && promo.lote.id !== p.lote_id;
+    celda.append(el('span', `${promo.porcentaje} % hasta el ${fecha(promo.hasta)}${enOtro ? ' (en otro lote)' : ''}`, { class: 'insignia insignia-promo' }));
   } else {
-    const boton = el('button', 'Publicitar', { type: 'button', class: 'boton boton-chico', 'aria-label': `Publicitar ${p.nombre}` });
+    const boton = el('button', 'Publicitar', { type: 'button', class: 'boton boton-chico', 'aria-label': `Publicitar ${p.nombre} (${nombreLote(p.lote).toLowerCase()})` });
     boton.addEventListener('click', () => abrirPublicitar(p, boton));
     celda.append(boton);
   }
+  const producto = el('td', p.nombre);
+  if (p.lote_id) producto.append(el('span', nombreLote(p.lote), { class: 'ayuda' }));
   tr.append(
-    el('td', p.nombre),
+    producto,
     el('td', fecha(p.fecha_vencimiento)),
     el('td', p.dias_restantes),
     el('td', p.stock),
@@ -382,7 +397,13 @@ async function cargarPromociones() {
 function filaPromocion(promo) {
   const tr = el('tr');
   const nombre = el('td', promo.nombre);
-  if (!promo.a_la_venta) nombre.append(' ', el('span', '(no está a la venta)', { class: 'marca-baja' }));
+  // El lote de la promoción (26/11): el descuento vale para sus unidades.
+  if (promo.lote) {
+    nombre.append(el('span', nombreLote(promo.lote.codigo) + (promo.lote.vencimiento ? `, vence el ${fecha(promo.lote.vencimiento)}` : ''), { class: 'ayuda' }));
+  }
+  if (!promo.a_la_venta) {
+    nombre.append(' ', el('span', promo.quedan === 0 ? '(se agotó el lote)' : '(no está a la venta)', { class: 'marca-baja' }));
+  }
   const terminar = el('button', 'Terminar', { type: 'button', class: 'boton boton-borde boton-chico', 'aria-label': `Terminar la promoción de ${promo.nombre}` });
   terminar.addEventListener('click', () => terminarPromocion(promo, terminar));
   const accion = el('td');
@@ -392,7 +413,7 @@ function filaPromocion(promo) {
     el('td', promo.porcentaje + ' %'),
     el('td', `${dinero(promo.precio_promocion)} (antes ${dinero(promo.precio)})`),
     el('td', fecha(promo.hasta)),
-    el('td', promo.stock),
+    el('td', promo.quedan ?? promo.stock),
     el('td', promo.creada_por ?? '—'),
     accion
   );
@@ -420,7 +441,7 @@ const dialogo = $('dialogo-publicitar');
 const formPublicitar = $('form-publicitar');
 let publicitando = null;   // { producto, boton } de la fila que abrió el cuadro
 
-// Hasta cuándo puede durar: el vencimiento del producto o, si es más lejos, 90 días desde hoy.
+// Hasta cuándo puede durar: el vencimiento del lote o, si es más lejos, 90 días desde hoy.
 function hastaMaximo(p) {
   const maximo = diaArgentina(90);
   return p.fecha_vencimiento && p.fecha_vencimiento < maximo ? p.fecha_vencimiento : maximo;
@@ -429,12 +450,13 @@ function hastaMaximo(p) {
 function abrirPublicitar(p, boton) {
   publicitando = { producto: p, boton };
   limpiarErrores(formPublicitar);
-  $('publicitar-producto').textContent = `${p.nombre}: ${dinero(p.precio)}, quedan ${p.stock}. Vence el ${fecha(p.fecha_vencimiento)}.`;
+  $('publicitar-producto').textContent = `${p.nombre}, ${nombreLote(p.lote).toLowerCase()}: ${dinero(p.precio)}, quedan ${p.stock}. Vence el ${fecha(p.fecha_vencimiento)}.`
+    + ' El descuento vale para las unidades de este lote: si alguien lleva más, las demás van a precio normal.';
   const hasta = formPublicitar.elements.hasta;
   hasta.min = diaArgentina(0);
   hasta.max = hastaMaximo(p);
   hasta.value = hasta.max;
-  $('ayuda-hasta').textContent = `Por defecto, hasta el día que vence. Como mucho el ${fecha(hasta.max)}.`;
+  $('ayuda-hasta').textContent = `Por defecto, hasta el día que vence el lote (o hasta que se agote). Como mucho el ${fecha(hasta.max)}.`;
   formPublicitar.elements.porcentaje.value = String(p.descuento_sugerido ?? 15);
   previsualizar();
   dialogo.showModal();
@@ -461,6 +483,8 @@ formPublicitar.addEventListener('submit', async (ev) => {
   const porcentaje = formPublicitar.elements.porcentaje.value.trim();
   const cuerpo = {
     producto_id: producto.producto_id,
+    // La promoción es de este lote (26/11).
+    ...(producto.lote_id ? { lote_id: producto.lote_id } : {}),
     porcentaje: /^\d+$/.test(porcentaje) ? Number(porcentaje) : porcentaje,
     hasta: formPublicitar.elements.hasta.value,
   };

@@ -114,7 +114,8 @@ function dibujar(compra) {
 
   document.getElementById('filas').replaceChildren(...(compra.items ?? []).map((item) => {
     const fila = el('tr');
-    fila.append(el('td', item.nombre), el('td', precio(item.precio_unitario)), el('td', item.cantidad), el('td', precio(item.subtotal)));
+    // Lo que se llevó con el descuento de la promoción va en su propia línea (26/11).
+    fila.append(el('td', item.en_promocion ? `${item.nombre} (con descuento)` : item.nombre), el('td', precio(item.precio_unitario)), el('td', item.cantidad), el('td', precio(item.subtotal)));
     return fila;
   }));
   document.getElementById('total').textContent = precio(compra.total);
