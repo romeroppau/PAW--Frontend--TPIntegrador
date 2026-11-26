@@ -97,6 +97,14 @@ function crearFila(item) {
     unitario.append(' ', el('span', `(antes ${precio(item.precio_sin_descuento)}, ${item.descuento} % off)`, { class: 'item-promo' }));
   }
   datos.append(el('a', item.nombre, { href: enlace, class: 'item-nombre' }), unitario);
+  // La promoción es de un lote (26/11): el descuento vale para las unidades que le quedan. Si lleva
+  // más, se dice cuántas van con descuento y cuántas a precio normal.
+  const sinDescuento = item.descuento ? item.cantidad - (item.cantidad_promocion ?? item.cantidad) : 0;
+  if (sinDescuento > 0) {
+    datos.append(el('span', item.cantidad_promocion > 0
+      ? `${item.cantidad_promocion} con ${item.descuento} % off (las que quedan en promoción) y ${sinDescuento} a ${precio(item.precio_sin_descuento)}.`
+      : `La promoción se agotó: van a ${precio(item.precio_sin_descuento)} c/u.`, { class: 'nota-item' }));
+  }
   if (!item.a_la_venta) {
     datos.append(el('span', 'Ya no está a la venta: quitalo para seguir.', { class: 'nota-item nota-error' }));
   } else if (item.cantidad > item.stock) {

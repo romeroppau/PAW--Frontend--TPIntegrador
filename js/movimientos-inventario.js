@@ -52,9 +52,15 @@ export function celdaMotivo(m, nombreItem) {
 export function filaMovimiento(m, campoItem) {
   const tr = el('tr');
   const nombre = m[campoItem] ?? '—';
+  // De qué lote fue (productos, 26/11): debajo del nombre.
+  const item = el('td', nombre);
+  if (m.lote) {
+    const vence = m.lote.vencimiento ? 'vence el ' + m.lote.vencimiento.split('-').reverse().join('/') : 'no vence';
+    item.append(el('span', `${m.lote.codigo ? 'Lote ' + m.lote.codigo : 'Lote sin número'} (${vence})`, { class: 'ayuda' }));
+  }
   tr.append(
     el('td', fechaHora(m.fecha)),
-    el('td', nombre),
+    item,
     el('td', TIPOS[m.tipo] ?? m.tipo),
     celdaMotivo(m, nombre),
     el('td', m.cantidad),

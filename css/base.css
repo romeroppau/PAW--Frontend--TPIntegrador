@@ -241,6 +241,13 @@ th { background: var(--menta); color: var(--pino-oscuro); }
 .form-stock { display: flex; gap: .35rem; }
 .form-stock input { width: 5rem; font: inherit; padding: .35rem .5rem; border: 2px solid var(--borde); border-radius: 8px; }
 .form-stock input[type="date"] { width: auto; }
+/* Los lotes de un producto (Productos → "Lotes", 26/11): debajo de su fila, con su tabla y la carga. */
+.fila-detalle > td { background: var(--fondo); }
+.lotes { display: grid; gap: .75rem; padding: .5rem 0; }
+.lotes h3 { margin: 0; font-size: 1.05rem; }
+.tabla-lotes caption { text-align: left; font-weight: 700; padding-bottom: .35rem; }
+.form-lote .campo { margin: 0; }
+.form-lote input, .form-lote select { min-width: 8rem; }
 .form-item .ancho-completo { flex-basis: 100%; margin: 0 0 .5rem; }
 .boton-chico { padding: .35rem .8rem; font-size: .9rem; }
 .sesion-nombre { font-weight: 700; color: var(--pino-oscuro); }

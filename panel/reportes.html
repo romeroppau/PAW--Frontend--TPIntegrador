@@ -50,12 +50,17 @@
       <div id="panel-liquidar" role="tabpanel" aria-labelledby="tab-liquidar" tabindex="0" hidden>
         <section class="tarjeta" aria-labelledby="t-liquidar">
           <h2 id="t-liquidar">Qué liquidar</h2>
-          <p>Con <strong>Publicitar</strong> el producto pasa a la sección de promociones de la tienda con el descuento que elijas.</p>
-          <p class="estado" id="vacio-liquidar" hidden>No hay productos por vencer con stock.</p>
+          <p>Cada fila es un <strong>lote</strong> que vence pronto. Con <strong>Publicitar</strong> el producto pasa a la sección de promociones de la tienda con el descuento que elijas, hasta que vence o se agota ese lote.</p>
+          <p class="estado" id="vacio-liquidar" hidden>No hay lotes por vencer con stock.</p>
+          <!-- Los lotes vencidos con stock (26/11): ya no se venden; se retiran desde Productos. -->
+          <div class="mensaje mensaje-error" id="caja-vencidos" hidden>
+            <p><strong>Lotes vencidos</strong> (ya no se venden: retiralos del stock):</p>
+            <ul id="lista-vencidos"></ul>
+          </div>
           <p class="aviso-ok" id="aviso-promociones" role="status" hidden></p>
           <div class="tabla-scroll">
             <table>
-              <caption class="solo-lectores">Productos por vencer con su descuento sugerido</caption>
+              <caption class="solo-lectores">Lotes por vencer con su descuento sugerido</caption>
               <thead>
                 <tr>
                   <th scope="col">Producto</th><th scope="col">Vence</th><th scope="col">Días restantes</th>
@@ -82,7 +87,7 @@
               <thead>
                 <tr>
                   <th scope="col">Producto</th><th scope="col">Descuento</th><th scope="col">Precio en la tienda</th>
-                  <th scope="col">Hasta</th><th scope="col">Stock</th><th scope="col">Publicada por</th>
+                  <th scope="col">Hasta</th><th scope="col">Quedan en promoción</th><th scope="col">Publicada por</th>
                   <th scope="col">Acción</th>
                 </tr>
               </thead>
