@@ -194,9 +194,14 @@ function fila(evento) {
 const rutaEvento = (evento) => `${API}/${actual.mascota.id}/calendario-sanitario/${evento.id}`;
 
 // Las acciones de una vacuna o desparasitación sin dar: marcarla como dada, cambiarle la fecha o quitarla.
+// De una dada que se repite (antirrábica, refuerzo anual, desparasitación): agregar la próxima en la fecha
+// sugerida (26/11: ya no se agrega sola al darla).
 function accionesEvento(evento) {
   const td = el('td');
-  if (evento.fecha_aplicada) return td;
+  if (evento.fecha_aplicada) {
+    if (evento.proxima_sugerida) td.append(accionProxima(evento));
+    return td;
+  }
 
   const caja = el('div', '', { class: 'acciones' });
   const error = el('span', '', { class: 'campo-error', role: 'alert' });
@@ -226,6 +231,27 @@ function accionesEvento(evento) {
   caja.append(dada, mover, quitar, error);
   td.append(caja);
   return td;
+}
+
+// "Agregar la próxima": la misma vacuna o desparasitación en la fecha sugerida (si ya pasó, hoy). Se
+// puede cambiar la fecha antes de guardar.
+function accionProxima(evento) {
+  const caja = el('div', '', { class: 'acciones' });
+  const error = el('span', '', { class: 'campo-error', role: 'alert' });
+  const sugerida = evento.proxima_sugerida >= hoyArgentina() ? evento.proxima_sugerida : hoyArgentina();
+  const boton = el('button', 'Agregar la próxima', {
+    type: 'button', class: 'boton boton-borde boton-chico',
+    'aria-label': `Agregar la próxima dosis de ${evento.nombre} (sugerida para el ${fecha(sugerida)})`,
+  });
+  boton.addEventListener('click', () => abrirFecha(caja, error, {
+    etiqueta: `Fecha de la próxima dosis de ${evento.nombre}`, valor: sugerida, min: hoyArgentina(), boton: 'Agregar',
+    enviar: (valor) => api(`${API}/${actual.mascota.id}/calendario-sanitario`, {
+      metodo: 'POST', cuerpo: { plan_sanitario_id: evento.plan_sanitario_id, fecha_programada: valor },
+    }),
+    listo: `${evento.nombre}: próxima dosis agregada al calendario.`,
+  }));
+  caja.append(el('span', 'Próxima sugerida: ' + fecha(evento.proxima_sugerida), { class: 'ayuda' }), boton, error);
+  return caja;
 }
 
 // Cambia los botones de la fila por un campo de fecha con Guardar y Volver.
@@ -291,10 +317,27 @@ function pintarAgregar({ eventos, plan = [] }) {
   }).filter((g) => g.children.length > 0);
 
   selectPlan.replaceChildren(el('option', disponibles.length ? 'Elegí cuál' : 'Ya tiene todo el plan en el calendario', { value: '' }), ...grupos);
-  formAgregar.elements.fecha_programada.min = hoyArgentina();
-  if (!formAgregar.elements.fecha_programada.value) formAgregar.elements.fecha_programada.value = hoyArgentina();
+  planActual = plan;
+  formAgregar.elements.fecha_programada.value = hoyArgentina();
+  ajustarFechaMinima();
   formAgregar.hidden = plan.length === 0;
 }
+
+// La fecha mínima del ítem elegido (26/11): la API la calcula con la dosis anterior dada y los días
+// mínimos de Configuración → Vacunas. El campo no deja elegir antes, y la ayuda dice desde cuándo.
+let planActual = [];
+function ajustarFechaMinima() {
+  const item = planActual.find((p) => String(p.id) === selectPlan.value);
+  const input = formAgregar.elements.fecha_programada;
+  const ayuda = document.getElementById('ayuda-fecha_programada');
+  const minima = item?.fecha_minima && item.fecha_minima > hoyArgentina() ? item.fecha_minima : hoyArgentina();
+  input.min = minima;
+  if (input.value < minima) input.value = minima;
+  ayuda.textContent = item?.fecha_minima && item.fecha_minima > hoyArgentina()
+    ? `Por la dosis anterior, se puede dar desde el ${fecha(item.fecha_minima)} (días mínimos de Configuración → Vacunas).`
+    : '';
+}
+selectPlan.addEventListener('change', ajustarFechaMinima);
 
 formAgregar.addEventListener('submit', async (ev) => {
   ev.preventDefault();
