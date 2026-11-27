@@ -19,6 +19,8 @@ export const MOTIVOS = {
   VENTA: 'Venta',
   VENTA_CANCELADA: 'Venta cancelada (vuelve el stock)',
   AJUSTE: 'Retiro manual (sin consulta)',
+  // La baja diaria de los lotes vencidos (27/11): la hace la tarea, sin usuario.
+  VENCIMIENTO: 'Baja por vencimiento',
 };
 
 // "2026-11-06 15:30:00" -> "06/11/2026 15:30"
@@ -64,7 +66,7 @@ export function filaMovimiento(m, campoItem) {
     el('td', TIPOS[m.tipo] ?? m.tipo),
     celdaMotivo(m, nombre),
     el('td', m.cantidad),
-    el('td', m.usuario ?? '—')
+    el('td', m.usuario ?? (m.motivo === 'VENCIMIENTO' ? 'Tarea diaria' : '—'))
   );
   return tr;
 }

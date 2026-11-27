@@ -410,3 +410,7 @@ form .boton + .boton { margin-left: .5rem; }
 }
 .contacto-acciones { display: flex; flex-wrap: wrap; gap: .6rem; margin: 0; }
 #contacto { scroll-margin-top: 1rem; }
+
+/* Registrar el pago de la factura de la consulta (la veterinaria, 27/11) */
+.pago-factura { border-top: 1px solid var(--borde); padding-top: 1rem; }
+.pago-factura h2 { font-size: 1.15rem; margin: 0 0 .75rem; }

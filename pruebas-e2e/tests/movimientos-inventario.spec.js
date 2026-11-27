@@ -158,3 +158,21 @@ test('abierta desde otro lado, la consulta vuelve a la agenda', async ({ page })
   await expect(page.locator('#volver')).toHaveText('← Volver a la agenda');
   await expect(page.locator('#volver')).toHaveAttribute('href', '/panel/agenda.html');
 });
+
+// La baja diaria de los lotes vencidos (27/11): el movimiento se ve con su motivo, su lote y "Tarea diaria".
+test('insumos: la baja por vencimiento se ve en Movimientos, con el lote y sin usuario', async ({ page }) => {
+  await simularSesion(page, VETERINARIO);
+  await page.route('**/api/inventario/insumos', (route) => responderJson(route, { datos: [], limite_stock_bajo: 10 }));
+  await page.route(/\/api\/inventario\/insumos\/movimientos(\?.*)?$/, (route) => responderJson(route, { datos: [
+    { id: 9, fecha: '2026-11-27 09:00:05', tipo: 'SALIDA', motivo: 'VENCIMIENTO', cantidad: 8, insumo_id: 3, insumo: 'Vacuna antirrábica',
+      usuario: null, consulta_id: null, compra: null,
+      lote: { id: 41, numero: 2, nombre: 'L2 (FL-2612)', codigo: 'FL-2612', vencimiento: '2026-11-26' } },
+  ] }));
+
+  await page.goto('/panel/insumo-movimientos.html');
+  const fila = page.locator('#filas tr');
+  await expect(fila).toHaveCount(1);
+  await expect(fila).toContainText('Baja por vencimiento');
+  await expect(fila).toContainText('Lote L2 (FL-2612) (vence el 26/11/2026)');
+  await expect(fila).toContainText('Tarea diaria');
+});

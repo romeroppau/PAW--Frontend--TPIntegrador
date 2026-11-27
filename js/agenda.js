@@ -55,6 +55,9 @@ const CLASE_ESTADO = {
 // en-CA formatea como AAAA-MM-DD.
 const hoy = () => new Intl.DateTimeFormat('en-CA', { timeZone: ZONA }).format(new Date());
 
+// La hora de Argentina, "HH:MM" (de 00 a 23).
+const horaAhora = () => new Intl.DateTimeFormat('en-GB', { timeZone: ZONA, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date());
+
 // Se calcula al mediodía UTC para que ningún cambio de hora mueva el día.
 function sumarDias(fecha, dias) {
   const d = new Date(fecha + 'T12:00:00Z');
@@ -461,6 +464,14 @@ formTurno.addEventListener('submit', async (ev) => {
   botonGuardarTurno.disabled = true;                        // un doble clic no carga dos turnos
   const fecha = formTurno.elements.fecha.value;
   const hora = formTurno.elements.hora.value;
+  // Hoy, una hora que ya pasó no vale (27/11, la misma regla que Pacientes): se avisa sin pedir nada.
+  const ahora = horaAhora();
+  if (fecha === hoy() && hora && hora < ahora) {
+    mostrarErrores(formTurno, { hora: `Esa hora ya pasó: hoy el turno tiene que ser a las ${ahora} o después` });
+    formTurno.elements.hora.focus();
+    botonGuardarTurno.disabled = false;
+    return;
+  }
   try {
     // Reprogramar: POST /api/pacientes/turnos/{id}/reprogramar con la fecha y la hora.
     // Nuevo: POST /api/pacientes/turnos (el veterinario es el de la sesión). Los dos responden { turno }.
