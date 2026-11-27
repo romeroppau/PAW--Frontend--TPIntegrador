@@ -16,7 +16,7 @@ on:
 jobs:
   pruebas:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
 
     steps:
       # A main solo se llega desde dev: un pull request de otra rama hacia main falla acá.
@@ -62,9 +62,11 @@ jobs:
         timeout-minutes: 3
         run: npm ci --no-audit --no-fund
 
+      # 10 minutos (27/11): con 558 pruebas (computadora y celular) tarda unos 4 y algún runner lento
+      # pasó los 5, que era el límite anterior.
       - name: Pruebas de punta a punta (Playwright)
         working-directory: pruebas-e2e
-        timeout-minutes: 5
+        timeout-minutes: 10
         run: npx playwright test
 
       # Si fallan, el informe (con capturas de lo que veía el navegador) queda para descargar
