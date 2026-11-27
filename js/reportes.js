@@ -185,23 +185,24 @@ async function cargarSugerencias() {
   }
 }
 
-// Una fila de "Qué promocionar". Las 5 franjas con menos turnos (a_promocionar del motor) traen el
-// descuento sugerido y "Publicitar", o la promoción que ya tienen.
+// Una fila de "Qué promocionar". Cualquier franja con una promoción vigente la muestra, aunque ya no
+// esté entre las que conviene promocionar (por ejemplo, porque con la promoción se llenó: 27/11). Las 5
+// franjas con menos turnos (a_promocionar del motor) traen el descuento sugerido y, si no tienen
+// promoción, "Publicitar".
 function filaFranja(f, sugerida) {
   const esSugerida = sugerida && f.dia_semana === sugerida.dia_semana && f.franja === sugerida.franja;
   const candidata = aPromocionar.find((a) => a.dia_semana === f.dia_semana && a.franja === f.franja);
+  const nombre = `${f.dia_semana} a la ${f.franja}`;
+  // La promoción se busca por su nombre ("Lunes a la mañana"): las franjas del motor no traen el número de día.
+  const vigente = promoTurnos.find((p) => p.nombre.toLowerCase() === nombre.toLowerCase());
   const tr = el('tr');
   const celdaPromo = el('td', '', { class: 'celda-promo' });
-  if (candidata) {
-    const vigente = promoTurnos.find((p) => p.dia_semana === candidata.dia_numero && p.franja === candidata.franja_codigo);
-    if (vigente) {
-      celdaPromo.append(el('span', `${vigente.porcentaje} % hasta el ${fecha(vigente.hasta)}`, { class: 'insignia insignia-promo' }));
-    } else {
-      const nombre = `${f.dia_semana} a la ${f.franja}`;
-      const boton = el('button', 'Publicitar', { type: 'button', class: 'boton boton-chico', 'aria-label': `Publicitar ${nombre}` });
-      boton.addEventListener('click', () => abrirFranja(candidata, boton));
-      celdaPromo.append(boton);
-    }
+  if (vigente) {
+    celdaPromo.append(el('span', `${vigente.porcentaje} % hasta el ${fecha(vigente.hasta)}`, { class: 'insignia insignia-promo' }));
+  } else if (candidata) {
+    const boton = el('button', 'Publicitar', { type: 'button', class: 'boton boton-chico', 'aria-label': `Publicitar ${nombre}` });
+    boton.addEventListener('click', () => abrirFranja(candidata, boton));
+    celdaPromo.append(boton);
   }
   tr.append(
     el('td', f.dia_semana), el('td', f.franja), el('td', f.cantidad_turnos), el('td', esSugerida ? 'Sugerida' : ''),
