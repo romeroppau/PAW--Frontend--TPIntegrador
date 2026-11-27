@@ -130,6 +130,8 @@ test('"Nuevo turno" lo carga y muestra su día en la agenda, sin recargar; un ho
     turnosManiana.push(nuevo);
     return responderJson(route, { turno: nuevo }, 201);
   });
+  // Son las 07:00 en Argentina: las 08:00 de hoy todavía no pasaron (la página no las rechaza).
+  await page.clock.setFixedTime(new Date(`${HOY}T07:00:00-03:00`));
 
   await page.goto('/panel/agenda.html');
   await expect(page.locator('#filas > tr')).toHaveCount(3);
@@ -220,4 +222,35 @@ test('"Nuevo turno" busca la mascota por nombre o dueño en el servidor (la list
 
   await page.fill('#buscar-mascota', 'zzz');
   await expect(page.locator('#mascota_id option')).toHaveText(['Ninguna mascota coincide con "zzz"']);
+});
+
+// 27/11 (devolución del profesor): hoy no se puede dar ni reprogramar un turno a una hora que ya pasó.
+// La página lo avisa sin pedir nada; la hora de ahora todavía vale.
+test('hoy, una hora que ya pasó no se puede elegir', async ({ page }) => {
+  await simularSesion(page, VETERINARIO);
+  await simularAgenda(page, { [HOY]: TURNOS_HOY });
+  await page.route('**/api/pacientes/mascotas', (route) => responderJson(route, { mascotas: [
+    { id: 101, nombre: 'Firulais', especie: 'PERRO', duenio: { id: 102, nombre: 'Cliente de Prueba' } }
+  ] }));
+  const cuerpos = [];
+  await page.route('**/api/pacientes/turnos', (route) => {
+    if (route.request().method() !== 'POST') return route.fallback();
+    cuerpos.push(route.request().postDataJSON());
+    const nuevo = turno(111, '15:30', 'Firulais', 'PROGRAMADO');
+    return responderJson(route, { turno: nuevo }, 201);
+  });
+  await page.clock.setFixedTime(new Date(`${HOY}T15:30:00-03:00`));
+
+  await page.goto('/panel/agenda.html');
+  await page.getByRole('button', { name: 'Nuevo turno' }).click();
+  await page.selectOption('#mascota_id', '101');
+  await page.fill('#hora', '10:00');
+  await page.getByRole('button', { name: 'Guardar turno' }).click();
+  await expect(page.locator('#error-hora')).toHaveText('Esa hora ya pasó: hoy el turno tiene que ser a las 15:30 o después');
+  expect(cuerpos).toHaveLength(0);
+
+  await page.fill('#hora', '15:30');
+  await page.getByRole('button', { name: 'Guardar turno' }).click();
+  await expect(page.locator('#estado')).toContainText('Turno cargado: Firulais');
+  expect(cuerpos).toHaveLength(1);
 });

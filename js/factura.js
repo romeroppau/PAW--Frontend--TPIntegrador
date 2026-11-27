@@ -8,11 +8,19 @@
  */
 
 import { api } from './api.js';
-import { el } from './ui.js';
+import { sesion } from './auth.js';
+import { confirmar, el, limpiarErrores, mostrarErrores } from './ui.js';
 import { textoEstadoFactura, textoMotivos } from './etiquetas.js';
 
 const estado = document.getElementById('estado');
 const consulta = new URLSearchParams(location.search).get('consulta');
+
+// Los medios de pago de la factura de una consulta (migración 030).
+const MEDIOS = { EFECTIVO: 'efectivo', TRANSFERENCIA: 'transferencia', TARJETA: 'tarjeta' };
+
+const $form = document.getElementById('form-pago');
+const $estadoPago = document.getElementById('estado-pago');
+let actual = null;
 
 const pesos = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' });
 const dinero = (v) => pesos.format(Number(v || 0));
@@ -33,20 +41,33 @@ async function cargar() {
   estado.textContent = 'Cargando…';
   try {
     const f = await api(`/api/pacientes/consultas/${encodeURIComponent(consulta)}/factura`);
-    mostrar(f);
+    await mostrar(f);
     estado.textContent = '';
   } catch (e) {
     estado.textContent = e.estado === 404 ? 'No se encontró la factura.' : 'No se pudo cargar la factura.';
   }
 }
 
-function mostrar(f) {
+async function mostrar(f) {
+  actual = f;
   const c = f.consulta ?? {};
   document.title = `Factura ${f.numero} | HuellaVet`;
   poner('titulo', `Factura ${f.numero}`);
   poner('estado-factura', textoEstadoFactura(f.estado));
   document.getElementById('estado-factura').classList.toggle('insignia-bajo', f.estado === 'PENDIENTE_PAGO');
   document.getElementById('nota-pago').hidden = f.estado !== 'PENDIENTE_PAGO';
+
+  // El pago: "Efectivo, el 27/11/2026" (las pagadas de antes no tienen medio: solo "Pagada").
+  const pago = f.estado === 'PAGADA' && (f.medio_pago || f.pagada_en)
+    ? [f.medio_pago ? MEDIOS[f.medio_pago][0].toUpperCase() + MEDIOS[f.medio_pago].slice(1) : null,
+       f.pagada_en ? 'el ' + fecha(f.pagada_en) : null].filter(Boolean).join(', ')
+    : '';
+  document.getElementById('dato-pago').hidden = !pago;
+  poner('pago', pago);
+
+  // "Registrar el pago": solo la veterinaria y solo si está pendiente.
+  const usuario = await sesion;
+  $form.hidden = !(usuario?.rol === 'VETERINARIO' && f.estado === 'PENDIENTE_PAGO');
 
   poner('fecha', fecha(f.fecha));
   poner('cliente', f.cliente?.nombre ?? '—');
@@ -114,5 +135,46 @@ function fila(concepto, cantidad, unitario) {
 }
 
 document.getElementById('imprimir').addEventListener('click', () => window.print());
+
+// La veterinaria marca la factura como pagada, con el medio de pago (POST .../factura/pago).
+$form.addEventListener('submit', async (evento) => {
+  evento.preventDefault();
+  limpiarErrores($form);
+  $estadoPago.textContent = '';
+  $estadoPago.classList.remove('mensaje-ok');
+
+  const medio = $form.elements.medio_pago.value;
+  if (!MEDIOS[medio]) {
+    mostrarErrores($form, { medio_pago: 'Elegí el medio de pago: efectivo, transferencia o tarjeta' });
+    $form.elements.medio_pago.focus();
+    return;
+  }
+
+  const pregunta = `¿Marcar la factura ${actual.numero} (${dinero(actual.total)}) como pagada en ${MEDIOS[medio]}?`;
+  if (!await confirmar(pregunta, { aceptar: 'Marcar como pagada' })) return;
+
+  const boton = $form.querySelector('button[type="submit"]');
+  boton.disabled = true;
+  try {
+    const f = await api(`/api/pacientes/consultas/${encodeURIComponent(consulta)}/factura/pago`, {
+      metodo: 'POST', cuerpo: { medio_pago: medio },
+    });
+    await mostrar(f);
+    $estadoPago.textContent = `Listo: la factura ${f.numero} quedó pagada en ${MEDIOS[medio]}.`;
+    $estadoPago.classList.add('mensaje-ok');
+  } catch (e) {
+    if (e.estado === 400) {
+      mostrarErrores($form, e.datos?.campos ?? {}, e.datos?.error ?? 'Revisá el medio de pago.');
+    } else if (e.estado === 409) {
+      // Otra pestaña (u otro clic) ya la marcó: se muestra como quedó.
+      $estadoPago.textContent = 'La factura ya estaba pagada.';
+      try { await mostrar(await api(`/api/pacientes/consultas/${encodeURIComponent(consulta)}/factura`)); } catch { /* queda como estaba */ }
+    } else {
+      mostrarErrores($form, {}, 'No se pudo registrar el pago. Probá de nuevo.');
+    }
+  } finally {
+    boton.disabled = false;
+  }
+});
 
 cargar();
