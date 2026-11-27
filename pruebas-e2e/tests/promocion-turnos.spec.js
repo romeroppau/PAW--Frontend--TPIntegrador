@@ -198,3 +198,33 @@ test('el panel del cliente también muestra "¡No te lo pierdas!" con los turnos
   await expect(page.locator('#lista-promo-turnos')).toContainText('Martes a la tarde');
 });
 
+// 27/11: una franja con promoción vigente la muestra aunque ya no esté entre las 5 con menos turnos
+// (con la promoción se llenó), y no ofrece "Publicitar".
+test('"Qué promocionar": la promoción vigente se ve aunque la franja ya no sea candidata', async ({ page }) => {
+  await simularSesion(page, VETERINARIO);
+  const franja = (d, f, n) => ({ dia_semana: d, franja: f, cantidad_turnos: n });
+  await page.route('**/api/reportes/sugerencias', (route) => responderJson(route, {
+    que_promocionar: {
+      franja_sugerida: { ...franja('Martes', 'mañana', 5), sugerencia: 'Los Martes a la mañana hubo 5 turnos en 4 semanas: conviene promocionarlos' },
+      franjas: [franja('Lunes', 'mañana', 12), franja('Lunes', 'tarde', 8), franja('Martes', 'mañana', 5)],
+      precio_consulta: 15000,
+      a_promocionar: [
+        { ...franja('Lunes', 'tarde', 8), dia_numero: 1, franja_codigo: 'TARDE', descuento_sugerido: 10, precio_sugerido: 13500 },
+        { ...franja('Martes', 'mañana', 5), dia_numero: 2, franja_codigo: 'MANIANA', descuento_sugerido: 10, precio_sugerido: 13500 },
+      ],
+    },
+    que_liquidar: [],
+  }));
+  await page.route('**/api/inventario/promociones', (route) => responderJson(route, { datos: [] }));
+  const promo = (id, d, f, nombre) => ({ id, dia_semana: d, franja: f, porcentaje: 10, hasta: '2026-12-25', nombre, precio: 15000, precio_promocion: 13500 });
+  await page.route('**/api/pacientes/promociones-turnos', (route) => responderJson(route, { precio_consulta: 15000, datos: [
+    promo(2, 1, 'MANIANA', 'Lunes a la mañana'), promo(3, 1, 'TARDE', 'Lunes a la tarde'),
+  ] }));
+  await page.goto('/panel/reportes.html');
+
+  const lunesManiana = page.locator('#filas-franjas tr', { hasText: 'Lunes' }).filter({ hasText: 'mañana' });
+  await expect(lunesManiana).toContainText('10 % hasta el 25/12/2026');
+  await expect(lunesManiana.getByRole('button')).toHaveCount(0);
+  await expect(page.locator('#filas-franjas tr', { hasText: 'tarde' })).toContainText('10 % hasta el 25/12/2026');
+  await expect(page.getByRole('button', { name: 'Publicitar Martes a la mañana' })).toBeVisible();
+});

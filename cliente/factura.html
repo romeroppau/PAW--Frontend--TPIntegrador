@@ -39,6 +39,7 @@
           <div><dt>Cliente</dt><dd id="cliente"></dd></div>
           <div><dt>Mascota</dt><dd id="mascota"></dd></div>
           <div><dt>Atención</dt><dd id="atencion"></dd></div>
+          <div id="dato-pago" hidden><dt>Pago</dt><dd id="pago"></dd></div>
           <div class="factura-diagnostico"><dt>Diagnóstico</dt><dd id="diagnostico"></dd></div>
         </dl>
 
@@ -64,6 +65,24 @@
         </div>
 
         <p id="nota-pago" class="ayuda" hidden>Se abona en la veterinaria.</p>
+
+        <!-- Solo la veterinaria, con la factura pendiente: registra que el cliente pagó (27/11). -->
+        <form id="form-pago" class="pago-factura no-imprimir" hidden novalidate>
+          <h2>Registrar el pago</h2>
+          <p class="mensaje mensaje-error" id="error-general" role="alert" hidden></p>
+          <div class="campo campo-chico">
+            <label for="medio_pago">Medio de pago</label>
+            <select id="medio_pago" name="medio_pago" required aria-describedby="error-medio_pago">
+              <option value="">Elegí el medio</option>
+              <option value="EFECTIVO">Efectivo</option>
+              <option value="TRANSFERENCIA">Transferencia</option>
+              <option value="TARJETA">Tarjeta</option>
+            </select>
+            <span class="campo-error" id="error-medio_pago"></span>
+          </div>
+          <button type="submit" class="boton">Marcar como pagada</button>
+        </form>
+        <p id="estado-pago" class="estado no-imprimir" role="status"></p>
         <p class="no-imprimir"><button type="button" class="boton boton-borde" id="imprimir">Imprimir</button></p>
       </article>
     </div>
